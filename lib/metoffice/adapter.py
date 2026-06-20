@@ -28,7 +28,7 @@ class MetOfficeAdapter:
         feature = root_data.features[0]
         
         # Meta conversions using modern built-in generics
-        location_name: str = feature.properties.location.name if feature.properties.location else "Unknown Location"
+        location_name: str = feature.properties.location.name if feature.properties.location else None
         coordinates: list[Decimal] = feature.geometry.coordinates
         model_run_at: datetime = datetime.fromisoformat(feature.properties.modelRunDate.replace("Z", "+00:00"))
         

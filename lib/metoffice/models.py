@@ -19,7 +19,7 @@ class DailyForecastPoint:
 
 @dataclass
 class HumanReadableWeatherReport:
-    location_name: str
+    location_name: str | None
     coordinates: list[Decimal]
     model_run_at: datetime
     forecast_days: list[DailyForecastPoint]
