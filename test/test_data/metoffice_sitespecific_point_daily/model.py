@@ -9,7 +9,7 @@ from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint
 def expected_human_report_snapshot() -> HumanReadableWeatherReport:
     """Fixture containing the exact expected output for verification."""
     return HumanReadableWeatherReport(
-        location_name="Unknown Location",
+        location_name=None,
         coordinates=[Decimal("-7.4058"), Decimal("54.3141"), Decimal("74.0")],
         model_run_at=datetime(2026, 6, 20, 15, 0, tzinfo=timezone.utc),
         forecast_days=[

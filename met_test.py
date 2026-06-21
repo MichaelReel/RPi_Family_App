@@ -3,10 +3,13 @@ import os
 import requests
 from typing import Final
 
+from PyQt6.QtWidgets import QApplication
+
 from lib.metoffice.adapter import MetOfficeAdapter
 from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
 from lib.metoffice.models import HumanReadableWeatherReport
+from lib.metoffice.widgets.eight_day_grid import EightDayGridWidget
 
 
 _API_KEY: Final[str] = os.environ.get("METOFFICE_API_KEY")
@@ -29,25 +32,29 @@ _PARAMS: Final[dict[str, str]] = {
     "longitude": str(_LONGITUDE)
 }
 
-# Fetch and parse data
-response = requests.get(_DAILY_URL, headers=_HEADERS, params=_PARAMS)
 
-if response.status_code == 200:
+def main():
+
+    # Fetch and parse data
+    response = requests.get(_DAILY_URL, headers=_HEADERS, params=_PARAMS)
+
+    if response.status_code != 200:
+        print(f"Error {response.status_code}: {response.text}")
+        # TODO: We can let the schema raise an error for now, but will need to handle properly
 
     raw_weather_obj: WeatherSchemaRoot = WeatherSchemaRootSchema().load(response.json())
     report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(raw_weather_obj)
 
-    location: str = report.location_name if report.location_name else str(report.coordinates)
+    app: QApplication = QApplication([])
+    widget_window: EightDayGridWidget = EightDayGridWidget(report)
+    widget_window.setWindowTitle("8-Day Reflow Weather Grid Tracker")
 
-    print(f"Weather Report For: {location}")
-    print(f"Data generated at: {report.model_run_at:%Y-%m-%d %H:%M}")
+    # Might replace these 2 lines with widget_window.showFullScreen()
+    widget_window.resize(850, 450)
+    widget_window.show()
 
-    for day in report.forecast_days:
-        print(f"\nDate: {day.date:%A, %b %d}")
-        print(f"  Condition:       {day.weather_condition}")
-        print(f"  Max Temp:        {day.max_temperature_c}°C")
-        print(f"  Chance of Rain:  {day.rain_probability_pct}%")
-        print(f"  Visibility:      {day.visibility_midday_metres}")
+    app.exec()
 
-else:
-    print(f"Error {response.status_code}: {response.text}")
+
+if __name__ == "__main__":
+    main()

@@ -33,7 +33,7 @@ def test_adapter_transforms_metadata_correctly(sample_weather_root: WeatherSchem
     
     # Assert
     assert isinstance(report, HumanReadableWeatherReport)
-    assert isinstance(report.location_name, str)
+    assert report.location_name is None
     assert isinstance(report.model_run_at, datetime)
     assert isinstance(report.coordinates, list)
     
