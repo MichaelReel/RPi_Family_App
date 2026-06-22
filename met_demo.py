@@ -33,7 +33,7 @@ _PARAMS: Final[dict[str, str]] = {
 }
 
 
-def main():
+def main() -> None:
 
     # Fetch and parse data
     response = requests.get(_DAILY_URL, headers=_HEADERS, params=_PARAMS)
