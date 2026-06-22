@@ -12,13 +12,45 @@ class DayCardWidget(QFrame):
         super().__init__(parent)
         
         self.setFrameShape(QFrame.Shape.StyledPanel)
+        
+        # 1. Initialize empty UI structures first
+        self.lbl_date: QLabel = QLabel()
+        self.lbl_date.setStyleSheet("font-weight: bold; font-size: 14px; color: #0056b3;")
+        self.lbl_date.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.lbl_cond: QLabel = QLabel()
+        self.lbl_cond.setStyleSheet("font-size: 13px; font-weight: 500;")
+        self.lbl_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.lbl_temps: QLabel = QLabel()
+        self.lbl_feels: QLabel = QLabel()
+        self.lbl_rain: QLabel = QLabel()
+        self.lbl_uv: QLabel = QLabel()
+        
+        # 2. Build the visual layout skeleton
+        layout: QVBoxLayout = QVBoxLayout()
+        layout.setSpacing(6)
+        layout.addWidget(self.lbl_date)
+        layout.addWidget(self.lbl_cond)
+        layout.addSpacing(4)
+        layout.addWidget(self.lbl_temps)
+        layout.addWidget(self.lbl_feels)
+        layout.addWidget(self.lbl_rain)
+        layout.addWidget(self.lbl_uv)
+        
+        self.setLayout(layout)
 
+        # 3. Populate and style the widget using the initial data
+        self.update_data(data)
+
+    def update_data(self, data: DailyForecastPoint) -> None:
+        """Updates the widget styles and text metrics with new forecast data."""
         # Check if this card's date is today
         forecast_date_utc: date = data.date.astimezone(timezone.utc).date()
         current_date_utc: date = datetime.now(timezone.utc).date()
-        # Timezone-safe match condition
         is_today: bool = (forecast_date_utc == current_date_utc)
 
+        # Dynamic Style sheet selection based on timezone-safe match
         if is_today:
             self.setStyleSheet("""
                 DayCardWidget {
@@ -44,7 +76,7 @@ class DayCardWidget(QFrame):
                 }
             """)
         
-        # Safe string formatting for optional metrics
+        # Safe string formatting helper for optional fields
         def fmt(val, suffix="") -> str:
             return f"{val}{suffix}" if val is not None else "--"
 
@@ -55,28 +87,10 @@ class DayCardWidget(QFrame):
         rain: str = fmt(data.rain_probability_pct, "%")
         uv: str = fmt(data.uv_index_max)
         
-        # Build UI layout structures
-        self.lbl_date: QLabel = QLabel(date_str)
-        self.lbl_date.setStyleSheet("font-weight: bold; font-size: 14px; color: #0056b3;")
-        self.lbl_date.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        self.lbl_cond: QLabel = QLabel(data.weather_condition)
-        self.lbl_cond.setStyleSheet("font-size: 13px; font-weight: 500;")
-        self.lbl_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        self.lbl_temps: QLabel = QLabel(f"High: {high}  |  Low: {low}")
-        self.lbl_feels: QLabel = QLabel(f"Feels like: {feels}")
-        self.lbl_rain: QLabel = QLabel(f"🌧️ Rain Chance: {rain}")
-        self.lbl_uv: QLabel = QLabel(f"☀️ Max UV Index: {uv}")
-        
-        layout: QVBoxLayout = QVBoxLayout()
-        layout.setSpacing(6)
-        layout.addWidget(self.lbl_date)
-        layout.addWidget(self.lbl_cond)
-        layout.addSpacing(4)
-        layout.addWidget(self.lbl_temps)
-        layout.addWidget(self.lbl_feels)
-        layout.addWidget(self.lbl_rain)
-        layout.addWidget(self.lbl_uv)
-        
-        self.setLayout(layout)
+        # Refresh label values
+        self.lbl_date.setText(date_str)
+        self.lbl_cond.setText(data.weather_condition)
+        self.lbl_temps.setText(f"High: {high}  |  Low: {low}")
+        self.lbl_feels.setText(f"Feels like: {feels}")
+        self.lbl_rain.setText(f"🌧️ Rain Chance: {rain}")
+        self.lbl_uv.setText(f"☀️ Max UV Index: {uv}")
