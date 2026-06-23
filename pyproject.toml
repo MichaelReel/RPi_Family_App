@@ -10,10 +10,6 @@ dependencies = [
     "requests>=2.34.2",
 ]
 
-[tool.pytest.ini_options]
-addopts = ["--import-mode=importlib"]
-pythonpath = ["."]
-
 [dependency-groups]
 dev = [
     "black>=26.5.1",
@@ -21,3 +17,12 @@ dev = [
     "pytest-qt>=4.5.0",
     "ruff>=0.15.18",
 ]
+
+[tool.uv]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'aarch64'"
+]
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+pythonpath = ["."]
