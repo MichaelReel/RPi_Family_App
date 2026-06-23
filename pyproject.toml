@@ -6,8 +6,6 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "marshmallow>=4.3.0",
-    # Cap PySide6 below version 6.10 so it pulls a compatible manylinux wheel
-    "pyside6 < 6.10", 
     "requests>=2.34.2",
 ]
 
@@ -17,11 +15,6 @@ dev = [
     "pytest>=9.1.1",
     "pytest-qt>=4.5.0",
     "ruff>=0.15.18",
-]
-
-[tool.uv]
-required-environments = [
-    "sys_platform == 'linux' and platform_machine == 'aarch64'"
 ]
 
 [tool.pytest.ini_options]

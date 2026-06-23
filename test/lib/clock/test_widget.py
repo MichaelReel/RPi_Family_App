@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 from unittest.mock import patch  # Built-in standard library module
-from PySide6.QtCore import Qt
+from PyQt6.QtCore import Qt
 
 from lib.clock.widget.live_clock import LiveClockWidget 
 
