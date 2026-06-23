@@ -1,7 +1,9 @@
-import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+import sys
+
 from PyQt6.QtWidgets import (QApplication, QWidget, QGridLayout, 
                              QVBoxLayout, QLabel, QFrame)
 from PyQt6.QtCore import Qt, QTimer
@@ -15,11 +17,11 @@ class EightDayGridWidget(QWidget):
     """Grid frame that builds child DayCardWidgets and dynamically reflows layouts."""
     def __init__(
         self,
-        report_source: callable[[], HumanReadableWeatherReport],
+        report_source: Callable[[], HumanReadableWeatherReport],
         parent=None
     ) -> None:
         super().__init__(parent)
-        self.report_source: callable[[], HumanReadableWeatherReport] = report_source
+        self.report_source: Callable[[], HumanReadableWeatherReport] = report_source
         self.cards: list[DayCardWidget] = []
         self.current_columns: int = 0 
         
