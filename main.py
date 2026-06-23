@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, QWidget
 
 from lib.clock.widget.live_clock import LiveClockWidget
 from lib.metoffice.client import get_human_readable_weather

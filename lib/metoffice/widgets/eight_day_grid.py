@@ -2,9 +2,9 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from PyQt6.QtWidgets import (QApplication, QWidget, QGridLayout, 
+from PySide6.QtWidgets import (QApplication, QWidget, QGridLayout, 
                              QVBoxLayout, QLabel, QFrame)
-from PyQt6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer
 
 from config import MET_REFRESH_MS
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport

@@ -1,7 +1,7 @@
 from datetime import datetime
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import QTimer, Qt
-from PyQt6.QtGui import QFont
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PySide6.QtCore import QTimer, Qt
+from PySide6.QtGui import QFont
 
 class LiveClockWidget(QWidget):
     def __init__(self):

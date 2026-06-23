@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 
-from PyQt6.QtWidgets import QVBoxLayout, QLabel, QFrame
-from PyQt6.QtCore import Qt
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QFrame
+from PySide6.QtCore import Qt
 
 from lib.metoffice.models import DailyForecastPoint
 

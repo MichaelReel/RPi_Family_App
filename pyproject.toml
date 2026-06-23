@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "marshmallow>=4.3.0",
-    "pyqt6>=6.11.0",
+    "pyside6>=6.11.1",
     "requests>=2.34.2",
 ]
 

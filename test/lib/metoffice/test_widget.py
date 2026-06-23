@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from unittest.mock import MagicMock
 
 from config import MET_REFRESH_MS
