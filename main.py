@@ -9,11 +9,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Custom Full Screen App")
-        self.resize(400, 600)
+        # self.resize(400, 600)
 
-
-        # button = QPushButton("Exit")
-        # button.pressed.connect(self.close)
+        button = QPushButton("Exit")
+        button.pressed.connect(self.close)
         # self.setCentralWidget(button)
 
         central_widget = QWidget()
@@ -28,23 +27,24 @@ class MainWindow(QMainWindow):
 
         self.main_layout.addWidget(self.clock_widget)
         self.main_layout.addWidget(self.met_office_widget)
+        self.main_layout.addWidget(button)
 
-        # self.showFullScreen()
-        self.show()
+        self.showFullScreen()
+        # self.show()
 
-    def resizeEvent(self, event) -> None:
-        """Monitors window size and swaps layout direction based on aspect ratio."""
-        super().resizeEvent(event)
+    # def resizeEvent(self, event) -> None:
+    #     """Monitors window size and swaps layout direction based on aspect ratio."""
+    #     super().resizeEvent(event)
         
-        size = event.size()
-        # Landscape: Width is greater than or equal to height
-        if size.width() >= size.height():
-            if self.main_layout.direction() != QBoxLayout.Direction.LeftToRight:
-                self.main_layout.setDirection(QBoxLayout.Direction.LeftToRight)
-        # Portrait: Height is greater than width
-        else:
-            if self.main_layout.direction() != QBoxLayout.Direction.TopToBottom:
-                self.main_layout.setDirection(QBoxLayout.Direction.TopToBottom)
+    #     size = event.size()
+    #     # Landscape: Width is greater than or equal to height
+    #     if size.width() >= size.height():
+    #         if self.main_layout.direction() != QBoxLayout.Direction.LeftToRight:
+    #             self.main_layout.setDirection(QBoxLayout.Direction.LeftToRight)
+    #     # Portrait: Height is greater than width
+    #     else:
+    #         if self.main_layout.direction() != QBoxLayout.Direction.TopToBottom:
+    #             self.main_layout.setDirection(QBoxLayout.Direction.TopToBottom)
 
 
 def main():
