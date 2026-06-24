@@ -42,7 +42,7 @@ uv run main.py
 
 ### Setup on Raspbian
 
-On Raspbian it's easier to avoid virtual envs, and the depencies are a little more involved. Install these system packages and set the pipx path:
+On Raspbian the depencies are a little more involved. Install these system packages and set the pipx path:
 
 ```
 sudo apt update
@@ -50,16 +50,18 @@ sudo apt install -y python3-pyqt6 pipx
 pipx ensurepath
 ```
 
-Open an new terminal to ensure that ~/.local/bin is on the path. Then install uv:
+Open an new terminal (or `source ~/.bashrc`) to ensure that ~/.local/bin is on the path. Then install uv:
 
 ```
 pipx install uv
 ```
 
-Install the dependencies:
+Create a virtual env, activate it and install the rest of the dependencies:
 
 ```
-uv pip install --system -r pyproject.toml
+python3 -m venv .venv --system-site-packages
+source .venv/bin/activate
+uv pip install -r pyproject.toml
 ```
 
 Cross your fingers and try to run the script:
