@@ -45,7 +45,7 @@ class LiveClockWidget(QWidget):
         self.timer.start(1000)
 
         self.update_clock()
-
+    
     def resizeEvent(self, event):
         """Automatically recalculates font sizes whenever the widget is resized."""
         super().resizeEvent(event)
@@ -84,7 +84,7 @@ class LiveClockWidget(QWidget):
         sec_size = getattr(self, 'seconds_font_size', 34)
         
         # Inject dynamic pixel sizing (px) into the HTML instead of static points (pt)
-        time_html = f'{hours_minutes}<span style="color: #444444; font-size: {sec_size}px;">:{seconds}</span>'
+        time_html = f'{hours_minutes}<span style="color: #000088; font-size: {sec_size}px;">:{seconds}</span>'
         
         day_text = now.strftime("%A")
         date_text = now.strftime("%d/%m/%Y")

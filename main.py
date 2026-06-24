@@ -22,6 +22,12 @@ class MainWindow(QMainWindow):
         self.main_layout.setSpacing(10)
         self.main_layout.setContentsMargins(10, 10, 10, 10)
 
+
+        bg_color: str = "#000022"
+        text_color: str = "#0000aa"
+
+        self.setStyleSheet(f"background-color: {bg_color};color: {text_color};")
+
         self.clock_widget: LiveClockWidget = LiveClockWidget()
         self.met_office_widget: EightDayGridWidget = EightDayGridWidget(report_source=get_human_readable_weather)
 
@@ -30,21 +36,6 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(button)
 
         self.showFullScreen()
-        # self.show()
-
-    # def resizeEvent(self, event) -> None:
-    #     """Monitors window size and swaps layout direction based on aspect ratio."""
-    #     super().resizeEvent(event)
-        
-    #     size = event.size()
-    #     # Landscape: Width is greater than or equal to height
-    #     if size.width() >= size.height():
-    #         if self.main_layout.direction() != QBoxLayout.Direction.LeftToRight:
-    #             self.main_layout.setDirection(QBoxLayout.Direction.LeftToRight)
-    #     # Portrait: Height is greater than width
-    #     else:
-    #         if self.main_layout.direction() != QBoxLayout.Direction.TopToBottom:
-    #             self.main_layout.setDirection(QBoxLayout.Direction.TopToBottom)
 
 
 def main():
