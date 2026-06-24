@@ -18,10 +18,12 @@ class EightDayGridWidget(QWidget):
     def __init__(
         self,
         report_source: Callable[[], HumanReadableWeatherReport],
-        parent=None
+        bg_color: str ="#000022",
+        parent: QWidget | None=None
     ) -> None:
         super().__init__(parent)
         self.report_source: Callable[[], HumanReadableWeatherReport] = report_source
+        self._bg_color: str = bg_color
         self.cards: list[DayCardWidget] = []
         self.current_columns: int = 0 
         
@@ -42,6 +44,7 @@ class EightDayGridWidget(QWidget):
         data_point: DailyForecastPoint
         for data_point in report.forecast_days[:8]:
             card: DayCardWidget = DayCardWidget(data_point)
+            card.setStyleSheet(f"background-color: {self._bg_color};")
             self.cards.append(card)
     
     def update_grid_data(self) -> None:

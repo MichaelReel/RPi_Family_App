@@ -25,11 +25,12 @@ class MainWindow(QMainWindow):
 
         bg_color: str = "#000022"
         text_color: str = "#0000aa"
+        seconds_color: str = "#000088"
 
         self.setStyleSheet(f"background-color: {bg_color};color: {text_color};")
 
-        self.clock_widget: LiveClockWidget = LiveClockWidget()
-        self.met_office_widget: EightDayGridWidget = EightDayGridWidget(report_source=get_human_readable_weather)
+        self.clock_widget: LiveClockWidget = LiveClockWidget(seconds_color=seconds_color)
+        self.met_office_widget: EightDayGridWidget = EightDayGridWidget(report_source=get_human_readable_weather, bg_color=bg_color)
 
         self.main_layout.addWidget(self.clock_widget)
         self.main_layout.addWidget(self.met_office_widget)
