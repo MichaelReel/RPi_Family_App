@@ -24,6 +24,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=313,
                 visibility_midday_metres=11214,
                 uv_index_max=None,
+                weather_code=7,
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
@@ -37,6 +38,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=248,
                 visibility_midday_metres=38840,
                 uv_index_max=6,
+                weather_code=7,
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
@@ -50,6 +52,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=129,
                 visibility_midday_metres=34291,
                 uv_index_max=6,
+                weather_code=7,
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
@@ -63,6 +66,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=142,
                 visibility_midday_metres=29583,
                 uv_index_max=6,
+                weather_code=7,
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
@@ -76,6 +80,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=234,
                 visibility_midday_metres=17928,
                 uv_index_max=6,
+                weather_code=7,
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
@@ -89,6 +94,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=252,
                 visibility_midday_metres=28076,
                 uv_index_max=6,
+                weather_code=7,
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
@@ -102,6 +108,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=98,
                 visibility_midday_metres=27419,
                 uv_index_max=6,
+                weather_code=10,
                 weather_condition="Light rain shower (day)",
             ),
             DailyForecastPoint(
@@ -115,6 +122,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 wind_direction_midday_deg=129,
                 visibility_midday_metres=25027,
                 uv_index_max=5,
+                weather_code=3,
                 weather_condition="Partly cloudy (day)",
             ),
         ],

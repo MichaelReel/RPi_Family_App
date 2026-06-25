@@ -72,6 +72,7 @@ class MetOfficeAdapter:
                 wind_direction_midday_deg=to_int(raw.get("midday10MWindDirection")),
                 visibility_midday_metres=visibility_metres,
                 uv_index_max=to_int(raw.get("maxUvIndex")),
+                weather_code=w_code,
                 weather_condition=condition
             )
             human_days.append(day_point)
