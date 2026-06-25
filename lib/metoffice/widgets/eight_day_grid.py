@@ -54,6 +54,7 @@ class EightDayGridWidget(QWidget):
         card: DayCardWidget
         for index, card in enumerate(self.cards):
             card.update_data(report.forecast_days[index])
+            card.setStyleSheet(f"background-color: {self._bg_color};")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
