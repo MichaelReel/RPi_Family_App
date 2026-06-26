@@ -1,13 +1,16 @@
 import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+from PyQt6.QtCore import QSize
+from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QApplication
 from unittest.mock import MagicMock
 
 from config import MET_REFRESH_MS
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 from lib.metoffice.widgets.day_card import DayCardWidget
-from lib.metoffice.widgets.eight_day_grid import FourDayGridWidget
+from lib.metoffice.widgets.eight_day_grid import FourDayGridWidget, LayoutMode
 
 from test.test_data.metoffice_sitespecific_point_daily.model import expected_human_report_snapshot
 
@@ -37,7 +40,7 @@ def test_widget_initialization_and_card_count(qtbot, report_source):
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget) # Registers the widget for auto-cleanup
     
-    assert len(grid_widget.cards) == 8
+    assert len(grid_widget.cards) == 4
 
 
 def test_card_data_mapping_and_labels(qtbot, report_source):
@@ -47,28 +50,36 @@ def test_card_data_mapping_and_labels(qtbot, report_source):
     
     first_card = grid_widget.cards[0]
     
-    assert "High: 18.34°C" in first_card.lbl_temps.text()
-    assert "Low: 8.43°C" in first_card.lbl_temps.text()
+    assert "High: 18.47°C" in first_card.lbl_temps.text()
+    assert "Low: 5.34°C" in first_card.lbl_temps.text()
     assert first_card.lbl_cond.text() == "Cloudy"
-    assert first_card.lbl_rain.text() == "🌧️ Rain Chance: 73%"
+    assert first_card.lbl_rain.text() == "🌧️ Rain Chance: 5%"
 
 
-def test_dynamic_reflow_layout_columns(qtbot, report_source):
-    """Verifies screen resize operations force the grid into 4x2 or 2x4 structures."""
+def test_dynamic_reflow_layout_modes_headless(qtbot, report_source) -> None:
+    """Verifies layout modes change accurately without rendering a visual window."""
+    # Instantiate the widget without calling .show() or adding it to a visible parent
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
-    grid_widget.show()
 
-    # 1. Simulate wide screen format (Landscape)
-    grid_widget.resize(800, 300)
-    qtbot.waitExposed(grid_widget) # Safely yields loop control to process UI layout updates
-    assert grid_widget.current_columns == 4
+    # 1. Simulate wide screen format (Horizontal aspect ratio >= 2.0)
+    new_size = QSize(800, 300)
+    grid_widget.resize(new_size)
+    # Explicitly dispatch the resize event to bypass the window manager
+    grid_widget.resizeEvent(QResizeEvent(new_size, QSize(0, 0)))
+    assert grid_widget.current_layout_mode == LayoutMode.HORIZONTAL
     
-    # 2. Simulate skinny screen format (Portrait)
-    grid_widget.resize(300, 800)
-    # Wait for the layout to recalculate and stabilize
-    qtbot.waitUntil(lambda: grid_widget.current_columns == 2, timeout=1000)
-    assert grid_widget.current_columns == 2
+    # 2. Simulate standard screen format (Square aspect ratio between 0.5 and 2.0)
+    new_size = QSize(500, 500)
+    grid_widget.resize(new_size)
+    grid_widget.resizeEvent(QResizeEvent(new_size, QSize(800, 300)))
+    assert grid_widget.current_layout_mode == LayoutMode.SQUARE
+
+    # 3. Simulate skinny screen format (Vertical aspect ratio <= 0.5)
+    new_size = QSize(300, 800)
+    grid_widget.resize(new_size)
+    grid_widget.resizeEvent(QResizeEvent(new_size, QSize(500, 500)))
+    assert grid_widget.current_layout_mode == LayoutMode.VERTICAL
 
 
 def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot):
