@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, 
 
 from lib.clock.widget.live_clock import LiveClockWidget
 from lib.metoffice.client import get_human_readable_weather
-from lib.metoffice.widgets.eight_day_grid import EightDayGridWidget
+from lib.metoffice.widgets.eight_day_grid import FourDayGridWidget
 
 
 class MainWindow(QMainWindow):
@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(f"background-color: {bg_color};color: {text_color};")
 
         self.clock_widget: LiveClockWidget = LiveClockWidget(seconds_color=seconds_color)
-        self.met_office_widget: EightDayGridWidget = EightDayGridWidget(report_source=get_human_readable_weather, bg_color=bg_color)
+        self.met_office_widget: FourDayGridWidget = FourDayGridWidget(report_source=get_human_readable_weather, bg_color=bg_color)
 
         self.main_layout.addWidget(self.clock_widget)
         self.main_layout.addWidget(self.met_office_widget)

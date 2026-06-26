@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from config import MET_REFRESH_MS
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 from lib.metoffice.widgets.day_card import DayCardWidget
-from lib.metoffice.widgets.eight_day_grid import EightDayGridWidget
+from lib.metoffice.widgets.eight_day_grid import FourDayGridWidget
 
 from test.test_data.metoffice_sitespecific_point_daily.model import expected_human_report_snapshot
 
@@ -34,7 +34,7 @@ def report_source(
 
 def test_widget_initialization_and_card_count(qtbot, report_source):
     """Verifies grid container instantiates exactly 8 interior card objects."""
-    grid_widget = EightDayGridWidget(report_source=report_source)
+    grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget) # Registers the widget for auto-cleanup
     
     assert len(grid_widget.cards) == 8
@@ -42,7 +42,7 @@ def test_widget_initialization_and_card_count(qtbot, report_source):
 
 def test_card_data_mapping_and_labels(qtbot, report_source):
     """Verifies data properties accurately map to visual text layouts."""
-    grid_widget = EightDayGridWidget(report_source=report_source)
+    grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
     
     first_card = grid_widget.cards[0]
@@ -55,7 +55,7 @@ def test_card_data_mapping_and_labels(qtbot, report_source):
 
 def test_dynamic_reflow_layout_columns(qtbot, report_source):
     """Verifies screen resize operations force the grid into 4x2 or 2x4 structures."""
-    grid_widget = EightDayGridWidget(report_source=report_source)
+    grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
     grid_widget.show()
 
@@ -78,7 +78,7 @@ def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot
     mock_source = MagicMock(return_value=expected_human_report_snapshot)
     
     # 2. Instantiate the widget (this runs report_source once on startup)
-    grid_widget = EightDayGridWidget(report_source=mock_source)
+    grid_widget = FourDayGridWidget(report_source=mock_source)
     qtbot.addWidget(grid_widget)
     
     # Reset our tracking statistics to clear out the startup call
@@ -94,7 +94,7 @@ def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot
 
 def test_timer_configuration_properties(qtbot, report_source):
     """Verifies the underlying timer structure runs continuously with correct ms."""
-    grid_widget = EightDayGridWidget(report_source=report_source)
+    grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
     
     # Verify the background configuration is active
