@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, 
 
 from lib.clock.widget.live_clock import LiveClockWidget
 from lib.metoffice.client import get_human_readable_weather
-from lib.metoffice.widgets.eight_day_grid import FourDayGridWidget
+from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
 
 
 class MainWindow(QMainWindow):

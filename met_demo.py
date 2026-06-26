@@ -3,7 +3,7 @@ import requests
 from PyQt6.QtWidgets import QApplication
 
 from lib.metoffice.client import get_human_readable_weather
-from lib.metoffice.widgets.eight_day_grid import FourDayGridWidget
+from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
 
 
 def main() -> None:

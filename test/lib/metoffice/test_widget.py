@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 from config import MET_REFRESH_MS
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 from lib.metoffice.widgets.day_card import DayCardWidget
-from lib.metoffice.widgets.eight_day_grid import FourDayGridWidget, LayoutMode
+from lib.metoffice.widgets.four_day_grid import FourDayGridWidget, LayoutMode
 
 from test.test_data.metoffice_sitespecific_point_daily.model import expected_human_report_snapshot
 
