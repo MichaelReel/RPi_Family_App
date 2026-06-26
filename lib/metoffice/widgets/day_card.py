@@ -66,6 +66,11 @@ class DayCardWidget(QFrame):
         current_date_utc: date = datetime.now(timezone.utc).date()
         is_today: bool = (forecast_date_utc == current_date_utc)
 
+        # 1. Establish icon dimension variables based on state
+        # Today's featured card gets a prominent 96x96 icon; others use a standard 48x48 icon
+        icon_dim: int = 128 if is_today else 48
+        self.lbl_icon.setMinimumSize(icon_dim, icon_dim)
+
         # Dynamic Style sheet selection based on timezone-safe match
         if is_today:
             self.setStyleSheet("""
@@ -111,15 +116,14 @@ class DayCardWidget(QFrame):
         self.lbl_rain.setText(f"🌧️ Rain Chance: {rain}")
         self.lbl_uv.setText(f"☀️ Max UV Index: {uv}")
 
-        # NEW: Fetch and apply the icon from memory cache using code data endpoint
-        # Adjust `data.weather_code` if your model uses a different property name
+        # Fetch and apply the icon from memory cache using code data endpoint
         weather_code = getattr(data, "weather_code", None)
         pixmap = self._icon_cache.get(weather_code)
 
         if pixmap and not pixmap.isNull():
-            # Scale smoothly to 64x64 (or 72x72 / 96x96 for a larger UI look)
+            # 2. Scale smoothly using the dynamic dimension variable
             scaled_pixmap = pixmap.scaled(
-                64, 64, 
+                icon_dim, icon_dim, 
                 Qt.AspectRatioMode.KeepAspectRatio, 
                 Qt.TransformationMode.SmoothTransformation
             )
