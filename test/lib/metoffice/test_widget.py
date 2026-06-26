@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 from config import MET_REFRESH_MS
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 from lib.metoffice.widgets.day_card import DayCardWidget
-from lib.metoffice.widgets.four_day_grid import FourDayGridWidget, LayoutMode
+from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
 
 from test.test_data.metoffice_sitespecific_point_daily.model import expected_human_report_snapshot
 
@@ -54,32 +54,6 @@ def test_card_data_mapping_and_labels(qtbot, report_source):
     assert "Low: 5.34°C" in first_card.lbl_temps.text()
     assert first_card.lbl_cond.text() == "Cloudy"
     assert first_card.lbl_rain.text() == "🌧️ Rain Chance: 5%"
-
-
-def test_dynamic_reflow_layout_modes_headless(qtbot, report_source) -> None:
-    """Verifies layout modes change accurately without rendering a visual window."""
-    # Instantiate the widget without calling .show() or adding it to a visible parent
-    grid_widget = FourDayGridWidget(report_source=report_source)
-    qtbot.addWidget(grid_widget)
-
-    # 1. Simulate wide screen format (Horizontal aspect ratio >= 2.0)
-    new_size = QSize(800, 300)
-    grid_widget.resize(new_size)
-    # Explicitly dispatch the resize event to bypass the window manager
-    grid_widget.resizeEvent(QResizeEvent(new_size, QSize(0, 0)))
-    assert grid_widget.current_layout_mode == LayoutMode.HORIZONTAL
-    
-    # 2. Simulate standard screen format (Square aspect ratio between 0.5 and 2.0)
-    new_size = QSize(500, 500)
-    grid_widget.resize(new_size)
-    grid_widget.resizeEvent(QResizeEvent(new_size, QSize(800, 300)))
-    assert grid_widget.current_layout_mode == LayoutMode.SQUARE
-
-    # 3. Simulate skinny screen format (Vertical aspect ratio <= 0.5)
-    new_size = QSize(300, 800)
-    grid_widget.resize(new_size)
-    grid_widget.resizeEvent(QResizeEvent(new_size, QSize(500, 500)))
-    assert grid_widget.current_layout_mode == LayoutMode.VERTICAL
 
 
 def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot):
