@@ -90,3 +90,16 @@ def test_timer_configuration_properties(qtbot, report_source):
     
     # Verify it matches your configuration file settings exactly
     assert grid_widget.refresh_timer.interval() == MET_REFRESH_MS
+    
+
+def test_featured_layout_initialization(qtbot: QtBot, report_source) -> None:
+    """Verifies all 4 weather cards map correctly into their primary layout hierarchies."""
+    grid_widget = FourDayGridWidget(report_source=report_source)
+    qtbot.addWidget(grid_widget)
+
+    # 1. Verify card array tracking matches limits
+    assert len(grid_widget.cards) == 4
+
+    # 2. Verify layout distributions structurally match expectations
+    assert grid_widget.main_layout.count() == 2  # Feature card + secondary layout track
+    assert grid_widget.secondary_layout.count() == 3  # Contains remaining cards 2, 3, and 4
