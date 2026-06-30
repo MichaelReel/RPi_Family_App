@@ -55,8 +55,8 @@ class LiveClockWidget(QWidget):
         base_height = self.height()
 
         # Calculate proportional pixel sizes
-        time_font_size = max(16, int(base_height * 0.15))   # 15% of widget height
-        sub_font_size = max(10, int(base_height * 0.07))    # 7% of widget height
+        time_font_size = max(16, int(base_height * 0.3))   # % of widget height
+        sub_font_size = max(10, int(base_height * 0.07))    # % of widget height
         self.seconds_font_size = max(12, int(base_height * 0.11)) # Saved for HTML string
 
         # Update widget fonts and minimum heights dynamically
