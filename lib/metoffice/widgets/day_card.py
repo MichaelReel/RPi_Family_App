@@ -21,6 +21,11 @@ class DayCardWidget(QFrame):
         if not DayCardWidget._icon_cache:
             DayCardWidget._icon_cache = load_weather_icons()
         
+        # Check if this card's date is today
+        forecast_date_utc: date = data.date.astimezone(timezone.utc).date()
+        current_date_utc: date = datetime.now(timezone.utc).date()
+        self.is_today: bool = (forecast_date_utc == current_date_utc)
+        
         self.setFrameShape(QFrame.Shape.StyledPanel)
         
         # 1. Initialize empty UI structures first
@@ -34,7 +39,16 @@ class DayCardWidget(QFrame):
         self.lbl_icon.setMinimumSize(64, 64)  # reserves clean layout space
         
         self.lbl_cond: QLabel = QLabel()
-        self.lbl_cond.setStyleSheet("font-size: 13px; font-weight: 500;")
+
+        if self.is_today:
+            self.lbl_cond.setStyleSheet(
+                "color: #cccccc; font-weight: 500; font-size: 80px;"
+            )
+        else:
+            self.lbl_cond.setStyleSheet(
+                "color: #cccccc; font-weight: 500; font-size: 20px;"
+            )
+
         self.lbl_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.lbl_temps: QLabel = QLabel()
@@ -61,21 +75,18 @@ class DayCardWidget(QFrame):
 
     def update_data(self, data: DailyForecastPoint) -> None:
         """Updates the widget styles and text metrics with new forecast data."""
-        # Check if this card's date is today
-        forecast_date_utc: date = data.date.astimezone(timezone.utc).date()
-        current_date_utc: date = datetime.now(timezone.utc).date()
-        is_today: bool = (forecast_date_utc == current_date_utc)
+        
 
         # 1. Establish icon dimension variables based on state
         # Today's featured card gets a prominent 96x96 icon; others use a standard 48x48 icon
-        icon_dim: int = 128 if is_today else 48
+        icon_dim: int = 400 if self.is_today else 100
         self.lbl_icon.setMinimumSize(icon_dim, icon_dim)
 
         # Dynamic Style sheet selection based on timezone-safe match
-        if is_today:
+        if self.is_today:
             self.setStyleSheet("""
                 DayCardWidget {
-                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ebf5ff, stop:1 #ffffff);
+                    background-color: #ebf5ff;
                     border: 2px solid #007bff;
                     border-radius: 8px;
                 }
