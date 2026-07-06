@@ -20,6 +20,7 @@ class FourDayGridWidget(QWidget):
     ) -> None:
         super().__init__(parent)
         self.report_source: Callable[[], HumanReadableWeatherReport] = report_source
+        self.report: HumanReadableWeatherReport | None = None
         self._bg_color: str = bg_color
         self.cards: list[DayCardWidget] = []
         
@@ -40,11 +41,14 @@ class FourDayGridWidget(QWidget):
         self.refresh_timer.start(MET_REFRESH_MS)
         
     def setup_grid_data(self) -> None:
-        report: HumanReadableWeatherReport = self.report_source()
+        self.report = self.report_source()
+
+        if self.report is None:
+            raise RuntimeError("Due to met office API issues, this widget cannot be built")
 
         # Extract exactly 4 items (Indices 1 to 4)
         data_point: DailyForecastPoint
-        for data_point in report.forecast_days[1:5]:
+        for data_point in self.report.forecast_days[1:5]:
             card: DayCardWidget = DayCardWidget(data_point)
             card.setStyleSheet(f"background-color: {self._bg_color};")
             self.cards.append(card)
@@ -63,12 +67,18 @@ class FourDayGridWidget(QWidget):
         self.main_layout.addLayout(self.secondary_layout, stretch=1)
     
     def update_grid_data(self) -> None:
-        report: HumanReadableWeatherReport = self.report_source()
+        report: HumanReadableWeatherReport | None = self.report_source()
+
+        if not report:
+            print(f"Due to met office API issues, this widget cannot be updated")
+            return
+        
+        self.report = report
 
         index: int
         card: DayCardWidget
         for index, card in enumerate(self.cards):
             report_index: int = index + 1
-            if report_index < len(report.forecast_days):
-                card.update_data(report.forecast_days[report_index])
+            if report_index < len(self.report.forecast_days):
+                card.update_data(self.report.forecast_days[report_index])
                 card.setStyleSheet(f"background-color: {self._bg_color};")
