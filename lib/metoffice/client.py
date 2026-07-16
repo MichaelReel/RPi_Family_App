@@ -1,5 +1,6 @@
 from http import HTTPStatus
 import requests
+from urllib3.exceptions import HTTPError
 
 from config import MET_DAILY_URL, MET_HEADERS, MET_PARAMS
 
@@ -10,7 +11,11 @@ from lib.metoffice.models import HumanReadableWeatherReport
 
 def get_human_readable_weather() -> HumanReadableWeatherReport | None:
     # Fetch and parse data
-    response = requests.get(MET_DAILY_URL, headers=MET_HEADERS, params=MET_PARAMS)
+    try:
+        response = requests.get(MET_DAILY_URL, headers=MET_HEADERS, params=MET_PARAMS)
+    except http_error as HTTPError:
+        print(f"Exception {http_error} occurred getting weather info")
+        return None
 
     if response.status_code != HTTPStatus.OK:
         print(f"Error {response.status_code}: {response.text}")
