@@ -13,7 +13,7 @@ def get_human_readable_weather() -> HumanReadableWeatherReport | None:
     # Fetch and parse data
     try:
         response = requests.get(MET_DAILY_URL, headers=MET_HEADERS, params=MET_PARAMS)
-    except http_error as HTTPError:
+    except HTTPError as http_error:
         print(f"Exception {http_error} occurred getting weather info")
         return None
 
