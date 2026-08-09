@@ -1,6 +1,7 @@
+import os
 from datetime import date, datetime, timezone
 
-from PyQt6.QtWidgets import QVBoxLayout, QLabel, QFrame
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 
@@ -9,7 +10,7 @@ from lib.metoffice.icons import load_weather_icons
 
 
 class DayCardWidget(QFrame):
-    """Displays specific daily weather metrics from a DailyForecastPoint with an icon."""
+    """Displays specific daily weather metrics from a DailyForecastPoint with custom asset icons."""
     
     # Class-level cache so we don't reload files from disk for every new card instance
     _icon_cache: dict[int, QPixmap] = {}
@@ -28,111 +29,144 @@ class DayCardWidget(QFrame):
         
         self.setFrameShape(QFrame.Shape.StyledPanel)
         
-        # 1. Initialize empty UI structures first
+        # 1. Initialize main weather elements
         self.lbl_date: QLabel = QLabel()
-        self.lbl_date.setStyleSheet("font-weight: bold; font-size: 14px; color: #0056b3;")
         self.lbl_date.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # NEW: Dedicated large visual layout container for the weather graphic
         self.lbl_icon: QLabel = QLabel()
         self.lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_icon.setMinimumSize(64, 64)  # reserves clean layout space
         
         self.lbl_cond: QLabel = QLabel()
-
-        if self.is_today:
-            self.lbl_cond.setStyleSheet(
-                "color: #cccccc; font-weight: 500; font-size: 80px;"
-            )
-        else:
-            self.lbl_cond.setStyleSheet(
-                "color: #cccccc; font-weight: 500; font-size: 20px;"
-            )
-
         self.lbl_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
+        # 2. Initialize metrics row elements (Image Labels + Value Labels)
+        self.ico_temp: QLabel = QLabel()
         self.lbl_temps: QLabel = QLabel()
+        
+        self.ico_feels: QLabel = QLabel()
         self.lbl_feels: QLabel = QLabel()
+        
+        self.ico_rain: QLabel = QLabel()
         self.lbl_rain: QLabel = QLabel()
+        
+        self.ico_uv: QLabel = QLabel()
         self.lbl_uv: QLabel = QLabel()
         
-        # 2. Build the visual layout skeleton
+        # Ensure image containers and data align cleanly
+        self.ico_temp.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.ico_feels.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.ico_rain.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.ico_uv.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.lbl_temps.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_feels.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_rain.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_uv.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        
+        # 3. Build the visual layout skeleton
         layout: QVBoxLayout = QVBoxLayout()
         layout.setSpacing(6)
         layout.addWidget(self.lbl_date)
-        layout.addWidget(self.lbl_icon)  # Inserted here to give it visual prominence
+        layout.addWidget(self.lbl_icon) 
         layout.addWidget(self.lbl_cond)
         layout.addSpacing(4)
-        layout.addWidget(self.lbl_temps)
-        layout.addWidget(self.lbl_feels)
-        layout.addWidget(self.lbl_rain)
-        layout.addWidget(self.lbl_uv)
+        
+        # Helper to construct clean horizontal rows for metrics
+        def create_metric_row(ico: QLabel, lbl: QLabel) -> QHBoxLayout:
+            row = QHBoxLayout()
+            row.setSpacing(8)             
+            row.setAlignment(Qt.AlignmentFlag.AlignCenter) 
+            row.addWidget(ico)
+            row.addWidget(lbl)
+            return row
+
+        layout.addLayout(create_metric_row(self.ico_temp, self.lbl_temps))
+        layout.addLayout(create_metric_row(self.ico_feels, self.lbl_feels))
+        layout.addLayout(create_metric_row(self.ico_rain, self.lbl_rain))
+        layout.addLayout(create_metric_row(self.ico_uv, self.lbl_uv))
         
         self.setLayout(layout)
 
-        # 3. Populate and style the widget using the initial data
+        # 4. Populate metrics, load images, and apply targeted styling
         self.update_data(data)
 
-    def update_data(self, data: DailyForecastPoint) -> None:
-        """Updates the widget styles and text metrics with new forecast data."""
-        
+    def paintEvent(self, event):
+        """Mandatory boilerplate for custom QFrame subclasses to support stylesheets."""
+        from PyQt6.QtGui import QPainter
+        from PyQt6.QtWidgets import QStyle, QStyleOption
+        opt = QStyleOption()
+        opt.initFrom(self)
+        p = QPainter(self)
+        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, p, self)
 
-        # 1. Establish icon dimension variables based on state
-        # Today's featured card gets a prominent 96x96 icon; others use a standard 48x48 icon
+    def _set_metric_icon(self, label: QLabel, filename: str, size: int = 16) -> None:
+        """Helper to safely load, scale, and assign an image asset to a label."""
+        # Update path structure to match your project files structure if needed
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(base_dir, "assets", "icons", filename)
+        
+        pixmap = QPixmap(path)
+        if not pixmap.isNull():
+            scaled = pixmap.scaled(
+                size, size, 
+                Qt.AspectRatioMode.KeepAspectRatio, 
+                Qt.TransformationMode.SmoothTransformation
+            )
+            label.setPixmap(scaled)
+        else:
+            # Fallback character if image file is broken or missing
+            label.setText("▪")
+
+    def update_data(self, data: DailyForecastPoint) -> None:
+        """Updates the widget styles, text metrics, and icons with new forecast data."""
+        
         icon_dim: int = 400 if self.is_today else 100
+        cond_font_size: str = "80px" if self.is_today else "20px"
+        
         self.lbl_icon.setMinimumSize(icon_dim, icon_dim)
 
-        # Dynamic Style sheet selection based on timezone-safe match
         if self.is_today:
-            self.setStyleSheet("""
-                DayCardWidget {
-                    background-color: #ebf5ff;
-                    border: 2px solid #007bff;
-                    border-radius: 8px;
-                }
-                QLabel {
-                    color: #111111;
-                    font-family: Arial, sans-serif;
-                }
-            """)
+            self.setStyleSheet("DayCardWidget { background-color: #ebf5ff; border: 2px solid #007bff; border-radius: 8px; }")
+            label_text_color = "#111111"
         else:
-            self.setStyleSheet("""
-                DayCardWidget {
-                    background-color: #ffffff;
-                    border: 1px solid #cccccc;
-                    border-radius: 6px;
-                }
-                QLabel {
-                    color: #222222;
-                    font-family: Arial, sans-serif;
-                }
-            """)
+            self.setStyleSheet("DayCardWidget { background-color: #ffffff; border: 1px solid #cccccc; border-radius: 6px; }")
+            label_text_color = "#222222"
+            
+        font_family = "font-family: Arial, sans-serif;"
         
-        # Safe string formatting helper for optional fields
+        self.lbl_date.setStyleSheet(f"{font_family} font-weight: bold; font-size: 14px; color: #0056b3;")
+        self.lbl_cond.setStyleSheet(f"{font_family} color: #cccccc; font-weight: 500; font-size: {cond_font_size};")
+        
+        metrics_style = f"{font_family} color: {label_text_color}; font-size: 13px;"
+        self.lbl_temps.setStyleSheet(metrics_style)
+        self.lbl_feels.setStyleSheet(metrics_style)
+        self.lbl_rain.setStyleSheet(metrics_style)
+        self.lbl_uv.setStyleSheet(metrics_style)
+        
+        # Populate text values cleanly
         def fmt(val, suffix="") -> str:
             return f"{val}{suffix}" if val is not None else "--"
 
-        date_str: str = data.date.strftime("%A, %b %d")
-        high: str = fmt(data.max_temperature_c, "°C")
-        low: str = fmt(data.min_temperature_c, "°C")
-        feels: str = fmt(data.max_feels_like_c, "°C")
-        rain: str = fmt(data.rain_probability_pct, "%")
-        uv: str = fmt(data.uv_index_max)
-        
-        # Refresh label values
-        self.lbl_date.setText(date_str)
+        self.lbl_date.setText(data.date.strftime("%A, %b %d"))
         self.lbl_cond.setText(data.weather_condition)
-        self.lbl_temps.setText(f"High: {high}  |  Low: {low}")
-        self.lbl_feels.setText(f"Feels like: {feels}")
-        self.lbl_rain.setText(f"🌧️ Rain Chance: {rain}")
-        self.lbl_uv.setText(f"☀️ Max UV Index: {uv}")
+        
+        self.lbl_temps.setText(f"{fmt(data.max_temperature_c, '°')} / {fmt(data.min_temperature_c, '°')}")
+        self.lbl_feels.setText(fmt(data.max_feels_like_c, "°C"))
+        self.lbl_rain.setText(fmt(data.rain_probability_pct, "%"))
+        self.lbl_uv.setText(fmt(data.uv_index_max))
 
-        # Fetch and apply the icon from memory cache using code data endpoint
+        # 5. Load the custom metric images from disk
+        # Adjust filenames matching your actual files (e.g., png or svg)
+        self._set_metric_icon(self.ico_temp, "temp.png", size=16)
+        self._set_metric_icon(self.ico_feels, "feels.png", size=16)
+        self._set_metric_icon(self.ico_rain, "rain.png", size=16)
+        self._set_metric_icon(self.ico_uv, "uv.png", size=16)
+
+        # Main Weather Graphic handler
         weather_code = getattr(data, "weather_code", None)
         pixmap = self._icon_cache.get(weather_code)
 
         if pixmap and not pixmap.isNull():
-            # 2. Scale smoothly using the dynamic dimension variable
             scaled_pixmap = pixmap.scaled(
                 icon_dim, icon_dim, 
                 Qt.AspectRatioMode.KeepAspectRatio, 
@@ -140,5 +174,4 @@ class DayCardWidget(QFrame):
             )
             self.lbl_icon.setPixmap(scaled_pixmap)
         else:
-            # Clean fallback state if the file is missing or code is null
             self.lbl_icon.setText("❓")

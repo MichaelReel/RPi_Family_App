@@ -4,8 +4,9 @@ from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QFont
 
 class LiveClockWidget(QWidget):
-    def __init__(self, seconds_color: str = "#000000"):
+    def __init__(self, hour_minutes_color: str = "#000000", seconds_color: str = "#000000"):
         super().__init__()
+        self._hour_minutes_color: str = hour_minutes_color
         self._seconds_color: str = seconds_color
         self.init_ui()
 
@@ -76,7 +77,7 @@ class LiveClockWidget(QWidget):
         self.update_clock()
 
     def update_clock(self):
-        now = datetime.now()
+        now = datetime.now()  # noqa: DTZ005
 
         hours_minutes = now.strftime("%H:%M")
         seconds = now.strftime("%S")
@@ -85,7 +86,8 @@ class LiveClockWidget(QWidget):
         sec_size = getattr(self, 'seconds_font_size', 34)
         
         # Inject dynamic pixel sizing (px) into the HTML instead of static points (pt)
-        time_html = f'{hours_minutes}<span style="color: {self._seconds_color}; font-size: {sec_size}px;">:{seconds}</span>'
+        hh_mm_html: str = f'<span style="color: {self._hour_minutes_color};">{hours_minutes}</span>'
+        time_html = f'{hh_mm_html}<span style="color: {self._seconds_color}; font-size: {sec_size}px;">:{seconds}</span>'
         
         day_text = now.strftime("%A")
         date_text = now.strftime("%d/%m/%Y")
