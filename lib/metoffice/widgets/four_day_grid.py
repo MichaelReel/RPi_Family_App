@@ -6,7 +6,8 @@ from PyQt6.QtCore import QTimer
 
 from config import MET_REFRESH_MS
 from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint
-from lib.metoffice.widgets.day_card import DayCardWidget
+# Assumed paths for your configuration objects based on the previous step
+from lib.metoffice.widgets.day_card import DayCardWidget, CardStyleConfig, UIElementStyle
 
 
 class FourDayGridWidget(QWidget):
@@ -23,6 +24,29 @@ class FourDayGridWidget(QWidget):
         self.report: HumanReadableWeatherReport | None = None
         self._bg_color: str = bg_color
         self.cards: list[DayCardWidget] = []
+        
+        # 1. Initialize custom design configurations using the new data structure
+        self.feature_config: CardStyleConfig = CardStyleConfig(
+            widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 2px solid #007bff; border-radius: 8px; }}",
+            weather_icon_dim=400,
+            metric_icon_dim=18,
+            layout_spacing=12,
+            row_spacing=10,
+            date_style=UIElementStyle(font_size="18px", font_weight="bold", text_color="#ffffff"),
+            condition_style=UIElementStyle(font_size="80px", font_weight="500", text_color="#cccccc"),
+            metrics_style=UIElementStyle(font_size="15px", text_color="#999999")
+        )
+        
+        self.secondary_config: CardStyleConfig = CardStyleConfig(
+            widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 1px solid #cccccc; border-radius: 6px; }}",
+            weather_icon_dim=100,
+            metric_icon_dim=16,
+            layout_spacing=6,
+            row_spacing=8,
+            date_style=UIElementStyle(font_size="14px", font_weight="bold", text_color="#0056b3"),
+            condition_style=UIElementStyle(font_size="20px", font_weight="500", text_color="#cccccc"),
+            metrics_style=UIElementStyle(font_size="13px", text_color="#888888")
+        )
         
         # Core outer vertical container layout
         self.main_layout: QVBoxLayout = QVBoxLayout()
@@ -47,10 +71,11 @@ class FourDayGridWidget(QWidget):
             raise RuntimeError("Due to met office API issues, this widget cannot be built")
 
         # Extract exactly 4 items (Indices 1 to 4)
-        data_point: DailyForecastPoint
-        for data_point in self.report.forecast_days[1:5]:
-            card: DayCardWidget = DayCardWidget(data_point)
-            card.setStyleSheet(f"background-color: {self._bg_color};")
+        for i, data_point in enumerate(self.report.forecast_days[1:5]):
+            # Assign the large profile to the first index, and standard profiles to the rest
+            config = self.feature_config if i == 0 else self.secondary_config
+            
+            card: DayCardWidget = DayCardWidget(data_point, config=config)
             self.cards.append(card)
 
         # Feature Card (Index 1 from the forecast pipeline, first item in self.cards)
@@ -80,5 +105,5 @@ class FourDayGridWidget(QWidget):
         for index, card in enumerate(self.cards):
             report_index: int = index + 1
             if report_index < len(self.report.forecast_days):
+                # Data updates seamlessly because card properties read from its internal saved config
                 card.update_data(self.report.forecast_days[report_index])
-                card.setStyleSheet(f"background-color: {self._bg_color};")

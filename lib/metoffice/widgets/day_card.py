@@ -1,5 +1,6 @@
 import os
 from datetime import date, datetime, timezone
+from dataclasses import dataclass, field
 
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame
 from PyQt6.QtCore import Qt
@@ -9,23 +10,80 @@ from lib.metoffice.models import DailyForecastPoint
 from lib.metoffice.icons import load_weather_icons
 
 
-class DayCardWidget(QFrame):
-    """Displays specific daily weather metrics from a DailyForecastPoint with custom asset icons."""
+@dataclass
+class UIElementStyle:
+    """Holds individual CSS and font properties for a single text label."""
+    font_family: str = "Arial, sans-serif"
+    font_size: str = "13px"
+    font_weight: str = "normal"
+    text_color: str = "#888888"
+
+    def to_stylesheet(self) -> str:
+        """Generates a valid Qt Style Sheet string from properties."""
+        return (
+            f"font-family: {self.font_family}; "
+            f"font-size: {self.font_size}; "
+            f"font-weight: {self.font_weight}; "
+            f"color: {self.text_color};"
+        )
+
+
+@dataclass
+class CardStyleConfig:
+    """Defines the complete visual representation of a weather card instance."""
+    # Main Container Styling
+    widget_stylesheet: str = (
+        "DayCardWidget { background-color: #ffffff; border: 1px solid #cccccc; border-radius: 6px; }"
+    )
     
-    # Class-level cache so we don't reload files from disk for every new card instance
+    # Graphic and Layout Sizing
+    weather_icon_dim: int = 100
+    metric_icon_dim: int = 16
+    layout_spacing: int = 6
+    row_spacing: int = 8
+    
+    # Text Element Styles
+    date_style: UIElementStyle = field(
+        default_factory=lambda: UIElementStyle(font_size="14px", font_weight="bold", text_color="#0056b3")
+    )
+    condition_style: UIElementStyle = field(
+        default_factory=lambda: UIElementStyle(font_size="20px", font_weight="500", text_color="#cccccc")
+    )
+    metrics_style: UIElementStyle = field(
+        default_factory=lambda: UIElementStyle(font_size="13px", text_color="#888888")
+    )
+
+
+# Predefined global styling configurations for Today vs. Future days
+DEFAULT_FUTURE_CONFIG = CardStyleConfig()
+
+DEFAULT_TODAY_CONFIG = CardStyleConfig(
+    widget_stylesheet="DayCardWidget { background-color: #ebf5ff; border: 2px solid #007bff; border-radius: 8px; }",
+    weather_icon_dim=400,
+    condition_style=UIElementStyle(font_size="80px", font_weight="500", text_color="#cccccc"),
+    metrics_style=UIElementStyle(font_size="13px", text_color="#999999")
+)
+
+
+class DayCardWidget(QFrame):
+    """Displays specific daily weather metrics with decoupled style configurations."""
+    
     _icon_cache: dict[int, QPixmap] = {}
 
-    def __init__(self, data: DailyForecastPoint, parent=None) -> None:
+    def __init__(self, data: DailyForecastPoint, config: CardStyleConfig = None, parent=None) -> None:
         super().__init__(parent)
         
-        # Initialize the static cache once if it's empty
+        # Fallback to smart automatic assignment if no specific style object is given
+        if config is None:
+            forecast_date_utc: date = data.date.astimezone(timezone.utc).date()
+            current_date_utc: date = datetime.now(timezone.utc).date()
+            is_today = (forecast_date_utc == current_date_utc)
+            self.config = DEFAULT_TODAY_CONFIG if is_today else DEFAULT_FUTURE_CONFIG
+        else:
+            self.config = config
+        
         if not DayCardWidget._icon_cache:
             DayCardWidget._icon_cache = load_weather_icons()
-        
-        # Check if this card's date is today
-        forecast_date_utc: date = data.date.astimezone(timezone.utc).date()
-        current_date_utc: date = datetime.now(timezone.utc).date()
-        self.is_today: bool = (forecast_date_utc == current_date_utc)
         
         self.setFrameShape(QFrame.Shape.StyledPanel)
         
@@ -39,7 +97,7 @@ class DayCardWidget(QFrame):
         self.lbl_cond: QLabel = QLabel()
         self.lbl_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # 2. Initialize metrics row elements (Image Labels + Value Labels)
+        # 2. Initialize metrics row elements
         self.ico_temp: QLabel = QLabel()
         self.lbl_temps: QLabel = QLabel()
         
@@ -52,7 +110,6 @@ class DayCardWidget(QFrame):
         self.ico_uv: QLabel = QLabel()
         self.lbl_uv: QLabel = QLabel()
         
-        # Ensure image containers and data align cleanly
         self.ico_temp.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ico_feels.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ico_rain.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -65,16 +122,15 @@ class DayCardWidget(QFrame):
         
         # 3. Build the visual layout skeleton
         layout: QVBoxLayout = QVBoxLayout()
-        layout.setSpacing(6)
+        layout.setSpacing(self.config.layout_spacing)
         layout.addWidget(self.lbl_date)
         layout.addWidget(self.lbl_icon) 
         layout.addWidget(self.lbl_cond)
         layout.addSpacing(4)
         
-        # Helper to construct clean horizontal rows for metrics
         def create_metric_row(ico: QLabel, lbl: QLabel) -> QHBoxLayout:
             row = QHBoxLayout()
-            row.setSpacing(8)             
+            row.setSpacing(self.config.row_spacing)
             row.setAlignment(Qt.AlignmentFlag.AlignCenter) 
             row.addWidget(ico)
             row.addWidget(lbl)
@@ -91,7 +147,6 @@ class DayCardWidget(QFrame):
         self.update_data(data)
 
     def paintEvent(self, event):
-        """Mandatory boilerplate for custom QFrame subclasses to support stylesheets."""
         from PyQt6.QtGui import QPainter
         from PyQt6.QtWidgets import QStyle, QStyleOption
         opt = QStyleOption()
@@ -99,9 +154,7 @@ class DayCardWidget(QFrame):
         p = QPainter(self)
         self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, p, self)
 
-    def _set_metric_icon(self, label: QLabel, filename: str, size: int = 16) -> None:
-        """Helper to safely load, scale, and assign an image asset to a label."""
-        # Update path structure to match your project files structure if needed
+    def _set_metric_icon(self, label: QLabel, filename: str, size: int) -> None:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         path = os.path.join(base_dir, "assets", "icons", filename)
         
@@ -114,36 +167,25 @@ class DayCardWidget(QFrame):
             )
             label.setPixmap(scaled)
         else:
-            # Fallback character if image file is broken or missing
             label.setText("▪")
 
     def update_data(self, data: DailyForecastPoint) -> None:
-        """Updates the widget styles, text metrics, and icons with new forecast data."""
+        """Applies configuration data structures directly to UI layouts and controls."""
         
-        icon_dim: int = 400 if self.is_today else 100
-        cond_font_size: str = "80px" if self.is_today else "20px"
+        # Apply configurations from the instance data structure
+        self.setStyleSheet(self.config.widget_stylesheet)
+        self.lbl_icon.setMinimumSize(self.config.weather_icon_dim, self.config.weather_icon_dim)
         
-        self.lbl_icon.setMinimumSize(icon_dim, icon_dim)
-
-        if self.is_today:
-            self.setStyleSheet("DayCardWidget { background-color: #ebf5ff; border: 2px solid #007bff; border-radius: 8px; }")
-            label_text_color = "#111111"
-        else:
-            self.setStyleSheet("DayCardWidget { background-color: #ffffff; border: 1px solid #cccccc; border-radius: 6px; }")
-            label_text_color = "#222222"
-            
-        font_family = "font-family: Arial, sans-serif;"
+        # Assign dynamically converted stylesheets
+        self.lbl_date.setStyleSheet(self.config.date_style.to_stylesheet())
+        self.lbl_cond.setStyleSheet(self.config.condition_style.to_stylesheet())
         
-        self.lbl_date.setStyleSheet(f"{font_family} font-weight: bold; font-size: 14px; color: #0056b3;")
-        self.lbl_cond.setStyleSheet(f"{font_family} color: #cccccc; font-weight: 500; font-size: {cond_font_size};")
+        metrics_css = self.config.metrics_style.to_stylesheet()
+        self.lbl_temps.setStyleSheet(metrics_css)
+        self.lbl_feels.setStyleSheet(metrics_css)
+        self.lbl_rain.setStyleSheet(metrics_css)
+        self.lbl_uv.setStyleSheet(metrics_css)
         
-        metrics_style = f"{font_family} color: {label_text_color}; font-size: 13px;"
-        self.lbl_temps.setStyleSheet(metrics_style)
-        self.lbl_feels.setStyleSheet(metrics_style)
-        self.lbl_rain.setStyleSheet(metrics_style)
-        self.lbl_uv.setStyleSheet(metrics_style)
-        
-        # Populate text values cleanly
         def fmt(val, suffix="") -> str:
             return f"{val}{suffix}" if val is not None else "--"
 
@@ -155,20 +197,19 @@ class DayCardWidget(QFrame):
         self.lbl_rain.setText(fmt(data.rain_probability_pct, "%"))
         self.lbl_uv.setText(fmt(data.uv_index_max))
 
-        # 5. Load the custom metric images from disk
-        # Adjust filenames matching your actual files (e.g., png or svg)
-        self._set_metric_icon(self.ico_temp, "temp.png", size=16)
-        self._set_metric_icon(self.ico_feels, "feels.png", size=16)
-        self._set_metric_icon(self.ico_rain, "rain.png", size=16)
-        self._set_metric_icon(self.ico_uv, "uv.png", size=16)
+        # Size mapping via configuration properties
+        metric_dim = self.config.metric_icon_dim
+        self._set_metric_icon(self.ico_temp, "temp.png", size=metric_dim)
+        self._set_metric_icon(self.ico_feels, "feels.png", size=metric_dim)
+        self._set_metric_icon(self.ico_rain, "rain.png", size=metric_dim)
+        self._set_metric_icon(self.ico_uv, "uv.png", size=metric_dim)
 
-        # Main Weather Graphic handler
         weather_code = getattr(data, "weather_code", None)
         pixmap = self._icon_cache.get(weather_code)
 
         if pixmap and not pixmap.isNull():
             scaled_pixmap = pixmap.scaled(
-                icon_dim, icon_dim, 
+                self.config.weather_icon_dim, self.config.weather_icon_dim, 
                 Qt.AspectRatioMode.KeepAspectRatio, 
                 Qt.TransformationMode.SmoothTransformation
             )
