@@ -1,10 +1,15 @@
-import os
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
+from PyQt6.QtGui import QPainter, QPixmap
+from PyQt6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QStyle,
+    QStyleOption,
+    QVBoxLayout,
+)
 
 from lib.metoffice.icons import load_stats_icons, load_weather_icons
 from lib.metoffice.models import DailyForecastPoint
@@ -147,8 +152,7 @@ class DayCardWidget(QFrame):
         self.update_data(data)
 
     def paintEvent(self, event):
-        from PyQt6.QtGui import QPainter
-        from PyQt6.QtWidgets import QStyle, QStyleOption
+
         opt = QStyleOption()
         opt.initFrom(self)
         p = QPainter(self)

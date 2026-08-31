@@ -34,7 +34,7 @@ class FourDayGridWidget(QWidget):
             metric_icon_dim=38,
             layout_spacing=12,
             row_spacing=10,
-            date_style=UIElementStyle(font_size="18px", font_weight="bold", text_color="#ffffff"),
+            date_style=UIElementStyle(font_size="56px", font_weight="bold", text_color="#0000ff"),
             condition_style=UIElementStyle(font_size="80px", font_weight="500", text_color="#cccccc"),
             metrics_style=UIElementStyle(font_size="38px", text_color="#999999")
         )
