@@ -31,7 +31,7 @@ class FourDayGridWidget(QWidget):
         self.feature_config: CardStyleConfig = CardStyleConfig(
             widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 2px solid #007bff; border-radius: 8px; }}",
             weather_icon_dim=400,
-            metric_icon_dim=54,
+            metric_icon_dim=45,
             layout_spacing=12,
             row_spacing=10,
             date_style=UIElementStyle(font_size="18px", font_weight="bold", text_color="#ffffff"),
