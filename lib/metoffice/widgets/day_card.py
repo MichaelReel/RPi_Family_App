@@ -54,17 +54,6 @@ class CardStyleConfig:
     )
 
 
-# Predefined global styling configurations for Today vs. Future days
-DEFAULT_FUTURE_CONFIG = CardStyleConfig()
-
-DEFAULT_TODAY_CONFIG = CardStyleConfig(
-    widget_stylesheet="DayCardWidget { background-color: #ebf5ff; border: 2px solid #007bff; border-radius: 8px; }",
-    weather_icon_dim=400,
-    condition_style=UIElementStyle(font_size="80px", font_weight="500", text_color="#cccccc"),
-    metrics_style=UIElementStyle(font_size="13px", text_color="#999999")
-)
-
-
 class DayCardWidget(QFrame):
     """Displays specific daily weather metrics with decoupled style configurations."""
     
@@ -74,12 +63,9 @@ class DayCardWidget(QFrame):
     def __init__(self, data: DailyForecastPoint, config: CardStyleConfig = None, parent=None) -> None:
         super().__init__(parent)
         
-        # Fallback to smart automatic assignment if no specific style object is given
+        # Fallback if no specific style object is given
         if config is None:
-            forecast_date_utc: date = data.date.astimezone(UTC).date()
-            current_date_utc: date = datetime.now(UTC).date()
-            is_today = (forecast_date_utc == current_date_utc)
-            self.config = DEFAULT_TODAY_CONFIG if is_today else DEFAULT_FUTURE_CONFIG
+            self.config = CardStyleConfig()
         else:
             self.config = config
         
