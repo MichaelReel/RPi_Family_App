@@ -29,7 +29,7 @@ class FourDayGridWidget(QWidget):
         
         # 1. Initialize custom design configurations using the new data structure
         self.feature_config: CardStyleConfig = CardStyleConfig(
-            widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 2px solid #007bff; border-radius: 8px; }}",
+            widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 0px solid #007bff; border-radius: 8px; }}",
             weather_icon_dim=400,
             metric_icon_dim=38,
             layout_spacing=12,

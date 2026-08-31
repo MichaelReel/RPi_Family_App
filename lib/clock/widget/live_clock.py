@@ -6,10 +6,18 @@ from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 
 class LiveClockWidget(QWidget):
-    def __init__(self, hour_minutes_color: str = "#000000", seconds_color: str = "#000000"):
+    def __init__(
+        self,
+        hour_minutes_color: str = "#000000", 
+        seconds_color: str = "#000000",
+        day_color: str = "#000000",
+        date_color: str = "#000000",
+    ):
         super().__init__()
         self._hour_minutes_color: str = hour_minutes_color
         self._seconds_color: str = seconds_color
+        self._day_color: str = day_color
+        self._date_color: str = date_color
         self.init_ui()
 
     def init_ui(self):
@@ -89,10 +97,10 @@ class LiveClockWidget(QWidget):
         
         # Inject dynamic pixel sizing (px) into the HTML instead of static points (pt)
         hh_mm_html: str = f'<span style="color: {self._hour_minutes_color};">{hours_minutes}</span>'
-        time_html = f'{hh_mm_html}<span style="color: {self._seconds_color}; font-size: {sec_size}px;">:{seconds}</span>'
+        time_html: str = f'{hh_mm_html}<span style="color: {self._seconds_color}; font-size: {sec_size}px;">:{seconds}</span>'
         
-        day_text = now.strftime("%A")
-        date_text = now.strftime("%d/%m/%Y")
+        day_text: str = f"<span style='color: {self._day_color};'>{now.strftime('%A')}</span>"
+        date_text: str = f"<span style='color: {self._date_color};'>{now.strftime('%d/%m/%Y')}</span>"
 
         self.time_label.setText(time_html)
         self.day_label.setText(day_text)
