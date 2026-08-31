@@ -4,7 +4,7 @@ from pathlib import Path
 from PyQt6.QtGui import QPixmap
 
 # 1. Define the dictionary mapping Met Office codes to the repo's file names
-_MET_OFFICE_WEATHER_MAP: Final[int, str] = {
+_MET_OFFICE_WEATHER_MAP: Final[dict[int, str]] = {
     0: "00_clearsky_night.png",
     1: "01_clearsky_day.png",
     2: "02_partlycloudy_night.png",
@@ -37,7 +37,7 @@ _MET_OFFICE_WEATHER_MAP: Final[int, str] = {
     30: "30_heavyrainandthunder.png",
 }
 
-_MET_OFFICE_STATS_MAP: Final[str, str] = {
+_MET_OFFICE_STATS_MAP: Final[dict[str, str]] = {
     "rain_pct": "precipitation.png",
     "temp_high": "temp_high.png",
     "temp_low": "temp_low.png",
