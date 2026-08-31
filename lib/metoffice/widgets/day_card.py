@@ -142,20 +142,18 @@ class DayCardWidget(QFrame):
         layout.addWidget(self.lbl_cond)
         layout.addSpacing(4)
         
-        def create_metric_row(ico: QLabel, lbl: QLabel) -> QHBoxLayout:
+        def create_metric_row(*args: list[QLabel]) -> QHBoxLayout:
             row = QHBoxLayout()
             row.setSpacing(self.config.row_spacing)
-            row.setAlignment(Qt.AlignmentFlag.AlignCenter) 
-            row.addWidget(ico)
-            row.addWidget(lbl)
+            row.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label: QLabel
+            for label in args:
+                row.addWidget(label)
             return row
 
-        layout.addLayout(create_metric_row(self.ico_temp_high, self.lbl_temp_high))
-        layout.addLayout(create_metric_row(self.ico_temp_low, self.lbl_temp_low))
-        layout.addLayout(create_metric_row(self.ico_wind, self.lbl_wind))
-        layout.addLayout(create_metric_row(self.ico_feels, self.lbl_feels))
-        layout.addLayout(create_metric_row(self.ico_rain, self.lbl_rain))
-        layout.addLayout(create_metric_row(self.ico_uv, self.lbl_uv))
+        layout.addLayout(create_metric_row(self.ico_temp_high, self.lbl_temp_high, self.ico_temp_low, self.lbl_temp_low))
+        layout.addLayout(create_metric_row(self.ico_wind, self.lbl_wind, self.ico_feels, self.lbl_feels))
+        layout.addLayout(create_metric_row(self.ico_rain, self.lbl_rain, self.ico_uv, self.lbl_uv))
         
         self.setLayout(layout)
 
@@ -209,7 +207,7 @@ class DayCardWidget(QFrame):
         
         self.lbl_temp_high.setText(f"{fmt(data.max_temperature_c, '°C')}")
         self.lbl_temp_low.setText(f"{fmt(data.min_temperature_c, '°C')}")
-        self.lbl_wind.setText(f"{fmt(data.wind_speed_midday_mph, 'Mph')}")
+        self.lbl_wind.setText(f"{fmt(data.wind_speed_midday_mph, 'mph')}")
         self.lbl_feels.setText(fmt(data.max_feels_like_c, "°C"))
         self.lbl_rain.setText(fmt(data.rain_probability_pct, "%"))
         self.lbl_uv.setText(fmt(data.uv_index_max))
