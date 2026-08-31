@@ -31,12 +31,12 @@ class FourDayGridWidget(QWidget):
         self.feature_config: CardStyleConfig = CardStyleConfig(
             widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 2px solid #007bff; border-radius: 8px; }}",
             weather_icon_dim=400,
-            metric_icon_dim=45,
+            metric_icon_dim=38,
             layout_spacing=12,
             row_spacing=10,
             date_style=UIElementStyle(font_size="18px", font_weight="bold", text_color="#ffffff"),
             condition_style=UIElementStyle(font_size="80px", font_weight="500", text_color="#cccccc"),
-            metrics_style=UIElementStyle(font_size="45px", text_color="#999999")
+            metrics_style=UIElementStyle(font_size="38px", text_color="#999999")
         )
         
         self.secondary_config: CardStyleConfig = CardStyleConfig(
