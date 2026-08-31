@@ -1,13 +1,15 @@
 from collections.abc import Callable
-from typing import Final
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from config import MET_REFRESH_MS
-from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint
-# Assumed paths for your configuration objects based on the previous step
-from lib.metoffice.widgets.day_card import DayCardWidget, CardStyleConfig, UIElementStyle
+from lib.metoffice.models import HumanReadableWeatherReport
+from lib.metoffice.widgets.day_card import (
+    CardStyleConfig,
+    DayCardWidget,
+    UIElementStyle,
+)
 
 
 class FourDayGridWidget(QWidget):
@@ -95,7 +97,7 @@ class FourDayGridWidget(QWidget):
         report: HumanReadableWeatherReport | None = self.report_source()
 
         if not report:
-            print(f"Due to met office API issues, this widget cannot be updated")
+            print("Due to met office API issues, this widget cannot be updated")
             return
         
         self.report = report

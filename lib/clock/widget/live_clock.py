@@ -1,7 +1,9 @@
 from datetime import datetime
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
-from PyQt6.QtCore import QTimer, Qt
+
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+
 
 class LiveClockWidget(QWidget):
     def __init__(self, hour_minutes_color: str = "#000000", seconds_color: str = "#000000"):
