@@ -12,12 +12,16 @@ class LiveClockWidget(QWidget):
         seconds_color: str = "#000000",
         day_color: str = "#000000",
         date_color: str = "#000000",
+        include_day: bool = True,
+        include_date: bool = True,
     ):
         super().__init__()
         self._hour_minutes_color: str = hour_minutes_color
         self._seconds_color: str = seconds_color
         self._day_color: str = day_color
         self._date_color: str = date_color
+        self._include_day: bool = include_day
+        self._include_date: bool = include_date
         self.init_ui()
 
     def init_ui(self):
@@ -43,13 +47,17 @@ class LiveClockWidget(QWidget):
         self.date_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Assemble layout with identical spacing blocks
-        layout.addStretch(1) 
+        layout.addStretch(1)
         layout.addWidget(self.time_label)
-        layout.addStretch(1) 
-        layout.addWidget(self.day_label)
-        layout.addStretch(1) 
-        layout.addWidget(self.date_label)
-        layout.addStretch(1) 
+        layout.addStretch(1)
+
+        if self._include_day:
+            layout.addWidget(self.day_label)
+            layout.addStretch(1)
+
+        if self._include_date:
+            layout.addWidget(self.date_label)
+            layout.addStretch(1)
 
         # Initialize Timer for live updates
         self.timer = QTimer(self)

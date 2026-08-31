@@ -33,7 +33,12 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(f"background-color: {bg_color};color: {text_color};")
 
         self.clock_widget: LiveClockWidget = LiveClockWidget(
-            hour_minutes_color=hour_minutes_color, seconds_color=seconds_color, day_color=day_color, date_color=date_color
+            hour_minutes_color=hour_minutes_color,
+            seconds_color=seconds_color,
+            day_color=day_color,
+            date_color=date_color,
+            include_day=False,
+            include_date=False,
         )
         self.met_office_widget: FourDayGridWidget = FourDayGridWidget(report_source=get_human_readable_weather, bg_color=bg_color)
 

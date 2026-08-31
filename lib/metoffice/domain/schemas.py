@@ -1,6 +1,16 @@
-from marshmallow import Schema, fields, post_load, INCLUDE
+from marshmallow import INCLUDE, Schema, fields, post_load
 
-from lib.metoffice.domain.models import Geometry, Location, TimeSeries, Properties, Feature, Symbol, Unit, ParameterDetails, WeatherSchemaRoot
+from lib.metoffice.domain.models import (
+    Feature,
+    Geometry,
+    Location,
+    ParameterDetails,
+    Properties,
+    Symbol,
+    TimeSeries,
+    Unit,
+    WeatherSchemaRoot,
+)
 
 
 class GeometrySchema(Schema):
@@ -16,7 +26,7 @@ class LocationSchema(Schema):
     name = fields.Str(allow_none=True)
 
     @post_load
-    def make_location(self, data, **kwargs):
+    def make_location(self, data, **kwargs) -> Location:
         return Location(**data)
 
 class TimeSeriesSchema(Schema):
@@ -26,7 +36,7 @@ class TimeSeriesSchema(Schema):
 
     # Evaluates empty objects/arbitrary data mapping
     @post_load
-    def make_timeseries(self, data, **kwargs):
+    def make_timeseries(self, data, **kwargs) -> TimeSeries:
         return TimeSeries(data=data)
 
 class PropertiesSchema(Schema):
@@ -36,7 +46,7 @@ class PropertiesSchema(Schema):
     location = fields.Nested(LocationSchema, allow_none=True)
 
     @post_load
-    def make_properties(self, data, **kwargs):
+    def make_properties(self, data, **kwargs) -> Properties:
         return Properties(**data)
 
 class FeatureSchema(Schema):
@@ -45,7 +55,7 @@ class FeatureSchema(Schema):
     type = fields.Str(required=True)
 
     @post_load
-    def make_feature(self, data, **kwargs):
+    def make_feature(self, data, **kwargs) -> Feature:
         return Feature(**data)
 
 class SymbolSchema(Schema):
@@ -53,7 +63,7 @@ class SymbolSchema(Schema):
     value = fields.Str(allow_none=True)
 
     @post_load
-    def make_symbol(self, data, **kwargs):
+    def make_symbol(self, data, **kwargs) -> Symbol:
         return Symbol(**data)
 
 class UnitSchema(Schema):
@@ -61,7 +71,7 @@ class UnitSchema(Schema):
     symbol = fields.Nested(SymbolSchema, allow_none=True)
 
     @post_load
-    def make_unit(self, data, **kwargs):
+    def make_unit(self, data, **kwargs) -> Unit:
         return Unit(**data)
 
 class ParameterDetailsSchema(Schema):
@@ -70,7 +80,7 @@ class ParameterDetailsSchema(Schema):
     unit = fields.Nested(UnitSchema, allow_none=True)
 
     @post_load
-    def make_parameter_details(self, data, **kwargs):
+    def make_parameter_details(self, data, **kwargs) -> ParameterDetails:
         return ParameterDetails(**data)
 
 class WeatherSchemaRootSchema(Schema):
@@ -83,5 +93,5 @@ class WeatherSchemaRootSchema(Schema):
     type = fields.Str(required=True)
 
     @post_load
-    def make_root(self, data, **kwargs):
+    def make_root(self, data, **kwargs) -> WeatherSchemaRoot:
         return WeatherSchemaRoot(**data)
