@@ -46,10 +46,11 @@
 - **Problem:** `response.json()` can raise `requests.exceptions.JSONDecodeError` if the response body isn't valid JSON. This will crash unhandled.
 - **Fix:** Wrap `response.json()` in a try/except block.
 
-### 6. `parameters` Schema May Not Match Real API Structure
+### 6. `parameters` Schema May Not Match Real API Structure ✅
 - **File:** `lib/metoffice/domain/schemas.py` (lines 89-92)
 - **Problem:** The `parameters` field uses `fields.List(fields.Dict(...))` but the real Met Office API may return `parameters` as a flat dict `{param_key: ParameterDetails}`. The test passes because the test fixture is structured to match the schema, not necessarily the real API.
 - **Fix:** Verify against a live API response and adjust schema accordingly.
+- **Status:** Verified against live API. The real API returns `parameters` as a list of length 1 (dict mapping param names to ParameterDetails), which matches the schema. No code change needed.
 
 ---
 
