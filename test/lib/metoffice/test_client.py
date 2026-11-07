@@ -53,6 +53,19 @@ class TestClientCoverage:
     """Additional tests for client.py coverage (action item #3)."""
 
     @patch("lib.metoffice.client.requests.get")
+    def test_json_decode_error_returns_none(self, mock_get):
+        """A response with invalid JSON should be caught and return None."""
+        import requests.exceptions
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.side_effect = requests.exceptions.JSONDecodeError(
+            "Expecting value", "doc", 0
+        )
+        mock_get.return_value = mock_response
+        result = get_human_readable_weather()
+        assert result is None
+
+    @patch("lib.metoffice.client.requests.get")
     def test_non_200_status_returns_none(self, mock_get):
         """A non-200 HTTP status code should return None."""
         mock_response = MagicMock()

@@ -25,5 +25,10 @@ def get_human_readable_weather() -> HumanReadableWeatherReport | None:
         print(f"Error {response.status_code}: {response.text}")
         return None
 
-    raw_weather_obj: WeatherSchemaRoot = WeatherSchemaRootSchema().load(response.json())
+    try:
+        raw_weather_obj: WeatherSchemaRoot = WeatherSchemaRootSchema().load(response.json())
+    except requests.exceptions.JSONDecodeError as json_error:
+        print(f"Failed to parse JSON response: {json_error}")
+        return None
+
     return MetOfficeAdapter.to_human_readable(raw_weather_obj)
