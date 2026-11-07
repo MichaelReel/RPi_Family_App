@@ -4,7 +4,7 @@ from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication
 
 # Assuming your code is inside weather_loader.py
-from lib.metoffice.icons import load_weather_icons, MET_OFFICE_ICON_MAP
+from lib.metoffice.icons import load_weather_icons, _MET_OFFICE_WEATHER_MAP, _IconCaches, caches, load_stats_icons
 
 
 @pytest.fixture(scope="session")
@@ -16,6 +16,7 @@ def qapp():
     return app
 
 
+
 @pytest.fixture
 def mock_icon_dir(tmp_path, qapp):  # Added qapp here so Qt is ready before saving
     """Creates a temporary directory filled with valid, test PNG assets using QImage."""
@@ -25,7 +26,7 @@ def mock_icon_dir(tmp_path, qapp):  # Added qapp here so Qt is ready before savi
     blank_image.fill(0)  # Fill with transparent pixels
     
     # Generate all expected files except for code 30 (to test missing file logic)
-    for code, filename in MET_OFFICE_ICON_MAP.items():
+    for code, filename in _MET_OFFICE_WEATHER_MAP.items():
         if code == 30:
             continue  # Intentionally skip code 30
         
@@ -64,10 +65,30 @@ def test_load_weather_icons_caching(qapp, mock_icon_dir, monkeypatch):
     """Verifies that the internal cache prevents duplicate disk/QPixmap initializations."""
     # Spy on QPixmap initialization by modifying the dictionary mapping to create a duplicate
     # Let's map code 5 and code 6 to the exact same file name to force a cache hit
-    monkeypatch.setitem(MET_OFFICE_ICON_MAP, 5, "06_fog.png")
-    monkeypatch.setitem(MET_OFFICE_ICON_MAP, 6, "06_fog.png")
+    monkeypatch.setitem(_MET_OFFICE_WEATHER_MAP, 5, "06_fog.png")
+    monkeypatch.setitem(_MET_OFFICE_WEATHER_MAP, 6, "06_fog.png")
     
     icons = load_weather_icons(mock_icon_dir)
     
     # If caching works, both keys must point to the exact same Python object memory address
     assert icons[5] is icons[6]
+
+# ── _IconCaches singleton tests ──────────────────────────────────
+
+def test_iconcaches_is_singleton_class(qapp):
+    """Verify _IconCaches is the class behind the module-level singleton."""
+    assert isinstance(caches, _IconCaches)
+
+
+def test_load_weather_icons_returns_same_ref_on_repeated_call(qapp, mock_icon_dir):
+    """load_weather_icons should cache its result so repeated calls return the same object."""
+    first = load_weather_icons(mock_icon_dir)
+    second = load_weather_icons(mock_icon_dir)
+    assert first is second
+
+
+def test_load_stats_icons_returns_same_ref_on_repeated_call(qapp, mock_icon_dir):
+    """load_stats_icons should cache its result so repeated calls return the same object."""
+    first = load_stats_icons(mock_icon_dir)
+    second = load_stats_icons(mock_icon_dir)
+    assert first is second

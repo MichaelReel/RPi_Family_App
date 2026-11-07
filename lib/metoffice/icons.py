@@ -47,6 +47,12 @@ _MET_OFFICE_STATS_MAP: Final[dict[str, str]] = {
 }
 
 class _IconCaches:
+    """Singleton cache for weather and stats icons.
+    
+    All icon pixmaps are loaded once and reused across DayCardWidget instances
+    to avoid repeated disk I/O. The module-level `caches` singleton is the
+    canonical source — do not create additional instances.
+    """
 
     def __init__(self):
         self._loaded_weather_icons: dict[int, QPixmap] = {}
@@ -88,8 +94,8 @@ class _IconCaches:
                 print(f"Warning: Missing icon file {file_path}")
                 # Optional: loaded_icons[code] = pixmap_cache.get("default.png")
 
-        _loaded_weather_icons = loaded_icons
-        _weather_icons_loaded = True
+        self._loaded_weather_icons = loaded_icons
+        self._weather_icons_loaded = True
         return loaded_icons
 
 
@@ -125,9 +131,21 @@ class _IconCaches:
                 print(f"Warning: Missing icon file {file_path}")
                 # Optional: loaded_icons[code] = pixmap_cache.get("default.png")
 
-        _load_stats_icons = loaded_icons
-        _stats_icons_loaded = True
+        self._loaded_stats_icons = loaded_icons
+        self._stats_icons_loaded = True
         return loaded_icons
+
+
+    def invalidate_caches(self) -> None:
+        """Reset both weather and stats icon caches to their empty, unloaded state.
+
+        Useful for tests and for runtime scenarios where the icon directory may
+        have changed and the cache needs to be refreshed.
+        """
+        self._loaded_weather_icons = {}
+        self._loaded_stats_icons = {}
+        self._weather_icons_loaded = False
+        self._stats_icons_loaded = False
 
 
 caches: _IconCaches = _IconCaches()

@@ -84,5 +84,5 @@ uv pip install -r pyproject.toml
 Cross your fingers and try to run the script:
 
 ```
-python3 maii.py
+python3 main.py
 ```

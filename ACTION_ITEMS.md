@@ -56,10 +56,10 @@
 
 ## Minor Issues & Code Smells (P2)
 
-### 7. Class-Level Mutable Shared State in `DayCardWidget`
-- **File:** `lib/metoffice/widgets/day_card.py` (lines 65-66)
-- **Problem:** `_icon_cache` and `_stats_cache` are class-level `dict` attributes shared across all instances. If one instance's path context changes or the app runs multiple widgets with different icon directories, they silently interfere. No thread-safety guard.
-- **Risk:** Low in current usage — only one icon directory is ever used. Downgraded from P1.
+### 7. Class-Level Mutable Shared State in `DayCardWidget` ✅
+- **File:** `lib/metoffice/widgets/day_card.py` (lines 65-66), `lib/metoffice/icons.py`
+- **Problem:** `_icon_cache` and `_stats_cache` are class-level `dict` attributes shared across all instances. The `_IconCaches` singleton was not properly storing loaded icons (missing `self.` prefix), so the cache was silently ineffective.
+- **Fix:** Fixed `self._loaded_weather_icons` and `self._loaded_stats_icons` assignment in `_IconCaches`. Added docstring to `_IconCaches` clarifying the singleton pattern. Added comment in `DayCardWidget` documenting the shared cache intent.
 
 ### 8. Hardcoded Icon Reuse
 - **File:** `lib/metoffice/icons.py` (line 44)
@@ -81,10 +81,10 @@
 - **Problem:** `self.report_source()` is called without a try/except. If the callable raises an exception (not just returns `None`), the exception propagates and crashes the widget.
 - **Fix:** Wrap `report_source()` in a try/except and handle exceptions gracefully.
 
-### 12. Broken Internal State in `_IconCaches.load_weather_icons()` and `.load_stats_icons()`
+### 12. Broken Internal State in `_IconCaches.load_weather_icons()` and `.load_stats_icons()` ✅
 - **File:** `lib/metoffice/icons.py` (lines 91-92, 128-129)
 - **Problem:** The methods assign to local variables (`_loaded_weather_icons = ...`) instead of `self._loaded_weather_icons`. The cache guard (`if self._weather_icons_loaded: return ...`) never triggers because the flag is never set on `self`. The module-level `caches` singleton works around this, but re-entering the same method on the same instance would reload icons from disk unnecessarily.
-- **Fix:** Change to `self._loaded_weather_icons = loaded_icons`, `self._weather_icons_loaded = True`, etc.
+- **Fix:** Changed to `self._loaded_weather_icons = loaded_icons`, `self._weather_icons_loaded = True`, etc. (Resolved alongside #7)
 
 ---
 

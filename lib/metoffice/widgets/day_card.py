@@ -62,6 +62,8 @@ class CardStyleConfig:
 class DayCardWidget(QFrame):
     """Displays specific daily weather metrics with decoupled style configurations."""
     
+    # Icon caches are shared across all DayCardWidget instances via a singleton
+    # to avoid reloading the same icon files on each widget creation.
     _icon_cache: dict[int, QPixmap] = {}
     _stats_cache: dict[str, QPixmap] = {}
 
