@@ -14,10 +14,11 @@
 - **Fix:** Replace `from urllib3.exceptions import HTTPError` with `from requests.exceptions import RequestException` and catch `requests.exceptions.RequestException`.
 - **Status:** Fixed in commit 94ec074. Added tests in `test/lib/metoffice/test_client.py`.
 
-### 2. No Timeout on HTTP Requests
+### 2. No Timeout on HTTP Requests ✅
 - **File:** `lib/metoffice/client.py` (line 16)
 - **Problem:** `requests.get()` is called without a `timeout` parameter. If the Met Office API hangs, the entire PyQt6 event loop blocks indefinitely, freezing the UI.
 - **Fix:** Add `timeout=30` to `requests.get()`.
+- **Status:** Fixed in commit 3c7066a. `HTTP_TIMEOUT=30` constant added to `client.py` and passed to `requests.get()`.
 
 ### 3. No Test Coverage for `client.py` ✅
 - **File:** Missing entirely

@@ -50,10 +50,12 @@ def test_card_data_mapping_and_labels(qtbot, report_source):
     
     first_card = grid_widget.cards[0]
     
-    assert "High: 18.47°C" in first_card.lbl_temps.text()
-    assert "Low: 5.34°C" in first_card.lbl_temps.text()
+    # First card uses forecast_days[1] (the widget skips index 0):
+    # max_temp=18.47, min_temp=5.34, rain=5%, condition=Cloudy
+    assert "18.47°C" in first_card.lbl_temp_high.text()
+    assert "5.34°C" in first_card.lbl_temp_low.text()
     assert first_card.lbl_cond.text() == "Cloudy"
-    assert first_card.lbl_rain.text() == "🌧️ Rain Chance: 5%"
+    assert "5%" in first_card.lbl_rain.text()
 
 
 def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot):

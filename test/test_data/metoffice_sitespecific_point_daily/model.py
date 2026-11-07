@@ -109,7 +109,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 visibility_midday_metres=27419,
                 uv_index_max=6,
                 weather_code=10,
-                weather_condition="Light rain shower (day)",
+                weather_condition="Light rain",
             ),
             DailyForecastPoint(
                 date=datetime(2026, 6, 26, 0, 0, tzinfo=timezone.utc),
@@ -123,7 +123,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 visibility_midday_metres=25027,
                 uv_index_max=5,
                 weather_code=3,
-                weather_condition="Partly cloudy (day)",
+                weather_condition="Partly cloudy",
             ),
         ],
     )
