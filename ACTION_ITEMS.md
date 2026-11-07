@@ -41,10 +41,11 @@
 - **Fix:** Change to `weather_code: int | None` and update consumers.
 - **Status:** Fixed in commit 743bf29. Changed dataclass field to `int | None` and added test `test_missing_weather_code_defaults_to_unknown`.
 
-### 5. No Error Handling for JSON Parse Failures
+### 5. No Error Handling for JSON Parse Failures ✅
 - **File:** `lib/metoffice/client.py` (line 25)
 - **Problem:** `response.json()` can raise `requests.exceptions.JSONDecodeError` if the response body isn't valid JSON. This will crash unhandled.
 - **Fix:** Wrap `response.json()` in a try/except block.
+- **Status:** Fixed in commit e5c46df. `JSONDecodeError` is caught and returns `None`. Test `test_json_decode_error_returns_none` added in `test_client.py`.
 
 ### 6. `parameters` Schema May Not Match Real API Structure ✅
 - **File:** `lib/metoffice/domain/schemas.py` (lines 89-92)
