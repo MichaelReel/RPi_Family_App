@@ -62,10 +62,10 @@
 - **Problem:** `_icon_cache` and `_stats_cache` are class-level `dict` attributes shared across all instances. The `_IconCaches` singleton was not properly storing loaded icons (missing `self.` prefix), so the cache was silently ineffective.
 - **Fix:** Fixed `self._loaded_weather_icons` and `self._loaded_stats_icons` assignment in `_IconCaches`. Added docstring to `_IconCaches` clarifying the singleton pattern. Added comment in `DayCardWidget` documenting the shared cache intent.
 
-### 8. Hardcoded Icon Reuse
+### 8. Hardcoded Icon Reuse ✅
 - **File:** `lib/metoffice/icons.py` (line 44)
 - **Problem:** The feels-like temperature uses the same icon as the low temperature.
-- **Action:** Verify if this is intentional or a bug.
+- **Fix:** Created a new `temp_feels.png` icon and mapped `"temp_feel"` to it. Also updated `temp_low.png`.
 
 ### 9. `print()` Instead of Logging
 - **Files:** `client.py`, `icons.py`, `four_day_grid.py`

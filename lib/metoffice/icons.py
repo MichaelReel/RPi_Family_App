@@ -41,7 +41,7 @@ _MET_OFFICE_STATS_MAP: Final[dict[str, str]] = {
     "rain_pct": "precipitation.png",
     "temp_high": "temp_high.png",
     "temp_low": "temp_low.png",
-    "temp_feel": "temp_low.png",
+    "temp_feel": "temp_feels.png",
     "uv_index": "uv.png",
     "wind": "wind.png",
 }
