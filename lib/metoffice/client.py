@@ -1,7 +1,8 @@
 from http import HTTPStatus
+from typing import Final
 
 import requests
-from urllib3.exceptions import HTTPError
+from requests.exceptions import RequestException
 
 from config import MET_DAILY_URL, MET_HEADERS, MET_PARAMS
 from lib.metoffice.adapter import MetOfficeAdapter
@@ -9,13 +10,15 @@ from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
 from lib.metoffice.models import HumanReadableWeatherReport
 
+HTTP_TIMEOUT: Final[int] = 30
+
 
 def get_human_readable_weather() -> HumanReadableWeatherReport | None:
     # Fetch and parse data
     try:
-        response = requests.get(MET_DAILY_URL, headers=MET_HEADERS, params=MET_PARAMS)
-    except HTTPError as http_error:
-        print(f"Exception {http_error} occurred getting weather info")
+        response = requests.get(MET_DAILY_URL, headers=MET_HEADERS, params=MET_PARAMS, timeout=HTTP_TIMEOUT)
+    except RequestException as req_error:
+        print(f"Exception {req_error} occurred getting weather info")
         return None
 
     if response.status_code != HTTPStatus.OK:

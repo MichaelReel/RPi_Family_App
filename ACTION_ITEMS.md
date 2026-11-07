@@ -8,10 +8,11 @@
 
 ## Critical Issues (P0)
 
-### 1. Wrong Exception Type Caught in `client.py`
+### 1. Wrong Exception Type Caught in `client.py` ✅
 - **File:** `lib/metoffice/client.py` (line 4)
 - **Problem:** `urllib3.exceptions.HTTPError` is *never* raised by `requests.get()`. Network errors raise `requests.exceptions.RequestException` (or subclasses like `ConnectionError`, `Timeout`, etc.). All network exceptions are silently uncaught, causing the app to crash on network failure instead of returning `None`.
-- **Fix:** Replace `from urllib3.exceptions import HTTPError` with `import requests` and catch `requests.exceptions.RequestException`.
+- **Fix:** Replace `from urllib3.exceptions import HTTPError` with `from requests.exceptions import RequestException` and catch `requests.exceptions.RequestException`.
+- **Status:** Fixed in commit 94ec074. Added tests in `test/lib/metoffice/test_client.py`.
 
 ### 2. No Timeout on HTTP Requests
 - **File:** `lib/metoffice/client.py` (line 16)
