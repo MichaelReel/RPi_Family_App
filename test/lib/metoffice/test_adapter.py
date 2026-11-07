@@ -117,3 +117,16 @@ def test_adapted_output_matches_fixture_snapshot(
         assert actual_day.wind_direction_midday_deg == expected_day.wind_direction_midday_deg
         assert actual_day.visibility_midday_metres == expected_day.visibility_midday_metres
         assert actual_day.uv_index_max == expected_day.uv_index_max
+
+def test_missing_weather_code_defaults_to_unknown(sample_weather_root: WeatherSchemaRoot) -> None:
+    """When both day and night weather codes are missing, the adapter should produce None and 'Unknown'."""
+    # Mutate the first timeSeries entry to strip both weather code keys
+    first_entry = sample_weather_root.features[0].properties.timeSeries[0]
+    first_entry.data.pop("daySignificantWeatherCode", None)
+    first_entry.data.pop("nightSignificantWeatherCode", None)
+
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root)
+    first_day: DailyForecastPoint = report.forecast_days[0]
+
+    assert first_day.weather_code is None
+    assert first_day.weather_condition == "Unknown"

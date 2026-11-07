@@ -15,7 +15,7 @@ class DailyForecastPoint:
     wind_direction_midday_deg: int | None
     visibility_midday_metres: int | None
     uv_index_max: int | None
-    weather_code: int
+    weather_code: int | None
     weather_condition: str
 
 @dataclass

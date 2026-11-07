@@ -35,10 +35,11 @@
 
 ## Significant Issues (P1)
 
-### 4. `weather_code` Can Be `None` But Type Says `int`
+### 4. `weather_code` Can Be `None` But Type Says `int` ✅
 - **File:** `lib/metoffice/models.py` (line 18) + `lib/metoffice/adapter.py` (line 47)
 - **Problem:** `weather_code: int` is non-optional in `DailyForecastPoint`, but the adapter can pass `w_code` which is `None` when neither day nor night weather code is present.
 - **Fix:** Change to `weather_code: int | None` and update consumers.
+- **Status:** Fixed in commit 743bf29. Changed dataclass field to `int | None` and added test `test_missing_weather_code_defaults_to_unknown`.
 
 ### 5. No Error Handling for JSON Parse Failures
 - **File:** `lib/metoffice/client.py` (line 25)
