@@ -48,17 +48,18 @@ def test_load_weather_icons_success(qapp, mock_icon_dir):
     assert not icons[0].isNull()  # Checks that PyQt successfully parsed the image data
 
 
-def test_load_weather_icons_missing_file(qapp, mock_icon_dir, capsys):
+def test_load_weather_icons_missing_file(qapp, mock_icon_dir, caplog):
     """Verifies that missing files are handled gracefully without crashing."""
     icons = load_weather_icons(mock_icon_dir)
     
     # Code 30 was intentionally omitted from mock_icon_dir
     assert 30 not in icons
     
-    # Verify the warning message was printed out correctly
-    captured = capsys.readouterr()
-    assert "Warning: Missing icon file" in captured.out
-    assert "30_heavyrainandthunder.png" in captured.out
+    # Verify the warning was logged (not printed)
+    with caplog.at_level("WARNING"):
+        load_weather_icons(mock_icon_dir)
+    assert "Missing icon file" in caplog.text
+    assert "30_heavyrainandthunder.png" in caplog.text
 
 
 def test_load_weather_icons_caching(qapp, mock_icon_dir, monkeypatch):

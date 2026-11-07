@@ -1,4 +1,6 @@
 from collections.abc import Callable
+from logging import Logger, getLogger
+from typing import Final
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
@@ -10,6 +12,8 @@ from lib.metoffice.widgets.day_card import (
     DayCardWidget,
     UIElementStyle,
 )
+
+_LOGGER: Final[Logger] = getLogger(__name__)
 
 
 class FourDayGridWidget(QWidget):
@@ -97,7 +101,7 @@ class FourDayGridWidget(QWidget):
         report: HumanReadableWeatherReport | None = self.report_source()
 
         if not report:
-            print("Due to met office API issues, this widget cannot be updated")
+            _LOGGER.error("Due to met office API issues, this widget cannot be updated")
             return
         
         self.report = report

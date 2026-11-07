@@ -1,7 +1,9 @@
+from logging import Logger, getLogger
 from typing import Final
 
 from pathlib import Path
 from PyQt6.QtGui import QPixmap
+_LOGGER: Final[Logger] = getLogger(__name__)
 
 # 1. Define the dictionary mapping Met Office codes to the repo's file names
 _MET_OFFICE_WEATHER_MAP: Final[dict[int, str]] = {
@@ -91,7 +93,7 @@ class _IconCaches:
                 pixmap_cache[filename] = pixmap
                 loaded_icons[code] = pixmap
             else:
-                print(f"Warning: Missing icon file {file_path}")
+                _LOGGER.warning("Missing icon file: %s", file_path)
                 # Optional: loaded_icons[code] = pixmap_cache.get("default.png")
 
         self._loaded_weather_icons = loaded_icons
@@ -128,7 +130,7 @@ class _IconCaches:
                 pixmap_cache[filename] = pixmap
                 loaded_icons[code] = pixmap
             else:
-                print(f"Warning: Missing icon file {file_path}")
+                _LOGGER.warning("Missing icon file: %s", file_path)
                 # Optional: loaded_icons[code] = pixmap_cache.get("default.png")
 
         self._loaded_stats_icons = loaded_icons

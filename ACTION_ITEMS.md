@@ -67,10 +67,10 @@
 - **Problem:** The feels-like temperature uses the same icon as the low temperature.
 - **Fix:** Created a new `temp_feels.png` icon and mapped `"temp_feel"` to it. Also updated `temp_low.png`.
 
-### 9. `print()` Instead of Logging
+### 9. `print()` Instead of Logging ✅
 - **Files:** `client.py`, `icons.py`, `four_day_grid.py`
 - **Problem:** `print()` statements used for error logging.
-- **Fix:** Replace with Python's `logging` module.
+- **Fix:** Replaced all `print()` calls with `logging.Logger` calls (`_LOGGER: Final[Logger]` per module). Updated `test_icons.py::test_load_weather_icons_missing_file` to use `caplog` instead of `capsys`.
 
 ### 10. Emoji in Test Assertions
 - **File:** `test/lib/metoffice/test_widget.py` (line 56)

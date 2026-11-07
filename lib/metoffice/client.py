@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from logging import Logger, getLogger
 from typing import Final
 
 import requests
@@ -10,6 +11,7 @@ from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
 from lib.metoffice.models import HumanReadableWeatherReport
 
+_LOGGER: Final[Logger] = getLogger(__name__)
 HTTP_TIMEOUT: Final[int] = 30
 
 
@@ -18,17 +20,17 @@ def get_human_readable_weather() -> HumanReadableWeatherReport | None:
     try:
         response = requests.get(MET_DAILY_URL, headers=MET_HEADERS, params=MET_PARAMS, timeout=HTTP_TIMEOUT)
     except RequestException as req_error:
-        print(f"Exception {req_error} occurred getting weather info")
+        _LOGGER.error("Exception occurred getting weather info: %s", req_error)
         return None
 
     if response.status_code != HTTPStatus.OK:
-        print(f"Error {response.status_code}: {response.text}")
+        _LOGGER.error("HTTP %s: %s", response.status_code, response.text)
         return None
 
     try:
         raw_weather_obj: WeatherSchemaRoot = WeatherSchemaRootSchema().load(response.json())
     except requests.exceptions.JSONDecodeError as json_error:
-        print(f"Failed to parse JSON response: {json_error}")
+        _LOGGER.error("Failed to parse JSON response: %s", json_error)
         return None
 
     return MetOfficeAdapter.to_human_readable(raw_weather_obj)
