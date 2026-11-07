@@ -4,6 +4,10 @@ Just want to have a full screen app for a RPi + Touch Screen.
 
 Current version is a Clock and a weekly Weather panel.
 
+## Documentation
+
+- **[REPOSITORY_GUIDE.md](REPOSITORY_GUIDE.md)** — Repository overview, architecture, data flow, module responsibilities, testing conventions (useful for LLM agents and new developers)
+
 ## Install from repo
 
 Clone this repository and cd into it:
