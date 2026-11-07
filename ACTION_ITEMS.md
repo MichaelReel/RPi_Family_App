@@ -19,7 +19,7 @@
 - **Problem:** `requests.get()` is called without a `timeout` parameter. If the Met Office API hangs, the entire PyQt6 event loop blocks indefinitely, freezing the UI.
 - **Fix:** Add `timeout=30` to `requests.get()`.
 
-### 3. No Test Coverage for `client.py`
+### 3. No Test Coverage for `client.py` ✅
 - **File:** Missing entirely
 - **Problem:** The HTTP client module (`lib/metoffice/client.py`) has **zero test coverage**. This is the most critical gap since it handles network I/O and error handling.
 - **Fix:** Create `test/lib/metoffice/test_client.py` with:
@@ -28,6 +28,7 @@
   - Mock non-200 HTTP status codes
   - Mock JSON parse failures
   - Verify `None` is returned on all error paths
+- **Status:** Fixed in commit a3431d6. Added 6 tests in `test/lib/metoffice/test_client.py` covering: network errors (3), timeout argument (1), non-200 status (1), successful response (1). JSON parse failure test deferred — client doesn't handle `JSONDecodeError` yet (see P1 item #5).
 
 ---
 
@@ -114,7 +115,7 @@
 
 | Module | Test File | Status |
 |--------|-----------|--------|
-| `metoffice/client.py` | Missing | **No tests at all — P0** |
+| `metoffice/client.py` | `test/lib/metoffice/test_client.py` | ✅ **Covered** (6 tests) |
 | `clock/widget/live_clock.py` | `test/lib/clock/test_widget.py` | Minimal — only init test |
 | `config.py` | Missing | No tests |
 | `main.py` | Missing | No integration tests |
