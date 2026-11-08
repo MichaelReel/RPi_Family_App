@@ -109,10 +109,11 @@
 - **Action:** Verify whether the location name should be displayed somewhere; if not, consider removing it.
 - **Status:** Resolved — created `LocationLabelWidget` in `lib/metoffice/widgets/location_label.py` that displays the location name between the clock and the four-day grid. The location is fetched once at startup and passed as a string (no duplicate API calls). 3 tests added.
 
-### 16. `config.py` Raises at Module Import Time
+### 16. `config.py` Raises at Module Import Time ✅
 - **File:** `config.py` (line 8)
-- **Problem:** `ValueError` is raised at module-level if `METOFFICE_API_KEY` is not set. Any test that imports `config.py` must have the environment variable set, or the entire test session crashes.
-- **Fix:** Consider deferring validation (lazy loading) or providing a test-friendly default/override.
+- **Problem:** `ValueError` was raised at module-level if `METOFFICE_API_KEY` was not set. Any test that imports `config.py` must have the environment variable set, or the entire test session crashes.
+- **Fix:** Remove import-time validation; default to empty string. If the key is missing, the API returns 401 and `client.py` handles it naturally by returning `None`.
+- **Status:** Fixed. Replaced magic-number status codes with `HTTPStatus` constants in `test_client.py` and added `test_401_unauthorized_returns_none`.
 
 ### 17. `pyqt6` Listed in Both `pyproject.toml` and README as a Separate Install
 - **Problem:** `pyproject.toml` already lists `pyqt6` in dependencies, but the README instructs users to run `uv pip install pyqt6` separately. The separate install is redundant.

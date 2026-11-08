@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from unittest.mock import patch, MagicMock
 
@@ -57,7 +59,7 @@ class TestClientCoverage:
         """A response with invalid JSON should be caught and return None."""
         import requests.exceptions
         mock_response = MagicMock()
-        mock_response.status_code = 200
+        mock_response.status_code = HTTPStatus.OK
         mock_response.json.side_effect = requests.exceptions.JSONDecodeError(
             "Expecting value", "doc", 0
         )
@@ -69,8 +71,18 @@ class TestClientCoverage:
     def test_non_200_status_returns_none(self, mock_get):
         """A non-200 HTTP status code should return None."""
         mock_response = MagicMock()
-        mock_response.status_code = 500
+        mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         mock_response.text = "Internal Server Error"
+        mock_get.return_value = mock_response
+        result = get_human_readable_weather()
+        assert result is None
+
+    @patch("lib.metoffice.client.requests.get")
+    def test_401_unauthorized_returns_none(self, mock_get):
+        """An empty or invalid API key should result in a 401, which returns None."""
+        mock_response = MagicMock()
+        mock_response.status_code = HTTPStatus.UNAUTHORIZED
+        mock_response.text = "Unauthorized"
         mock_get.return_value = mock_response
         result = get_human_readable_weather()
         assert result is None
@@ -89,7 +101,7 @@ class TestClientCoverage:
         mock_schema_cls.return_value = mock_schema
 
         mock_response = MagicMock()
-        mock_response.status_code = 200
+        mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {}
         mock_get.return_value = mock_response
 

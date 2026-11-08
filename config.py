@@ -2,10 +2,7 @@ from decimal import Decimal
 import os
 from typing import Final
 
-_API_KEY: Final[str] = os.environ.get("METOFFICE_API_KEY")
-
-if not _API_KEY:
-    raise ValueError("Unconfigured METOFFICE_API_KEY in environment")
+_API_KEY: Final[str] = os.environ.get("METOFFICE_API_KEY", "")
 
 _LATITUDE: Final[Decimal] = Decimal(os.environ.get("METOFFICE_LATITUDE", "54.3"))
 _LONGITUDE: Final[Decimal] = Decimal(os.environ.get("METOFFICE_LONGITUDE", "-7.3"))
