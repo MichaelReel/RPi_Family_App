@@ -99,8 +99,9 @@
 - **Fix:** Move to module-level utility functions or static methods. Downgraded from P1 — purely stylistic, no functional impact.
 - **Status:** Fixed. Moved to module-level functions `_to_decimal()` and `_to_int()`. Also cleaned up numbered comments.
 
-### 14. No `__init__.py` Test Coverage
+### 14. No `__init__.py` Test Coverage ✅
 - **Problem:** The `__init__.py` files exist but are not tested for importability.
+- **Status:** Fixed. Added `test/lib/test_packages.py` with 6 tests verifying each package __init__.py is importable.
 
 ### 15. Unused `location_name` Field
 - **File:** `lib/metoffice/models.py`, `lib/metoffice/adapter.py`

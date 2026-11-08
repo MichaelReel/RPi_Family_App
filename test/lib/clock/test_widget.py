@@ -24,10 +24,10 @@ def test_clock_initial_values(qtbot):
         qtbot.addWidget(widget)
         widget.update_clock()
 
-    # Assert standard text outputs
-    assert widget.day_label.text() == "Monday"
-    assert widget.date_label.text() == "22/06/2026"
+    # Assert standard text outputs (widget sets HTML with <span> tags for colouring)
+    assert widget.day_label.text() == "<span style='color: #000000;'>Monday</span>"
+    assert widget.date_label.text() == "<span style='color: #000000;'>22/06/2026</span>"
 
     # Assert hours, minutes, and the dim smaller seconds tag
-    expected_time_html = '14:30<span style="color: #000000; font-size: 34px;">:45</span>'
+    expected_time_html = '<span style="color: #000000;">14:30</span><span style="color: #000000; font-size: 34px;">:45</span>'
     assert widget.time_label.text() == expected_time_html
