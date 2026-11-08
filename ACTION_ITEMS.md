@@ -72,10 +72,11 @@
 - **Problem:** `print()` statements used for error logging.
 - **Fix:** Replaced all `print()` calls with `logging.Logger` calls (`_LOGGER: Final[Logger]` per module). Updated `test_icons.py::test_load_weather_icons_missing_file` to use `caplog` instead of `capsys`.
 
-### 10. Emoji in Test Assertions
+### 10. Emoji in Test Assertions ✅
 - **File:** `test/lib/metoffice/test_widget.py` (line 56)
 - **Problem:** Test asserts exact emoji text. If the rendering or emoji changes, the test fails.
 - **Fix:** Consider using a regex match or normalizing the assertion.
+- **Status:** Closed as false alarm — no emoji assertions exist in the tests. The current assertions use stable Unicode characters (`°C`, `%`) and plain text.
 
 ### 11. `setup_grid_data()` Does Not Catch Exceptions from `report_source()`
 - **File:** `lib/metoffice/widgets/four_day_grid.py` (line 70)
