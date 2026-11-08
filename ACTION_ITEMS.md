@@ -115,9 +115,10 @@
 - **Fix:** Remove import-time validation; default to empty string. If the key is missing, the API returns 401 and `client.py` handles it naturally by returning `None`.
 - **Status:** Fixed. Replaced magic-number status codes with `HTTPStatus` constants in `test_client.py` and added `test_401_unauthorized_returns_none`.
 
-### 17. `pyqt6` Listed in Both `pyproject.toml` and README as a Separate Install
-- **Problem:** `pyproject.toml` already lists `pyqt6` in dependencies, but the README instructs users to run `uv pip install pyqt6` separately. The separate install is redundant.
-- **Fix:** Remove `pyqt6` from the README's separate install step.
+### 17. `pyqt6` Listed in Both `pyproject.toml` and README as a Separate Install ✅
+- **Problem:** `pyproject.toml` already lists `pyqt6` in dependencies, but the README instructed users to run `uv pip install pyqt6` separately. The separate install was redundant.
+- **Fix:** Remove the claim that pyqt6 is excluded from pyproject.toml and the redundant install step from the README.
+- **Status:** Fixed. README now simply says to run `uv sync`.
 
 ---
 

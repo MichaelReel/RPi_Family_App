@@ -43,12 +43,10 @@ python -m pip install uv
 > You will need to use `source .venv/bin/activate` to activate the python environment each time you open this folder in a new shell, or if you source another python environment.
 > If you ever see "command not found" it can mean the environment hasn't been activated.
 
-The App will need dependencies installed. `uv sync` will handle most dependencies, but we also need PyQT6 installed which has been left out of the pyproject.toml.
-On a normal linux environment this should be as simple as:
+The App will need dependencies installed. Run `uv sync` to install all dependencies:
 
 ```
 uv sync
-uv pip install pyqt6
 ```
 
 To run the app, `source .venv/bin/activate` if necessary, then:
