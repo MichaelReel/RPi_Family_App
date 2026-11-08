@@ -93,10 +93,11 @@
 
 ## Minor Issues & Code Smells (P3)
 
-### 13. Conversion Helpers Defined Inside Loop
+### 13. Conversion Helpers Defined Inside Loop ✅
 - **File:** `lib/metoffice/adapter.py` (lines 57-61)
 - **Problem:** `to_decimal()` and `to_int()` are defined inside the loop body and redefined on every iteration.
 - **Fix:** Move to module-level utility functions or static methods. Downgraded from P1 — purely stylistic, no functional impact.
+- **Status:** Fixed. Moved to module-level functions `_to_decimal()` and `_to_int()`. Also cleaned up numbered comments.
 
 ### 14. No `__init__.py` Test Coverage
 - **Problem:** The `__init__.py` files exist but are not tested for importability.
