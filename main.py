@@ -44,9 +44,11 @@ class MainWindow(QMainWindow):
         # Fetch the report once at startup to extract the location name
         initial_report = get_human_readable_weather()
         location_name = initial_report.location_name if initial_report else None
+        coordinates = initial_report.coordinates if initial_report else None
 
         self.location_widget: LocationLabelWidget = LocationLabelWidget(
-            location_name=location_name
+            location_name=location_name,
+            coordinates=coordinates
         )
         self.met_office_widget: FourDayGridWidget = FourDayGridWidget(
             report_source=get_human_readable_weather, bg_color=bg_color

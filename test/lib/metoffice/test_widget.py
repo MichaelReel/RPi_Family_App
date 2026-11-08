@@ -143,8 +143,8 @@ def test_location_label_shows_name(qtbot, expected_human_report_snapshot) -> Non
 
 
 def test_location_label_hidden_when_none(qtbot) -> None:
-    """Widget should hide its label when location_name is None."""
-    widget = LocationLabelWidget(location_name=None)
+    """Widget should hide its label when location_name is None and no coordinates."""
+    widget = LocationLabelWidget(location_name=None, coordinates=None)
     qtbot.addWidget(widget)
     widget.show()
 
@@ -152,9 +152,23 @@ def test_location_label_hidden_when_none(qtbot) -> None:
 
 
 def test_location_label_hidden_when_empty(qtbot) -> None:
-    """Widget should hide its label when location_name is an empty string."""
-    widget = LocationLabelWidget(location_name="")
+    """Widget should hide its label when location_name is empty and no coordinates."""
+    widget = LocationLabelWidget(location_name="", coordinates=None)
     qtbot.addWidget(widget)
     widget.show()
 
     assert widget.label.isVisible() is False
+
+
+def test_location_label_shows_coordinates_when_no_name(qtbot) -> None:
+    """Widget should display coordinates as fallback when location_name is blank."""
+    from decimal import Decimal
+    widget = LocationLabelWidget(
+        location_name=None,
+        coordinates=[Decimal("-7.4058"), Decimal("54.3141"), Decimal("74.0")]
+    )
+    qtbot.addWidget(widget)
+    widget.show()
+
+    assert widget.label.text() == "54.3141, -7.4058"
+    assert widget.label.isVisible() is True
