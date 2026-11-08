@@ -105,3 +105,27 @@ def test_featured_layout_initialization(qtbot: QtBot, report_source) -> None:
     # 2. Verify layout distributions structurally match expectations
     assert grid_widget.main_layout.count() == 2  # Feature card + secondary layout track
     assert grid_widget.secondary_layout.count() == 3  # Contains remaining cards 2, 3, and 4
+
+
+def test_setup_grid_data_handles_report_source_exception(qtbot, expected_human_report_snapshot) -> None:
+    """If report_source raises an exception during setup, the widget should raise RuntimeError."""
+    def failing_source() -> HumanReadableWeatherReport:
+        raise RuntimeError("API failure")
+
+    with pytest.raises(RuntimeError, match="met office API issues"):
+        grid_widget = FourDayGridWidget(report_source=failing_source)
+
+
+def test_update_grid_data_handles_report_source_exception(qtbot, expected_human_report_snapshot, caplog) -> None:
+    """If report_source raises during a timer-triggered update, the error should be logged, not crash."""
+    grid_widget = FourDayGridWidget(report_source=lambda: expected_human_report_snapshot)
+    qtbot.addWidget(grid_widget)
+
+    # Replace with a failing source after setup
+    grid_widget.report_source = lambda: (_ for _ in ()).throw(RuntimeError("API failure"))
+
+    with caplog.at_level("ERROR"):
+        grid_widget.update_grid_data()
+
+    assert "Error calling report_source" in caplog.text
+    assert "API failure" in caplog.text

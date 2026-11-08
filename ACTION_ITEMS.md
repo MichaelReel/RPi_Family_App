@@ -78,10 +78,11 @@
 - **Fix:** Consider using a regex match or normalizing the assertion.
 - **Status:** Closed as false alarm — no emoji assertions exist in the tests. The current assertions use stable Unicode characters (`°C`, `%`) and plain text.
 
-### 11. `setup_grid_data()` Does Not Catch Exceptions from `report_source()`
+### 11. `setup_grid_data()` Does Not Catch Exceptions from `report_source()` ✅
 - **File:** `lib/metoffice/widgets/four_day_grid.py` (line 70)
 - **Problem:** `self.report_source()` is called without a try/except. If the callable raises an exception (not just returns `None`), the exception propagates and crashes the widget.
 - **Fix:** Wrap `report_source()` in a try/except and handle exceptions gracefully.
+- **Status:** Fixed. Both `setup_grid_data()` and `update_grid_data()` now wrap `report_source()` in try/except. Added 2 tests in `test_widget.py`.
 
 ### 12. Broken Internal State in `_IconCaches.load_weather_icons()` and `.load_stats_icons()` ✅
 - **File:** `lib/metoffice/icons.py` (lines 91-92, 128-129)

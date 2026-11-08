@@ -71,7 +71,11 @@ class FourDayGridWidget(QWidget):
         self.refresh_timer.start(MET_REFRESH_MS)
         
     def setup_grid_data(self) -> None:
-        self.report = self.report_source()
+        try:
+            self.report = self.report_source()
+        except Exception:
+            _LOGGER.exception("Error calling report_source during setup_grid_data")
+            self.report = None
 
         if self.report is None:
             raise RuntimeError("Due to met office API issues, this widget cannot be built")
@@ -98,7 +102,11 @@ class FourDayGridWidget(QWidget):
         self.main_layout.addLayout(self.secondary_layout, stretch=1)
     
     def update_grid_data(self) -> None:
-        report: HumanReadableWeatherReport | None = self.report_source()
+        try:
+            report: HumanReadableWeatherReport | None = self.report_source()
+        except Exception:
+            _LOGGER.exception("Error calling report_source during update_grid_data")
+            return
 
         if not report:
             _LOGGER.error("Due to met office API issues, this widget cannot be updated")
