@@ -11,6 +11,7 @@ from config import MET_REFRESH_MS
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 from lib.metoffice.widgets.day_card import DayCardWidget
 from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
+from lib.metoffice.widgets.location_label import LocationLabelWidget
 
 from test.test_data.metoffice_sitespecific_point_daily.model import expected_human_report_snapshot
 
@@ -129,3 +130,31 @@ def test_update_grid_data_handles_report_source_exception(qtbot, expected_human_
 
     assert "Error calling report_source" in caplog.text
     assert "API failure" in caplog.text
+
+
+def test_location_label_shows_name(qtbot, expected_human_report_snapshot) -> None:
+    """Widget should display the location name when it is present."""
+    widget = LocationLabelWidget(location_name="Falmouth")
+    qtbot.addWidget(widget)
+    widget.show()
+
+    assert widget.label.text() == "Falmouth"
+    assert widget.label.isVisible() is True
+
+
+def test_location_label_hidden_when_none(qtbot) -> None:
+    """Widget should hide its label when location_name is None."""
+    widget = LocationLabelWidget(location_name=None)
+    qtbot.addWidget(widget)
+    widget.show()
+
+    assert widget.label.isVisible() is False
+
+
+def test_location_label_hidden_when_empty(qtbot) -> None:
+    """Widget should hide its label when location_name is an empty string."""
+    widget = LocationLabelWidget(location_name="")
+    qtbot.addWidget(widget)
+    widget.show()
+
+    assert widget.label.isVisible() is False

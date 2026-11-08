@@ -103,10 +103,11 @@
 - **Problem:** The `__init__.py` files exist but are not tested for importability.
 - **Status:** Fixed. Added `test/lib/test_packages.py` with 6 tests verifying each package __init__.py is importable.
 
-### 15. Unused `location_name` Field
+### 15. Unused `location_name` Field ✅
 - **File:** `lib/metoffice/models.py`, `lib/metoffice/adapter.py`
 - **Problem:** The `location_name` field in `HumanReadableWeatherReport` is populated by the adapter but never consumed by any UI widget.
 - **Action:** Verify whether the location name should be displayed somewhere; if not, consider removing it.
+- **Status:** Resolved — created `LocationLabelWidget` in `lib/metoffice/widgets/location_label.py` that displays the location name between the clock and the four-day grid. The location is fetched once at startup and passed as a string (no duplicate API calls). 3 tests added.
 
 ### 16. `config.py` Raises at Module Import Time
 - **File:** `config.py` (line 8)

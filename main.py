@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, 
 from lib.clock.widget.live_clock import LiveClockWidget
 from lib.metoffice.client import get_human_readable_weather
 from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
+from lib.metoffice.widgets.location_label import LocationLabelWidget
 
 
 class MainWindow(QMainWindow):
@@ -22,7 +23,6 @@ class MainWindow(QMainWindow):
         self.main_layout.setSpacing(10)
         self.main_layout.setContentsMargins(10, 10, 10, 10)
 
-
         bg_color: str = "#000022"
         text_color: str = "#0000aa"
         hour_minutes_color: str = "#0000FF"
@@ -40,9 +40,20 @@ class MainWindow(QMainWindow):
             include_day=False,
             include_date=False,
         )
-        self.met_office_widget: FourDayGridWidget = FourDayGridWidget(report_source=get_human_readable_weather, bg_color=bg_color)
+
+        # Fetch the report once at startup to extract the location name
+        initial_report = get_human_readable_weather()
+        location_name = initial_report.location_name if initial_report else None
+
+        self.location_widget: LocationLabelWidget = LocationLabelWidget(
+            location_name=location_name
+        )
+        self.met_office_widget: FourDayGridWidget = FourDayGridWidget(
+            report_source=get_human_readable_weather, bg_color=bg_color
+        )
 
         self.main_layout.addWidget(self.clock_widget)
+        self.main_layout.addWidget(self.location_widget)
         self.main_layout.addWidget(self.met_office_widget)
         self.main_layout.addWidget(button)
 
