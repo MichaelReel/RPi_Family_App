@@ -7,7 +7,6 @@ Current version is a Clock and a weekly Weather panel.
 ## Documentation
 
 - **[REPOSITORY_GUIDE.md](REPOSITORY_GUIDE.md)** — Repository overview, architecture, data flow, module responsibilities, testing conventions (useful for LLM agents and new developers)
-- **[ACTION_ITEMS.md](ACTION_ITEMS.md)** — Known issues, missing tests, and improvement suggestions (temporary tracking document)
 
 ## Install from repo
 
