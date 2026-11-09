@@ -1,4 +1,4 @@
-"""Generic widget that periodically swaps a contained widget with a blank placeholder."""
+"""Generic widget that periodically cycles through a list of contained widgets."""
 from logging import Logger, getLogger
 from typing import Final
 
@@ -9,18 +9,16 @@ _LOGGER: Final[Logger] = getLogger(__name__)
 
 
 class SwappingContainerWidget(QWidget):
-    """A container that periodically swaps between a content widget and a blank placeholder.
+    """A container that periodically cycles through a list of widgets.
 
-    Uses a QStackedWidget with two pages:
-    - Page 0: the provided content widget
-    - Page 1: a blank placeholder widget
-
-    A QTimer toggles between them at the configured interval.
+    Uses a QStackedWidget with one page per widget in the provided list.
+    A QTimer advances to the next widget on each tick, wrapping around
+    to the first widget after the last one.
     """
 
     def __init__(
         self,
-        content: QWidget,
+        pages: list[QWidget],
         swap_interval_ms: int,
         bg_color: str = "#000022",
         parent: QWidget | None = None,
@@ -28,6 +26,10 @@ class SwappingContainerWidget(QWidget):
         super().__init__(parent)
 
         self._bg_color: str = bg_color
+        self._page_count: int = len(pages)
+
+        if self._page_count == 0:
+            raise ValueError("At least one page widget must be provided")
 
         outer_layout: QVBoxLayout = QVBoxLayout()
         outer_layout.setContentsMargins(0, 0, 0, 0)
@@ -37,23 +39,20 @@ class SwappingContainerWidget(QWidget):
         self.stacked: QStackedWidget = QStackedWidget()
         outer_layout.addWidget(self.stacked)
 
-        # Page 1: blank placeholder
-        self._blank_page: QWidget = QWidget()
-        self._blank_page.setStyleSheet(f"background-color: {bg_color};")
+        # Add all pages to the stacked widget
+        for widget in pages:
+            self.stacked.addWidget(widget)
 
-        # Add pages to stacked widget
-        self.stacked.addWidget(content)
-        self.stacked.addWidget(self._blank_page)
-
-        # Start on the content page
+        # Start on the first page
         self.stacked.setCurrentIndex(0)
 
-        # Timer to swap views
+        # Timer to advance pages
         self._swap_timer: QTimer = QTimer(self)
-        self._swap_timer.timeout.connect(self._swap_view)
+        self._swap_timer.timeout.connect(self._advance_page)
         self._swap_timer.start(swap_interval_ms)
 
-    def _swap_view(self) -> None:
-        """Toggle between the content page (0) and blank page (1)."""
+    def _advance_page(self) -> None:
+        """Advance to the next page, wrapping around to the first."""
         current: int = self.stacked.currentIndex()
-        self.stacked.setCurrentIndex(1 if current == 0 else 0)
+        next_index: int = (current + 1) % self._page_count
+        self.stacked.setCurrentIndex(next_index)

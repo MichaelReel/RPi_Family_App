@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, 
 
 from lib.clock.widget.live_clock import LiveClockWidget
 from lib.metoffice.client import get_human_readable_weather
+from lib.metoffice.widgets.weather_graph import WeatherGraphWidget
 from lib.metoffice.widgets.weather_group import WeatherGroupWidget
 from lib.widgets.swapping_container import SwappingContainerWidget
 
@@ -11,10 +12,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Custom Full Screen App")
         # self.resize(400, 600)
-
-        button = QPushButton("Exit")
-        button.pressed.connect(self.close)
-        # self.setCentralWidget(button)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -54,15 +51,22 @@ class MainWindow(QMainWindow):
             coordinates=coordinates,
             bg_color=bg_color,
         )
+        self.weather_graph: WeatherGraphWidget = WeatherGraphWidget(
+            report_source=get_human_readable_weather,
+            bg_color=bg_color,
+        )
         self.weather_container: SwappingContainerWidget = SwappingContainerWidget(
-            content=self.weather_group,
+            pages=[self.weather_group, self.weather_graph],
             swap_interval_ms=WEATHER_SWAP_MS,
             bg_color=bg_color,
         )
 
         self.main_layout.addWidget(self.clock_widget)
         self.main_layout.addWidget(self.weather_container)
-        self.main_layout.addWidget(button)
+
+        exit_button = QPushButton("Exit")
+        exit_button.pressed.connect(self.close)
+        self.main_layout.addWidget(exit_button)
 
         self.showFullScreen()
 
