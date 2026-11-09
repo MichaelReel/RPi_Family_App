@@ -2,8 +2,8 @@ from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, 
 
 from lib.clock.widget.live_clock import LiveClockWidget
 from lib.metoffice.client import get_human_readable_weather
-from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
-from lib.metoffice.widgets.location_label import LocationLabelWidget
+from lib.metoffice.widgets.weather_group import WeatherGroupWidget
+from lib.widgets.swapping_container import SwappingContainerWidget
 
 
 class MainWindow(QMainWindow):
@@ -41,22 +41,27 @@ class MainWindow(QMainWindow):
             include_date=False,
         )
 
+        from config import WEATHER_SWAP_MS
+
         # Fetch the report once at startup to extract the location name
         initial_report = get_human_readable_weather()
         location_name = initial_report.location_name if initial_report else None
         coordinates = initial_report.coordinates if initial_report else None
 
-        self.location_widget: LocationLabelWidget = LocationLabelWidget(
+        self.weather_group: WeatherGroupWidget = WeatherGroupWidget(
+            report_source=get_human_readable_weather,
             location_name=location_name,
-            coordinates=coordinates
+            coordinates=coordinates,
+            bg_color=bg_color,
         )
-        self.met_office_widget: FourDayGridWidget = FourDayGridWidget(
-            report_source=get_human_readable_weather, bg_color=bg_color
+        self.weather_container: SwappingContainerWidget = SwappingContainerWidget(
+            content=self.weather_group,
+            swap_interval_ms=WEATHER_SWAP_MS,
+            bg_color=bg_color,
         )
 
         self.main_layout.addWidget(self.clock_widget)
-        self.main_layout.addWidget(self.location_widget)
-        self.main_layout.addWidget(self.met_office_widget)
+        self.main_layout.addWidget(self.weather_container)
         self.main_layout.addWidget(button)
 
         self.showFullScreen()

@@ -30,3 +30,8 @@ def test_clock_package_importable():
 def test_clock_widget_package_importable():
     """lib/clock/widget/__init__.py should be importable."""
     importlib.import_module("lib.clock.widget")
+
+
+def test_widgets_package_importable():
+    """lib/widgets/__init__.py should be importable."""
+    importlib.import_module("lib.widgets")

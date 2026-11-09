@@ -18,3 +18,4 @@ MET_PARAMS: Final[dict[str, str]] = {
     "longitude": str(_LONGITUDE)
 }
 MET_REFRESH_MS: Final[int] = 60 * 60 * 1000
+WEATHER_SWAP_MS: Final[int] = 1000 # 30 * 60 * 1000
