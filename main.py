@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, QWidget
 
 from lib.clock.widget.live_clock import LiveClockWidget
-from lib.metoffice.client import get_human_readable_weather
+from lib.metoffice.weather_source import CachedWeatherSource
 from lib.metoffice.widgets.weather_graph import WeatherGraphWidget
 from lib.metoffice.widgets.weather_group import WeatherGroupWidget
 from lib.widgets.swapping_container import SwappingContainerWidget
@@ -40,19 +40,23 @@ class MainWindow(QMainWindow):
 
         from config import WEATHER_SWAP_MS
 
+        # Shared cached weather source — both widgets hit the API at most
+        # once per MET_REFRESH_MS interval instead of each calling it independently.
+        weather_source = CachedWeatherSource()
+
         # Fetch the report once at startup to extract the location name
-        initial_report = get_human_readable_weather()
+        initial_report = weather_source.get_report()
         location_name = initial_report.location_name if initial_report else None
         coordinates = initial_report.coordinates if initial_report else None
 
         self.weather_group: WeatherGroupWidget = WeatherGroupWidget(
-            report_source=get_human_readable_weather,
+            report_source=weather_source.get_report,
             location_name=location_name,
             coordinates=coordinates,
             bg_color=bg_color,
         )
         self.weather_graph: WeatherGraphWidget = WeatherGraphWidget(
-            report_source=get_human_readable_weather,
+            report_source=weather_source.get_report,
             bg_color=bg_color,
         )
         self.weather_container: SwappingContainerWidget = SwappingContainerWidget(

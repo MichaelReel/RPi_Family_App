@@ -3,10 +3,11 @@ from logging import Logger, getLogger
 from typing import Final
 
 from PyQt6.QtCore import QRectF, Qt
-from PyQt6.QtGui import QColor, QPen, QPainter, QFont, QBrush
+from PyQt6.QtGui import QColor, QPen, QPainter, QFont, QBrush, QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
 
 from collections.abc import Callable
+from lib.metoffice.icons import load_stats_icons
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 
 _LOGGER: Final[Logger] = getLogger(__name__)
@@ -24,6 +25,26 @@ _TEXT_COLOR = "#cccccc"
 _GRID_COLOR = "#333355"
 _LANE_BORDER_COLOR = "#444466"
 
+# Fixed UV axis range (WHO UV index scale 0–11)
+_UV_AXIS_MAX: Final[float] = 11.0
+
+# Layout dimensions
+_ICON_SIZE: Final[int] = 28        # icon pixel size
+_ICON_BORDER: Final[int] = 2      # border width around icons
+_LEFT_MARGIN: Final[int] = 90     # total left margin: icons + gap + Y-axis labels
+_RIGHT_MARGIN: Final[int] = 12
+_TOP_PADDING: Final[int] = 14     # padding above chart area (so top labels aren't clipped)
+_BOTTOM_PADDING: Final[int] = 12  # padding below chart area
+
+
+def _load_lane_icons() -> dict[str, QPixmap]:
+    """Load the stats icons once and return a dict keyed by stat name."""
+    try:
+        return load_stats_icons()
+    except Exception:
+        _LOGGER.exception("Failed to load stats icons for weather graph lanes")
+        return {}
+
 
 class _LaneFrame(QFrame):
     """A single lane frame that delegates painting to a parent-provided callback."""
@@ -33,9 +54,9 @@ class _LaneFrame(QFrame):
         self._paint_fn = paint_fn
         self.setFrameShape(QFrame.Shape.Box)
         self.setFrameShadow(QFrame.Shadow.Plain)
-        self.setLineWidth(1)
+        self.setLineWidth(0)
         self.setStyleSheet(
-            f"QFrame {{ background-color: {bg_color}; border: 1px solid {_LANE_BORDER_COLOR}; }}"
+            f"QFrame {{ background-color: {bg_color}; border: 0px; }}"
         )
         self.setMinimumHeight(80)
 
@@ -66,6 +87,7 @@ class WeatherGraphWidget(QWidget):
         self._bg_color = bg_color
         self._report_source = report_source
         self._days: list[DailyForecastPoint] = []
+        self._lane_icons: dict[str, QPixmap] = _load_lane_icons()
 
         self.setStyleSheet(f"WeatherGraphWidget {{ background-color: {bg_color}; }}")
 
@@ -154,6 +176,7 @@ class WeatherGraphWidget(QWidget):
         v_max: float,
         unit: str,
         bar_mode: bool = False,
+        icons: list[tuple[str, str]] | None = None,  # [(icon_key, border_color), ...]
     ) -> None:
         n = len(self._days)
         if n == 0:
@@ -166,16 +189,56 @@ class WeatherGraphWidget(QWidget):
             )
             return
 
-        y_axis_width = 44
-        chart_left = y_axis_width
-        chart_right = width - 4
+        # --- Lane icons (left of Y-axis labels) ---
+        if icons:
+            icon_total = _ICON_SIZE + _ICON_BORDER * 2
+            icon_x = 4
+            if len(icons) == 1:
+                y_offsets = [height / 2]
+            else:
+                y_offsets = [height * (i + 1) / (len(icons) + 1) for i in range(len(icons))]
+
+            for (icon_key, border_color), cy in zip(icons, y_offsets):
+                pixmap = self._lane_icons.get(icon_key)
+                if pixmap is None or pixmap.isNull():
+                    continue
+                y = int(cy - icon_total / 2)
+
+                # Border box
+                border_x = icon_x
+                border_y = y
+                border_w = icon_total
+                border_h = icon_total
+                painter.setPen(QPen(QColor(border_color), _ICON_BORDER))
+                painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
+                painter.drawRect(border_x, border_y, border_w, border_h)
+
+                # Scaled icon centred inside border
+                painter.setPen(QPen(Qt.PenStyle.NoPen))
+                target_size = border_w - _ICON_BORDER * 2
+                scaled = pixmap.scaled(
+                    target_size, target_size,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                # Centre the scaled pixmap within the inner box
+                draw_x = icon_x + _ICON_BORDER + (target_size - scaled.width()) // 2
+                draw_y = y + _ICON_BORDER + (target_size - scaled.height()) // 2
+                painter.drawPixmap(draw_x, draw_y, scaled)
+
+        # --- Chart geometry ---
+        chart_left = _LEFT_MARGIN
+        chart_right = width - _RIGHT_MARGIN
         chart_width = chart_right - chart_left
+        plot_top = _TOP_PADDING
+        plot_bottom = height - _BOTTOM_PADDING
+        plot_height = plot_bottom - plot_top
 
         # Grid lines + Y-axis labels (3 lines: min, mid, max)
         painter.setFont(QFont("Arial", 9))
         for i in range(3):
             ratio = i / 2
-            y = height - (height * ratio)
+            y = plot_bottom - (plot_height * ratio)
             painter.setPen(QPen(QColor(_GRID_COLOR), 1))
             painter.drawLine(int(chart_left), int(y), int(chart_right), int(y))
 
@@ -188,14 +251,14 @@ class WeatherGraphWidget(QWidget):
                 label = f"{val:.0f}"
 
             painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
-            label_rect = QRectF(0, y - 8, y_axis_width - 4, 16)
+            label_rect = QRectF(4, y - 8, _LEFT_MARGIN - 8, 16)
             painter.drawText(label_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, label)
 
         # Bottom axis
         painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
-        painter.drawLine(int(chart_left), int(height), int(chart_right), int(height))
+        painter.drawLine(int(chart_left), int(plot_bottom), int(chart_right), int(plot_bottom))
 
-        # X/Y position helpers (closures capturing local scope)
+        # X/Y position helpers
         def x_pos(i: int) -> float:
             if n == 1:
                 return chart_left + chart_width / 2
@@ -203,12 +266,12 @@ class WeatherGraphWidget(QWidget):
 
         def y_pos(value: float) -> float:
             ratio = (value - v_min) / (v_max - v_min)
-            return height - (height * ratio)
+            return plot_bottom - (plot_height * ratio)
 
         # Draw each series
         for vals, color in series:
             if bar_mode:
-                self._draw_bars(painter, vals, color, x_pos, y_pos, height, chart_width)
+                self._draw_bars(painter, vals, color, x_pos, y_pos, plot_bottom, chart_width)
             else:
                 self._draw_line(painter, vals, color, x_pos, y_pos)
 
@@ -260,24 +323,31 @@ class WeatherGraphWidget(QWidget):
             ([d.min_temperature_c for d in self._days], _TEMP_MIN_COLOR),
             ([d.max_feels_like_c for d in self._days], _FEELS_LIKE_COLOR),
         ]
-        self._draw_lane(painter, width, height, series, v_min, v_max, unit="C")
+        icons = [
+            ("temp_high", _TEMP_MAX_COLOR),
+            ("temp_feel", _FEELS_LIKE_COLOR),
+            ("temp_low", _TEMP_MIN_COLOR),
+        ]
+        self._draw_lane(painter, width, height, series, v_min, v_max, unit="C", icons=icons)
 
     def _paint_rain_lane(self, painter: QPainter, width: int, height: int) -> None:
         series = [([d.rain_probability_pct for d in self._days], _RAIN_COLOR)]
-        self._draw_lane(painter, width, height, series, 0.0, 100.0, unit="%")
+        icons = [("rain_pct", _RAIN_COLOR)]
+        self._draw_lane(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons)
 
     def _paint_uv_lane(self, painter: QPainter, width: int, height: int) -> None:
         series = [([d.uv_index_max for d in self._days], _UV_COLOR)]
-        v_max = max((float(d.uv_index_max) for d in self._days if d.uv_index_max is not None), default=10.0) + 1.0
-        self._draw_lane(painter, width, height, series, 0.0, v_max, unit="", bar_mode=True)
+        icons = [("uv_index", _UV_COLOR)]
+        self._draw_lane(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons)
 
     def _paint_wind_lane(self, painter: QPainter, width: int, height: int) -> None:
         series = [([d.wind_speed_midday_mph for d in self._days], _WIND_COLOR)]
+        icons = [("wind", _WIND_COLOR)]
         v_max = max(
             (float(d.wind_speed_midday_mph) for d in self._days if d.wind_speed_midday_mph is not None),
             default=20.0,
         ) + 5.0
-        self._draw_lane(painter, width, height, series, 0.0, v_max, unit="mph")
+        self._draw_lane(painter, width, height, series, 0.0, v_max, unit="mph", icons=icons)
 
     # ------------------------------------------------------------------
     # Date labels (painted at the bottom of the main widget)
@@ -295,8 +365,8 @@ class WeatherGraphWidget(QWidget):
     def _draw_date_labels(self, painter: QPainter) -> None:
         n = len(self._days)
         w = self.width()
-        left_margin = 44
-        right_margin = 4
+        left_margin = _LEFT_MARGIN
+        right_margin = _RIGHT_MARGIN
         chart_width = w - left_margin - right_margin
 
         painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
