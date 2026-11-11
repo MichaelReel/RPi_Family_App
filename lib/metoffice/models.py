@@ -4,6 +4,22 @@ from decimal import Decimal
 
 
 @dataclass
+class HourlyForecastPoint:
+    time: datetime
+    screen_temperature_c: Decimal | None
+    feels_like_temperature_c: Decimal | None
+    wind_speed_10m_mph: Decimal | None
+    wind_gust_10m_mph: Decimal | None
+    wind_direction_10m_deg: int | None
+    relative_humidity_pct: Decimal | None
+    precipitation_rate_mmh: Decimal | None
+    total_precip_amount_mm: Decimal | None
+    prob_of_precipitation_pct: int | None
+    uv_index: int | None
+    significant_weather_code: int | None
+
+
+@dataclass
 class DailyForecastPoint:
     date: datetime
     max_temperature_c: Decimal | None
@@ -24,3 +40,4 @@ class HumanReadableWeatherReport:
     coordinates: list[Decimal]
     model_run_at: datetime
     forecast_days: list[DailyForecastPoint]
+    forecast_hourly: list[HourlyForecastPoint]

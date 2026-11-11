@@ -2,13 +2,13 @@
 from logging import Logger, getLogger
 from typing import Final
 
-from PyQt6.QtCore import QRectF, Qt
+from PyQt6.QtCore import QRectF, Qt, QRect
 from PyQt6.QtGui import QColor, QPen, QPainter, QFont, QBrush, QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
 
 from collections.abc import Callable
 from lib.metoffice.icons import load_stats_icons
-from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
+from lib.metoffice.models import DailyForecastPoint, HourlyForecastPoint, HumanReadableWeatherReport
 
 _LOGGER: Final[Logger] = getLogger(__name__)
 
@@ -87,6 +87,7 @@ class WeatherGraphWidget(QWidget):
         self._bg_color = bg_color
         self._report_source = report_source
         self._days: list[DailyForecastPoint] = []
+        self._hourly: list[HourlyForecastPoint] = []
         self._lane_icons: dict[str, QPixmap] = _load_lane_icons()
 
         self.setStyleSheet(f"WeatherGraphWidget {{ background-color: {bg_color}; }}")
@@ -138,6 +139,7 @@ class WeatherGraphWidget(QWidget):
             return
 
         self._days = report.forecast_days[1:8]
+        self._hourly = report.forecast_hourly
         self._repaint()
 
     def _repaint(self) -> None:
@@ -178,7 +180,36 @@ class WeatherGraphWidget(QWidget):
         bar_mode: bool = False,
         icons: list[tuple[str, str]] | None = None,  # [(icon_key, border_color), ...]
     ) -> None:
-        n = len(self._days)
+        self._draw_lane_impl(painter, width, height, series, v_min, v_max, unit, self._days, len(self._days), bar_mode, icons)
+
+    def _draw_lane_hourly(
+        self,
+        painter: QPainter,
+        width: int,
+        height: int,
+        series: list[tuple[list, str]],
+        v_min: float,
+        v_max: float,
+        unit: str,
+        bar_mode: bool = False,
+        icons: list[tuple[str, str]] | None = None,
+    ) -> None:
+        self._draw_lane_impl(painter, width, height, series, v_min, v_max, unit, self._hourly, len(self._hourly), bar_mode, icons)
+
+    def _draw_lane_impl(
+        self,
+        painter: QPainter,
+        width: int,
+        height: int,
+        series: list[tuple[list, str]],
+        v_min: float,
+        v_max: float,
+        unit: str,
+        data_points: list,
+        n: int,
+        bar_mode: bool = False,
+        icons: list[tuple[str, str]] | None = None,
+    ) -> None:
         if n == 0:
             painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
             painter.setFont(QFont("Arial", 11))
@@ -203,28 +234,21 @@ class WeatherGraphWidget(QWidget):
                 if pixmap is None or pixmap.isNull():
                     continue
                 y = int(cy - icon_total / 2)
-
-                # Border box
-                border_x = icon_x
-                border_y = y
-                border_w = icon_total
-                border_h = icon_total
+                # Border
                 painter.setPen(QPen(QColor(border_color), _ICON_BORDER))
                 painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
-                painter.drawRect(border_x, border_y, border_w, border_h)
-
-                # Scaled icon centred inside border
+                painter.drawRect(icon_x, y, icon_total, icon_total)
+                # Icon centred inside border
                 painter.setPen(QPen(Qt.PenStyle.NoPen))
-                target_size = border_w - _ICON_BORDER * 2
+                target_size = icon_total - _ICON_BORDER * 2
                 scaled = pixmap.scaled(
                     target_size, target_size,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
-                # Centre the scaled pixmap within the inner box
                 draw_x = icon_x + _ICON_BORDER + (target_size - scaled.width()) // 2
                 draw_y = y + _ICON_BORDER + (target_size - scaled.height()) // 2
-                painter.drawPixmap(draw_x, draw_y, scaled)
+                painter.drawPixmap(QRect(draw_x, draw_y, scaled.width(), scaled.height()), scaled)
 
         # --- Chart geometry ---
         chart_left = _LEFT_MARGIN
@@ -331,14 +355,24 @@ class WeatherGraphWidget(QWidget):
         self._draw_lane(painter, width, height, series, v_min, v_max, unit="C", icons=icons)
 
     def _paint_rain_lane(self, painter: QPainter, width: int, height: int) -> None:
-        series = [([d.rain_probability_pct for d in self._days], _RAIN_COLOR)]
-        icons = [("rain_pct", _RAIN_COLOR)]
-        self._draw_lane(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons)
+        if self._hourly:
+            series = [([h.prob_of_precipitation_pct for h in self._hourly], _RAIN_COLOR)]
+            icons = [("rain_pct", _RAIN_COLOR)]
+            self._draw_lane_hourly(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons)
+        else:
+            series = [([d.rain_probability_pct for d in self._days], _RAIN_COLOR)]
+            icons = [("rain_pct", _RAIN_COLOR)]
+            self._draw_lane(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons)
 
     def _paint_uv_lane(self, painter: QPainter, width: int, height: int) -> None:
-        series = [([d.uv_index_max for d in self._days], _UV_COLOR)]
-        icons = [("uv_index", _UV_COLOR)]
-        self._draw_lane(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons)
+        if self._hourly:
+            series = [([h.uv_index for h in self._hourly], _UV_COLOR)]
+            icons = [("uv_index", _UV_COLOR)]
+            self._draw_lane_hourly(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons)
+        else:
+            series = [([d.uv_index_max for d in self._days], _UV_COLOR)]
+            icons = [("uv_index", _UV_COLOR)]
+            self._draw_lane(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons)
 
     def _paint_wind_lane(self, painter: QPainter, width: int, height: int) -> None:
         series = [([d.wind_speed_midday_mph for d in self._days], _WIND_COLOR)]

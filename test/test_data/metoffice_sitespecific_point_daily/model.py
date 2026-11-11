@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 import pytest
 
-from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint
+from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint, HourlyForecastPoint
 
 
 @pytest.fixture
@@ -126,4 +126,5 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Partly cloudy",
             ),
         ],
+        forecast_hourly=[],
     )

@@ -5,7 +5,7 @@ from typing import Final
 import requests
 from requests.exceptions import RequestException
 
-from config import MET_DAILY_URL, MET_HEADERS, MET_PARAMS
+from config import MET_DAILY_URL, MET_HEADERS, MET_PARAMS, MET_HOURLY_URL
 from lib.metoffice.adapter import MetOfficeAdapter
 from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
@@ -16,9 +16,16 @@ HTTP_TIMEOUT: Final[int] = 30
 
 
 def get_human_readable_weather() -> HumanReadableWeatherReport | None:
-    # Fetch and parse data
+    # Fetch and parse daily data
+    daily_raw = _fetch_endpoint(MET_DAILY_URL)
+    hourly_raw = _fetch_endpoint(MET_HOURLY_URL)
+
+    return MetOfficeAdapter.to_human_readable(daily_raw, hourly_raw)
+
+
+def _fetch_endpoint(url: str) -> WeatherSchemaRoot | None:
     try:
-        response = requests.get(MET_DAILY_URL, headers=MET_HEADERS, params=MET_PARAMS, timeout=HTTP_TIMEOUT)
+        response = requests.get(url, headers=MET_HEADERS, params=MET_PARAMS, timeout=HTTP_TIMEOUT)
     except RequestException as req_error:
         _LOGGER.error("Exception occurred getting weather info: %s", req_error)
         return None
@@ -28,9 +35,7 @@ def get_human_readable_weather() -> HumanReadableWeatherReport | None:
         return None
 
     try:
-        raw_weather_obj: WeatherSchemaRoot = WeatherSchemaRootSchema().load(response.json())
+        return WeatherSchemaRootSchema().load(response.json())
     except requests.exceptions.JSONDecodeError as json_error:
         _LOGGER.error("Failed to parse JSON response: %s", json_error)
         return None
-
-    return MetOfficeAdapter.to_human_readable(raw_weather_obj)

@@ -29,7 +29,7 @@ def sample_weather_root() -> WeatherSchemaRoot:
 def test_adapter_transforms_metadata_correctly(sample_weather_root: WeatherSchemaRoot) -> None:
     """Verifies that the adapter cleanly parses global top-level metadata properties."""
     # Act
-    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root)
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root, None)
     
     # Assert
     assert isinstance(report, HumanReadableWeatherReport)
@@ -45,7 +45,7 @@ def test_adapter_transforms_metadata_correctly(sample_weather_root: WeatherSchem
 def test_adapter_transforms_timeseries_points(sample_weather_root: WeatherSchemaRoot) -> None:
     """Verifies the core timeline transformation loop maps attributes and data types."""
     # Act
-    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root)
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root, None)
     
     # Assert
     assert len(report.forecast_days) > 0
@@ -72,7 +72,7 @@ def test_adapter_transforms_timeseries_points(sample_weather_root: WeatherSchema
 def test_visibility_parsed_as_metres(sample_weather_root: WeatherSchemaRoot) -> None:
     """Ensures that midday or midnight visibility handles native integers instead of old text codes."""
     # Act
-    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root)
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root, None)
     first_day: DailyForecastPoint = report.forecast_days[0]
     
     # Assert
@@ -87,7 +87,7 @@ def test_adapted_output_matches_fixture_snapshot(
 ) -> None:
     """Performs a direct comparison between the adapted output and the known good snapshot fixture."""
     # Act: Run the adapter on the raw payload
-    actual_report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root)
+    actual_report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root, None)
     
     # Assert 1: Compare Top Level Metadata
     assert actual_report.location_name == expected_human_report_snapshot.location_name
@@ -125,7 +125,7 @@ def test_missing_weather_code_defaults_to_unknown(sample_weather_root: WeatherSc
     first_entry.data.pop("daySignificantWeatherCode", None)
     first_entry.data.pop("nightSignificantWeatherCode", None)
 
-    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root)
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(sample_weather_root, None)
     first_day: DailyForecastPoint = report.forecast_days[0]
 
     assert first_day.weather_code is None

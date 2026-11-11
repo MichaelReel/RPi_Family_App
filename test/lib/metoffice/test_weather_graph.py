@@ -36,6 +36,7 @@ def _make_report(days: list[DailyForecastPoint]) -> HumanReadableWeatherReport:
         coordinates=[Decimal("51.5"), Decimal("-0.1")],
         model_run_at=datetime(2026, 11, 9),
         forecast_days=days,
+        forecast_hourly=[],
     )
 
 

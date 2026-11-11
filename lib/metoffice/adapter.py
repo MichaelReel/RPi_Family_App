@@ -1,7 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
-from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint
+from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint, HourlyForecastPoint
 from lib.metoffice.domain.models import WeatherSchemaRoot, TimeSeries
 
 
@@ -32,39 +33,57 @@ WEATHER_CODE_MAP: dict[int, str] = {
 class MetOfficeAdapter:
     
     @staticmethod
-    def to_human_readable(root_data: WeatherSchemaRoot) -> HumanReadableWeatherReport:
-        """Transforms a strongly typed WeatherSchemaRoot into an application-safe HumanReadableWeatherReport."""
-        
-        # Pull out the primary feature block safely from the features list index
+    def to_human_readable(
+        daily_root: WeatherSchemaRoot | None,
+        hourly_root: WeatherSchemaRoot | None,
+    ) -> HumanReadableWeatherReport:
+        """Transforms strongly typed schema roots into an application-safe HumanReadableWeatherReport."""
+
+        location_name: str | None = None
+        coordinates: list[Decimal] = []
+        model_run_at: datetime = datetime.now(ZoneInfo("UTC"))
+
+        if daily_root:
+            feature = daily_root.features[0]
+            location_name = feature.properties.location.name if feature.properties.location else None
+            coordinates = feature.geometry.coordinates
+            model_run_at = datetime.fromisoformat(feature.properties.modelRunDate.replace("Z", "+00:00"))
+
+        days = MetOfficeAdapter._to_daily_report(daily_root)
+        hourly = MetOfficeAdapter._to_hourly_report(hourly_root)
+
+        return HumanReadableWeatherReport(
+            location_name=location_name,
+            coordinates=coordinates,
+            model_run_at=model_run_at,
+            forecast_days=days,
+            forecast_hourly=hourly,
+        )
+
+    @staticmethod
+    def _to_daily_report(root_data: WeatherSchemaRoot | None) -> list[DailyForecastPoint]:
+        """Convert daily TimeSeries entries to DailyForecastPoint list."""
+        if root_data is None:
+            return []
+
         feature = root_data.features[0]
-        
-        # Meta conversions
-        location_name: str = feature.properties.location.name if feature.properties.location else None
-        coordinates: list[Decimal] = feature.geometry.coordinates
-        model_run_at: datetime = datetime.fromisoformat(feature.properties.modelRunDate.replace("Z", "+00:00"))
-        
+        model_run_at = datetime.fromisoformat(feature.properties.modelRunDate.replace("Z", "+00:00"))
         human_days: list[DailyForecastPoint] = []
-        entry: TimeSeries
-        
+
         for entry in feature.properties.timeSeries:
-            # The inner dictionary holds dynamic, raw weather data
             raw: dict[str, int | str | Decimal] = entry.data
-            
-            # Parse date parameters
+
             raw_time: str | None = raw.get("time")
             forecast_date: datetime = datetime.fromisoformat(raw_time.replace("Z", "+00:00")) if raw_time else model_run_at
 
-            # Extract and translate the condition string
             w_code: int | None = raw.get("daySignificantWeatherCode") or raw.get("nightSignificantWeatherCode")
             condition: str = "Unknown"
             if w_code is not None:
                 condition = WEATHER_CODE_MAP.get(w_code, f"Unknown Code ({w_code})")
 
-            # Handle numeric visibility metrics natively
             raw_vis: int | float | str | None = raw.get("middayVisibility") or raw.get("midnightVisibility")
             visibility_metres: int | None = int(raw_vis) if raw_vis is not None else None
 
-            # Populate the human-readable dataclass target
             day_point: DailyForecastPoint = DailyForecastPoint(
                 date=forecast_date,
                 max_temperature_c=_to_decimal(raw.get("dayMaxScreenTemperature")),
@@ -77,13 +96,42 @@ class MetOfficeAdapter:
                 visibility_midday_metres=visibility_metres,
                 uv_index_max=_to_int(raw.get("maxUvIndex")),
                 weather_code=w_code,
-                weather_condition=condition
+                weather_condition=condition,
             )
             human_days.append(day_point)
-            
-        return HumanReadableWeatherReport(
-            location_name=location_name,
-            coordinates=coordinates,
-            model_run_at=model_run_at,
-            forecast_days=human_days
-        )
+
+        return human_days
+
+    @staticmethod
+    def _to_hourly_report(root_data: WeatherSchemaRoot | None) -> list[HourlyForecastPoint]:
+        """Convert hourly TimeSeries entries to HourlyForecastPoint list."""
+        if root_data is None:
+            return []
+
+        feature = root_data.features[0]
+        model_run_at = datetime.fromisoformat(feature.properties.modelRunDate.replace("Z", "+00:00"))
+        hourly_points: list[HourlyForecastPoint] = []
+
+        for entry in feature.properties.timeSeries:
+            raw: dict[str, int | str | Decimal] = entry.data
+
+            raw_time: str | None = raw.get("time")
+            point_time: datetime = datetime.fromisoformat(raw_time.replace("Z", "+00:00")) if raw_time else model_run_at
+
+            point = HourlyForecastPoint(
+                time=point_time,
+                screen_temperature_c=_to_decimal(raw.get("screenTemperature")),
+                feels_like_temperature_c=_to_decimal(raw.get("feelsLikeTemp")),
+                wind_speed_10m_mph=_to_decimal(raw.get("windSpeed10M")),
+                wind_gust_10m_mph=_to_decimal(raw.get("windGust10M")),
+                wind_direction_10m_deg=_to_int(raw.get("windDirection10M")),
+                relative_humidity_pct=_to_decimal(raw.get("relativeHumidity")),
+                precipitation_rate_mmh=_to_decimal(raw.get("precipitationRate")),
+                total_precip_amount_mm=_to_decimal(raw.get("totalPrecipAmount")),
+                prob_of_precipitation_pct=_to_int(raw.get("probOfPrecipitation")),
+                uv_index=_to_int(raw.get("uvIndex")),
+                significant_weather_code=_to_int(raw.get("significantWeatherCode")),
+            )
+            hourly_points.append(point)
+
+        return hourly_points
