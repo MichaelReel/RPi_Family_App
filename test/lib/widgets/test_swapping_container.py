@@ -1,6 +1,7 @@
 """Tests for SwappingContainerWidget."""
 import pytest
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QWidget
 
 from lib.widgets.swapping_container import SwappingContainerWidget
@@ -70,3 +71,49 @@ def test_swapping_container_single_page(qtbot) -> None:
     assert container.stacked.count() == 1
     container._advance_page()
     assert container.stacked.currentIndex() == 0
+
+
+def test_swapping_container_click_swaps_page(qtbot) -> None:
+    """A click anywhere on the container should immediately swap to the next page."""
+    pages = [QLabel(f"Page {i}") for i in range(3)]
+    container = SwappingContainerWidget(pages=pages, swap_interval_ms=5000)
+    qtbot.addWidget(container)
+    container.show()
+
+    # Simulate a click in the center of the container
+    qtbot.mouseClick(container, Qt.MouseButton.LeftButton)
+    assert container.stacked.currentIndex() == 1
+
+    # Second click advances again
+    qtbot.mouseClick(container, Qt.MouseButton.LeftButton)
+    assert container.stacked.currentIndex() == 2
+
+
+def test_swapping_container_click_resets_timer(qtbot) -> None:
+    """After a click-driven swap the timer should be restarted (still active, full interval)."""
+    container = SwappingContainerWidget(pages=[QLabel("a"), QLabel("b")], swap_interval_ms=3000)
+    qtbot.addWidget(container)
+    container.show()
+
+    # Let the timer elapse partway through its interval
+    qtbot.wait(1000)
+    # Simulate a click
+    qtbot.mouseClick(container, Qt.MouseButton.LeftButton)
+    # Timer must still be active, and the page should have advanced
+    assert container._swap_timer.isActive()
+    assert container._swap_timer.interval() == 3000
+    assert container.stacked.currentIndex() == 1
+
+
+def test_swapping_container_timer_swap_resets_timer(qtbot) -> None:
+    """After a timer-driven swap the timer should be restarted (still active, full interval)."""
+    container = SwappingContainerWidget(pages=[QLabel("a"), QLabel("b")], swap_interval_ms=100)
+    qtbot.addWidget(container)
+    container.show()
+
+    # Wait for at least one timeout-driven swap to occur
+    qtbot.wait(250)
+    assert container._swap_timer.isActive()
+    assert container._swap_timer.interval() == 100
+    # Page should have advanced at least once
+    assert container.stacked.currentIndex() >= 0

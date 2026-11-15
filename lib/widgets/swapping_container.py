@@ -1,8 +1,10 @@
 """Generic widget that periodically cycles through a list of contained widgets."""
+
 from logging import Logger, getLogger
 from typing import Final
 
 from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QStackedWidget, QVBoxLayout, QWidget
 
 _LOGGER: Final[Logger] = getLogger(__name__)
@@ -13,7 +15,10 @@ class SwappingContainerWidget(QWidget):
 
     Uses a QStackedWidget with one page per widget in the provided list.
     A QTimer advances to the next widget on each tick, wrapping around
-    to the first widget after the last one.
+    to the first widget after the last one. Clicking anywhere on the
+    container also immediately swaps to the next page. Every page
+    change (timer-driven or click-driven) restarts the timer so the
+    countdown to the next auto-swap begins again.
     """
 
     def __init__(
@@ -48,11 +53,29 @@ class SwappingContainerWidget(QWidget):
 
         # Timer to advance pages
         self._swap_timer: QTimer = QTimer(self)
-        self._swap_timer.timeout.connect(self._advance_page)
+        self._swap_timer.timeout.connect(self._swap_page)
         self._swap_timer.start(swap_interval_ms)
 
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Click anywhere on the container to swap to the next page immediately."""
+        self._swap_page()
+
     def _advance_page(self) -> None:
-        """Advance to the next page, wrapping around to the first."""
+        """Advance to the next page, wrapping around to the first.
+
+        .. deprecated::
+            Use :meth:`_swap_page` instead; retained for backwards
+            compatibility with existing callers.
+        """
+        self._swap_page()
+
+    def _swap_page(self) -> None:
+        """Advance to the next page (wrapping around) and restart the swap timer.
+
+        Called both by the timer timeout and by user clicks so the countdown
+        to the next auto-swap is reset whenever the page changes.
+        """
         current: int = self.stacked.currentIndex()
         next_index: int = (current + 1) % self._page_count
         self.stacked.setCurrentIndex(next_index)
+        self._swap_timer.start(self._swap_timer.interval())
