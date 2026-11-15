@@ -10,6 +10,7 @@ _METOFFICE_URL: Final[str] = "https://data.hub.api.metoffice.gov.uk/"
 
 MET_DAILY_URL: Final[str] = _METOFFICE_URL + "sitespecific/v0/point/daily"
 MET_HOURLY_URL: Final[str] = _METOFFICE_URL + "sitespecific/v0/point/hourly"
+MET_THREE_HOURLY_URL: Final[str] = _METOFFICE_URL + "sitespecific/v0/point/three-hourly"
 MET_HEADERS: Final[dict[str, str]] = {
     "apikey": _API_KEY,
     "accept": "application/json"
