@@ -379,7 +379,10 @@ class WeatherGraphWidget(QWidget):
 
     def _paint_temp_lane(self, painter: QPainter, width: int, height: int) -> None:
         if self._hourly:
-            hourly_series = [([h.screen_temperature_c for h in self._hourly], _TEMP_MAX_COLOR)]
+            hourly_series = [
+                ([h.screen_temperature_c for h in self._hourly], _TEMP_MAX_COLOR),
+                ([h.feels_like_temperature_c for h in self._hourly], _FEELS_LIKE_COLOR),
+            ]
             daily_series = [
                 ([d.max_temperature_c for d in self._days], _TEMP_MAX_COLOR),
                 ([d.min_temperature_c for d in self._days], _TEMP_MIN_COLOR),
@@ -393,6 +396,8 @@ class WeatherGraphWidget(QWidget):
             for h in self._hourly:
                 if h.screen_temperature_c is not None:
                     all_vals.append(float(h.screen_temperature_c))
+                if h.feels_like_temperature_c is not None:
+                    all_vals.append(float(h.feels_like_temperature_c))
             if not all_vals:
                 v_min, v_max = 0.0, 1.0
             else:
