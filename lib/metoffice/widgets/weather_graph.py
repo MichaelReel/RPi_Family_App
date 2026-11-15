@@ -35,6 +35,9 @@ _LEFT_MARGIN: Final[int] = 90     # total left margin: icons + gap + Y-axis labe
 _RIGHT_MARGIN: Final[int] = 12
 _TOP_PADDING: Final[int] = 14     # padding above chart area (so top labels aren't clipped)
 _BOTTOM_PADDING: Final[int] = 12  # padding below chart area
+# Inset the first data point away from the Y-axis so the dot/line doesn't
+# overdraw the axis line or labels.
+_DATA_LEFT_INSET: Final[int] = 10
 
 
 def _load_lane_icons() -> dict[str, QPixmap]:
@@ -290,7 +293,13 @@ class WeatherGraphWidget(QWidget):
         # If effective_chart_width is specified (e.g. hourly data covering
         # only part of the chart), use it for x-positioning so data points
         # are compressed into the correct region.
-        data_chart_width = effective_chart_width if effective_chart_width is not None else full_chart_width
+        effective_width = effective_chart_width if effective_chart_width is not None else full_chart_width
+        # Inset the plot origin from the Y-axis so the first data point (and
+        # its dot/line) does not overdraw the axis line or Y-axis labels.
+        plot_left = chart_left + _DATA_LEFT_INSET
+        # The data region spans the (possibly compressed) effective width,
+        # measured from the inset origin.
+        plot_width = effective_width
         plot_top = _TOP_PADDING
         plot_bottom = height - _BOTTOM_PADDING
         plot_height = plot_bottom - plot_top
@@ -322,8 +331,8 @@ class WeatherGraphWidget(QWidget):
         # X/Y position helpers
         def x_pos(i: int) -> float:
             if n == 1:
-                return chart_left + data_chart_width / 2
-            return chart_left + (data_chart_width * i) / (n - 1)
+                return plot_left + plot_width / 2
+            return plot_left + (plot_width * i) / (n - 1)
 
         def y_pos(value: float) -> float:
             ratio = (value - v_min) / (v_max - v_min)
@@ -332,7 +341,7 @@ class WeatherGraphWidget(QWidget):
         # Draw each series
         for vals, color in series:
             if bar_mode:
-                self._draw_bars(painter, vals, color, x_pos, y_pos, plot_bottom, data_chart_width)
+                self._draw_bars(painter, vals, color, x_pos, y_pos, plot_bottom, plot_width)
             else:
                 self._draw_line(painter, vals, color, x_pos, y_pos)
 
