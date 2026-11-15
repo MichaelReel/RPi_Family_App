@@ -2,6 +2,9 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtCore import Qt
+
 from lib.metoffice.models import (
     DailyForecastPoint,
     HourlyForecastPoint,
@@ -284,3 +287,40 @@ def test_widget_with_fine_data_populates_all_series_and_paints(qtbot) -> None:
     for frame in widget._frames:
         frame.grab()
     widget.grab()
+
+
+def test_temp_lane_draws_midnight_gridlines(qtbot) -> None:
+    """The temp lane must paint faint vertical midnight gridlines.
+
+    Renders the lane into a pixmap and checks the midnight guide colour
+    (#3A3A5C) appears — i.e. the vertical day-boundary lines are drawn.
+    """
+    days = _make_days(8)
+    hourly = _make_hourly([(0, 10, 6, 12, 8), (1, 11, 7, 13, 9), (2, 12, 8, 14, 10)])
+    three_hourly = _make_three_hourly([(3, 5, 12, 6), (6, 4, 13, 5), (24, 6, 15, 7)])
+    report = _make_report(days, hourly=hourly, three_hourly=three_hourly)
+
+    widget = WeatherGraphWidget(report_source=lambda: report)
+    qtbot.addWidget(widget)
+    widget.resize(1200, 600)
+    widget.show()
+
+    # Grab the first lane frame (the temperature lane) and inspect its pixels.
+    frame = widget._frames[0]
+    frame.resize(frame.size())
+    pixmap = QPixmap(frame.size())
+    pixmap.fill(Qt.GlobalColor.transparent)
+    frame.render(pixmap)
+    image = pixmap.toImage()
+
+    target = QColor("#3A3A5C")
+    tol = 12  # tolerate antialiasing / blending
+    hit = 0
+    for y in range(image.height()):
+        for x in range(image.width()):
+            c = image.pixelColor(x, y)
+            if (abs(c.red() - target.red()) <= tol
+                    and abs(c.green() - target.green()) <= tol
+                    and abs(c.blue() - target.blue()) <= tol):
+                hit += 1
+    assert hit > 0, "expected midnight gridline colour to be painted in the temp lane"

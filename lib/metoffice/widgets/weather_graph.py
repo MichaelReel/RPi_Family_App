@@ -1,6 +1,7 @@
 """Widget that renders a multi-lane weather stats chart of the next 7 days."""
 from logging import Logger, getLogger
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from typing import Final
 
 from PyQt6.QtCore import QRectF, Qt, QRect
@@ -31,6 +32,9 @@ _AXIS_COLOR = "#555555"
 _TEXT_COLOR = "#cccccc"
 _GRID_COLOR = "#333355"
 _LANE_BORDER_COLOR = "#444466"
+# Vertical reference lines: faint midnight gridlines and a distinct "now" marker.
+_MIDNIGHT_COLOR = "#3A3A5C"
+_NOW_COLOR = "#E86A5E"
 
 # Layout dimensions
 _ICON_SIZE: Final[int] = 28        # icon pixel size
@@ -290,6 +294,9 @@ class WeatherGraphWidget(QWidget):
             label_rect = QRectF(4, y - 8, _LEFT_MARGIN - 8, 16)
             painter.drawText(label_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, label)
 
+        # Vertical reference lines (midnights + now), under the data series
+        self._draw_vertical_guides(painter, window_start, window_end, width, plot_top, plot_bottom)
+
         # Bottom axis
         painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
         painter.drawLine(int(chart_left), int(plot_bottom), int(chart_right), int(plot_bottom))
@@ -345,6 +352,50 @@ class WeatherGraphWidget(QWidget):
             draw_x = icon_x + _ICON_BORDER + (target_size - scaled.width()) // 2
             draw_y = y + _ICON_BORDER + (target_size - scaled.height()) // 2
             painter.drawPixmap(QRect(draw_x, draw_y, scaled.width(), scaled.height()), scaled)
+
+    def _draw_vertical_guides(
+        self,
+        painter: QPainter,
+        window_start: "datetime",
+        window_end: "datetime",
+        width: int,
+        top: int,
+        bottom: int,
+    ) -> None:
+        """Draw faint midnight gridlines and a distinct 'now' marker for a lane.
+
+        Midnights are computed in local (UK) time so each line lines up with the
+        date-boundary labels under the chart. The 'now' line is drawn only when
+        it falls within the window. Called after the horizontal grid but before
+        the data series so the lines sit on top of the grid yet under the data.
+        """
+        left = _LEFT_MARGIN
+        right = width - _RIGHT_MARGIN
+        if right <= left:
+            return
+
+        now = datetime.now(ZoneInfo("UTC"))
+        # Match the window's tz awareness so all comparisons are valid.
+        if window_start.tzinfo is None:
+            now = now.replace(tzinfo=None)
+
+        # Faint midnight gridlines.
+        midnight = (window_start + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        while midnight <= window_end:
+            x = self._x_for_time(midnight, window_start, window_end, width)
+            if left <= x <= right:
+                painter.setPen(QPen(QColor(_MIDNIGHT_COLOR), 1))
+                painter.drawLine(int(x), int(top), int(x), int(bottom))
+            midnight += timedelta(days=1)
+
+        # 'Now' marker (distinct colour + dashed), only when within the window.
+        if window_start <= now <= window_end:
+            x = self._x_for_time(now, window_start, window_end, width)
+            if left <= x <= right:
+                pen = QPen(QColor(_NOW_COLOR), 1)
+                pen.setStyle(Qt.PenStyle.DashLine)
+                painter.setPen(pen)
+                painter.drawLine(int(x), int(top), int(x), int(bottom))
 
     @staticmethod
     def _draw_line(
@@ -531,6 +582,9 @@ class WeatherGraphWidget(QWidget):
             label = f"{val:.0f}"
             label_rect = QRectF(chart_right, y - 8, _RIGHT_MARGIN + 8, 16)
             painter.drawText(label_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, label)
+
+        # Vertical reference lines (midnights + now), under the data series
+        self._draw_vertical_guides(painter, window_start, window_end, width, plot_top, plot_bottom)
 
         # Bottom axis
         painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
