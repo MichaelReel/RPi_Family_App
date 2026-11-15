@@ -193,8 +193,40 @@ class WeatherGraphWidget(QWidget):
         unit: str,
         bar_mode: bool = False,
         icons: list[tuple[str, str]] | None = None,
+        daily_series: list[tuple[list, str]] | None = None,
     ) -> None:
-        self._draw_lane_impl(painter, width, height, series, v_min, v_max, unit, self._hourly, len(self._hourly), bar_mode, icons)
+        # Compute the proportional chart width for the hourly data span.
+        # The hourly data covers 3 days out of the 7-day chart, so it should
+        # occupy the left 3/7 of the chart width, not the full width.
+        full_chart_width = width - _LEFT_MARGIN - _RIGHT_MARGIN
+        if len(self._hourly) < 2 or len(self._days) < 2:
+            effective_width = full_chart_width
+        else:
+            hourly_start = self._hourly[0].time
+            hourly_end = self._hourly[-1].time
+            days_start = self._days[0].date
+            days_end = self._days[-1].date
+            total_span = (days_end - days_start).total_seconds()
+            hourly_span = (hourly_end - hourly_start).total_seconds()
+            if total_span > 0 and hourly_span > 0:
+                effective_width = full_chart_width * (hourly_span / total_span)
+            else:
+                effective_width = full_chart_width
+
+        # If daily overlay is requested, draw the daily data first (full width),
+        # then draw hourly on top (compressed to its time span).
+        if daily_series:
+            self._draw_lane_impl(
+                painter, width, height, daily_series, v_min, v_max, unit,
+                self._days, len(self._days), bar_mode, None,
+                effective_chart_width=None,  # use full chart width
+            )
+
+        self._draw_lane_impl(
+            painter, width, height, series, v_min, v_max, unit,
+            self._hourly, len(self._hourly), bar_mode, icons,
+            effective_chart_width=effective_width,
+        )
 
     def _draw_lane_impl(
         self,
@@ -209,6 +241,7 @@ class WeatherGraphWidget(QWidget):
         n: int,
         bar_mode: bool = False,
         icons: list[tuple[str, str]] | None = None,
+        effective_chart_width: float | None = None,
     ) -> None:
         if n == 0:
             painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
@@ -253,7 +286,11 @@ class WeatherGraphWidget(QWidget):
         # --- Chart geometry ---
         chart_left = _LEFT_MARGIN
         chart_right = width - _RIGHT_MARGIN
-        chart_width = chart_right - chart_left
+        full_chart_width = chart_right - chart_left
+        # If effective_chart_width is specified (e.g. hourly data covering
+        # only part of the chart), use it for x-positioning so data points
+        # are compressed into the correct region.
+        data_chart_width = effective_chart_width if effective_chart_width is not None else full_chart_width
         plot_top = _TOP_PADDING
         plot_bottom = height - _BOTTOM_PADDING
         plot_height = plot_bottom - plot_top
@@ -285,8 +322,8 @@ class WeatherGraphWidget(QWidget):
         # X/Y position helpers
         def x_pos(i: int) -> float:
             if n == 1:
-                return chart_left + chart_width / 2
-            return chart_left + (chart_width * i) / (n - 1)
+                return chart_left + data_chart_width / 2
+            return chart_left + (data_chart_width * i) / (n - 1)
 
         def y_pos(value: float) -> float:
             ratio = (value - v_min) / (v_max - v_min)
@@ -295,7 +332,7 @@ class WeatherGraphWidget(QWidget):
         # Draw each series
         for vals, color in series:
             if bar_mode:
-                self._draw_bars(painter, vals, color, x_pos, y_pos, plot_bottom, chart_width)
+                self._draw_bars(painter, vals, color, x_pos, y_pos, plot_bottom, data_chart_width)
             else:
                 self._draw_line(painter, vals, color, x_pos, y_pos)
 
@@ -341,24 +378,57 @@ class WeatherGraphWidget(QWidget):
     # ------------------------------------------------------------------
 
     def _paint_temp_lane(self, painter: QPainter, width: int, height: int) -> None:
-        v_min, v_max = self._compute_temp_range(self._days)
-        series = [
-            ([d.max_temperature_c for d in self._days], _TEMP_MAX_COLOR),
-            ([d.min_temperature_c for d in self._days], _TEMP_MIN_COLOR),
-            ([d.max_feels_like_c for d in self._days], _FEELS_LIKE_COLOR),
-        ]
-        icons = [
-            ("temp_high", _TEMP_MAX_COLOR),
-            ("temp_feel", _FEELS_LIKE_COLOR),
-            ("temp_low", _TEMP_MIN_COLOR),
-        ]
-        self._draw_lane(painter, width, height, series, v_min, v_max, unit="C", icons=icons)
+        if self._hourly:
+            hourly_series = [([h.screen_temperature_c for h in self._hourly], _TEMP_MAX_COLOR)]
+            daily_series = [
+                ([d.max_temperature_c for d in self._days], _TEMP_MAX_COLOR),
+                ([d.min_temperature_c for d in self._days], _TEMP_MIN_COLOR),
+                ([d.max_feels_like_c for d in self._days], _FEELS_LIKE_COLOR),
+            ]
+            all_vals: list[float] = []
+            for d in self._days:
+                for val in (d.max_temperature_c, d.min_temperature_c, d.max_feels_like_c):
+                    if val is not None:
+                        all_vals.append(float(val))
+            for h in self._hourly:
+                if h.screen_temperature_c is not None:
+                    all_vals.append(float(h.screen_temperature_c))
+            if not all_vals:
+                v_min, v_max = 0.0, 1.0
+            else:
+                v_min = min(all_vals) - 1.0
+                v_max = max(all_vals) + 1.0
+                if v_max == v_min:
+                    v_max = v_min + 1.0
+            icons = [
+                ("temp_high", _TEMP_MAX_COLOR),
+                ("temp_feel", _FEELS_LIKE_COLOR),
+                ("temp_low", _TEMP_MIN_COLOR),
+            ]
+            self._draw_lane_hourly(
+                painter, width, height, hourly_series, v_min, v_max,
+                unit="C", icons=icons, daily_series=daily_series,
+            )
+        else:
+            v_min, v_max = self._compute_temp_range(self._days)
+            series = [
+                ([d.max_temperature_c for d in self._days], _TEMP_MAX_COLOR),
+                ([d.min_temperature_c for d in self._days], _TEMP_MIN_COLOR),
+                ([d.max_feels_like_c for d in self._days], _FEELS_LIKE_COLOR),
+            ]
+            icons = [
+                ("temp_high", _TEMP_MAX_COLOR),
+                ("temp_feel", _FEELS_LIKE_COLOR),
+                ("temp_low", _TEMP_MIN_COLOR),
+            ]
+            self._draw_lane(painter, width, height, series, v_min, v_max, unit="C", icons=icons)
 
     def _paint_rain_lane(self, painter: QPainter, width: int, height: int) -> None:
         if self._hourly:
             series = [([h.prob_of_precipitation_pct for h in self._hourly], _RAIN_COLOR)]
+            daily = [([d.rain_probability_pct for d in self._days], _RAIN_COLOR)]
             icons = [("rain_pct", _RAIN_COLOR)]
-            self._draw_lane_hourly(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons)
+            self._draw_lane_hourly(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons, daily_series=daily)
         else:
             series = [([d.rain_probability_pct for d in self._days], _RAIN_COLOR)]
             icons = [("rain_pct", _RAIN_COLOR)]
@@ -367,21 +437,39 @@ class WeatherGraphWidget(QWidget):
     def _paint_uv_lane(self, painter: QPainter, width: int, height: int) -> None:
         if self._hourly:
             series = [([h.uv_index for h in self._hourly], _UV_COLOR)]
+            daily = [([d.uv_index_max for d in self._days], _UV_COLOR)]
             icons = [("uv_index", _UV_COLOR)]
-            self._draw_lane_hourly(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons)
+            self._draw_lane_hourly(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons, daily_series=daily)
         else:
             series = [([d.uv_index_max for d in self._days], _UV_COLOR)]
             icons = [("uv_index", _UV_COLOR)]
             self._draw_lane(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons)
 
     def _paint_wind_lane(self, painter: QPainter, width: int, height: int) -> None:
-        series = [([d.wind_speed_midday_mph for d in self._days], _WIND_COLOR)]
-        icons = [("wind", _WIND_COLOR)]
-        v_max = max(
-            (float(d.wind_speed_midday_mph) for d in self._days if d.wind_speed_midday_mph is not None),
-            default=20.0,
-        ) + 5.0
-        self._draw_lane(painter, width, height, series, 0.0, v_max, unit="mph", icons=icons)
+        if self._hourly:
+            hourly_series = [([h.wind_speed_10m_mph for h in self._hourly], _WIND_COLOR)]
+            daily_series = [([d.wind_speed_midday_mph for d in self._days], _WIND_COLOR)]
+            all_vals: list[float] = []
+            for d in self._days:
+                if d.wind_speed_midday_mph is not None:
+                    all_vals.append(float(d.wind_speed_midday_mph))
+            for h in self._hourly:
+                if h.wind_speed_10m_mph is not None:
+                    all_vals.append(float(h.wind_speed_10m_mph))
+            v_max = max(all_vals, default=20.0) + 5.0
+            icons = [("wind", _WIND_COLOR)]
+            self._draw_lane_hourly(
+                painter, width, height, hourly_series, 0.0, v_max,
+                unit="mph", icons=icons, daily_series=daily_series,
+            )
+        else:
+            series = [([d.wind_speed_midday_mph for d in self._days], _WIND_COLOR)]
+            icons = [("wind", _WIND_COLOR)]
+            v_max = max(
+                (float(d.wind_speed_midday_mph) for d in self._days if d.wind_speed_midday_mph is not None),
+                default=20.0,
+            ) + 5.0
+            self._draw_lane(painter, width, height, series, 0.0, v_max, unit="mph", icons=icons)
 
     # ------------------------------------------------------------------
     # Date labels (painted at the bottom of the main widget)
