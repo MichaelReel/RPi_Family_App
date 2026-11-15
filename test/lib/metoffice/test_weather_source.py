@@ -30,6 +30,7 @@ def _make_report() -> HumanReadableWeatherReport:
         model_run_at=datetime(2026, 11, 9),
         forecast_days=[day],
         forecast_hourly=[],
+        forecast_three_hourly=[],
     )
 
 

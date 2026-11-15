@@ -1,5 +1,6 @@
 """Widget that renders a multi-lane weather stats chart of the next 7 days."""
 from logging import Logger, getLogger
+from datetime import datetime, timedelta
 from typing import Final
 
 from PyQt6.QtCore import QRectF, Qt, QRect
@@ -8,7 +9,12 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
 
 from collections.abc import Callable
 from lib.metoffice.icons import load_stats_icons
-from lib.metoffice.models import DailyForecastPoint, HourlyForecastPoint, HumanReadableWeatherReport
+from lib.metoffice.models import (
+    DailyForecastPoint,
+    HourlyForecastPoint,
+    HumanReadableWeatherReport,
+    ThreeHourlyForecastPoint,
+)
 
 _LOGGER: Final[Logger] = getLogger(__name__)
 
@@ -19,14 +25,12 @@ _FEELS_LIKE_COLOR = "#FFB347"
 _RAIN_COLOR = "#4ECDC4"
 _UV_COLOR = "#FFD93D"
 _WIND_COLOR = "#95E1D3"
+_WIND_GUST_COLOR = "#FFFFFF"
 
 _AXIS_COLOR = "#555555"
 _TEXT_COLOR = "#cccccc"
 _GRID_COLOR = "#333355"
 _LANE_BORDER_COLOR = "#444466"
-
-# Fixed UV axis range (WHO UV index scale 0–11)
-_UV_AXIS_MAX: Final[float] = 11.0
 
 # Layout dimensions
 _ICON_SIZE: Final[int] = 28        # icon pixel size
@@ -71,13 +75,14 @@ class _LaneFrame(QFrame):
 
 
 class WeatherGraphWidget(QWidget):
-    """Renders a multi-lane chart of the next 7 days of weather stats.
+    """Renders a multi-lane chart of the coming days of weather stats.
 
     Lanes (top to bottom):
-    - Max, Min & Feels-like Temperature (C)
-    - Rain Probability (%)
-    - UV Index (bar chart)
-    - Wind Speed (mph)
+    - Temperature (C): min, max and feels-like, each as one continuous line
+      built from the dense 1-hourly points then the coarser 3-hourly points.
+    - Rain probability (%) and UV index: two independent sub-axes side by side,
+      each a continuous line.
+    - Wind (mph): average speed and gust, each a continuous line.
     """
 
     def __init__(
@@ -91,6 +96,7 @@ class WeatherGraphWidget(QWidget):
         self._report_source = report_source
         self._days: list[DailyForecastPoint] = []
         self._hourly: list[HourlyForecastPoint] = []
+        self._three_hourly: list[ThreeHourlyForecastPoint] = []
         self._lane_icons: dict[str, QPixmap] = _load_lane_icons()
 
         self.setStyleSheet(f"WeatherGraphWidget {{ background-color: {bg_color}; }}")
@@ -111,11 +117,10 @@ class WeatherGraphWidget(QWidget):
 
         # Lane frames
         self._temp_frame = _LaneFrame(self._paint_temp_lane, bg_color)
-        self._rain_frame = _LaneFrame(self._paint_rain_lane, bg_color)
-        self._uv_frame = _LaneFrame(self._paint_uv_lane, bg_color)
+        self._rain_uv_frame = _LaneFrame(self._paint_rain_uv_lane, bg_color)
         self._wind_frame = _LaneFrame(self._paint_wind_lane, bg_color)
 
-        self._frames = [self._temp_frame, self._rain_frame, self._uv_frame, self._wind_frame]
+        self._frames = [self._temp_frame, self._rain_uv_frame, self._wind_frame]
         for frame in self._frames:
             layout.addWidget(frame, 1)
 
@@ -132,17 +137,22 @@ class WeatherGraphWidget(QWidget):
         except Exception:
             _LOGGER.exception("Error fetching weather report for graph")
             self._days = []
+            self._hourly = []
+            self._three_hourly = []
             self._repaint()
             return
 
         if report is None:
             _LOGGER.error("No weather report available for graph")
             self._days = []
+            self._hourly = []
+            self._three_hourly = []
             self._repaint()
             return
 
         self._days = report.forecast_days[1:8]
         self._hourly = report.forecast_hourly
+        self._three_hourly = getattr(report, "forecast_three_hourly", []) or []
         self._repaint()
 
     def _repaint(self) -> None:
@@ -150,156 +160,112 @@ class WeatherGraphWidget(QWidget):
             frame.update()
 
     # ------------------------------------------------------------------
-    # Shared drawing helpers
+    # Series construction (dense hourly -> coarser three-hourly, deduped)
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _compute_temp_range(days: list[DailyForecastPoint]) -> tuple[float, float]:
-        all_vals: list[float] = []
-        for d in days:
-            if d.max_temperature_c is not None:
-                all_vals.append(float(d.max_temperature_c))
-            if d.min_temperature_c is not None:
-                all_vals.append(float(d.min_temperature_c))
-            if d.max_feels_like_c is not None:
-                all_vals.append(float(d.max_feels_like_c))
-        if not all_vals:
-            return 0.0, 1.0
-        v_min = min(all_vals) - 1.0
-        v_max = max(all_vals) + 1.0
-        if v_max == v_min:
-            v_max = v_min + 1.0
-        return v_min, v_max
+    def _continuous_series(
+        hourly: list[HourlyForecastPoint],
+        three_hourly: list[ThreeHourlyForecastPoint],
+        hourly_getter: Callable[[HourlyForecastPoint], float | None],
+        three_hourly_getter: Callable[[ThreeHourlyForecastPoint], float | None],
+    ) -> list[tuple["datetime", float | None]]:
+        """Build one time-ordered series by stitching dense hourly points onto
+        the coarser three-hourly points.
+
+        Hourly points always take precedence: a three-hourly point whose
+        timestamp already appears among the hourly points is dropped so the two
+        series never overlap. The result is sorted by time.
+        """
+        series: list[tuple["datetime", float | None]] = []
+        hourly_times: set["datetime"] = set()
+        for hp in hourly:
+            series.append((hp.time, hourly_getter(hp)))
+            hourly_times.add(hp.time)
+
+        for thp in three_hourly:
+            if thp.time in hourly_times:
+                continue  # hourly data takes precedence at shared timestamps
+            series.append((thp.time, three_hourly_getter(thp)))
+
+        series.sort(key=lambda item: item[0])
+        return series
+
+    # ------------------------------------------------------------------
+    # Time-window / x-positioning helpers
+    # ------------------------------------------------------------------
+
+    def _time_window(self) -> tuple["datetime", "datetime"]:
+        """Return the (start, end) of the full plotting window.
+
+        The window is the span covered by the fine-grained forecast (hourly +
+        three-hourly). When that is unavailable (e.g. tests using daily data
+        only) it falls back to the daily-day window.
+        """
+        start: "datetime | None" = None
+        end: "datetime | None" = None
+        for hp in self._hourly:
+            if start is None or hp.time < start:
+                start = hp.time
+            if end is None or hp.time > end:
+                end = hp.time
+        for thp in self._three_hourly:
+            if start is None or thp.time < start:
+                start = thp.time
+            if end is None or thp.time > end:
+                end = thp.time
+
+        if start is not None and end is not None and end > start:
+            return start, end
+
+        if self._days:
+            first = self._days[0].date
+            last = self._days[-1].date
+            if last > first:
+                return first, last
+
+        now = datetime.now()
+        return now, now + timedelta(days=1)
+
+    def _x_for_time(self, t: "datetime", start: "datetime", end: "datetime", width: int) -> float:
+        """Map a time to a pixel x within the lane, insetting from the Y-axis."""
+        span = (end - start).total_seconds()
+        if span <= 0:
+            return _LEFT_MARGIN + _DATA_LEFT_INSET + (width - _LEFT_MARGIN - _RIGHT_MARGIN) / 2
+        chart_width = width - _LEFT_MARGIN - _RIGHT_MARGIN
+        ratio = (t - start).total_seconds() / span
+        return _LEFT_MARGIN + _DATA_LEFT_INSET + ratio * chart_width
+
+    # ------------------------------------------------------------------
+    # Shared drawing helpers
+    # ------------------------------------------------------------------
 
     def _draw_lane(
         self,
         painter: QPainter,
         width: int,
         height: int,
-        series: list[tuple[list, str]],
+        series: list[tuple[list[tuple["datetime", float | None]], str]],
         v_min: float,
         v_max: float,
         unit: str,
-        bar_mode: bool = False,
-        icons: list[tuple[str, str]] | None = None,  # [(icon_key, border_color), ...]
-    ) -> None:
-        self._draw_lane_impl(painter, width, height, series, v_min, v_max, unit, self._days, len(self._days), bar_mode, icons)
-
-    def _draw_lane_hourly(
-        self,
-        painter: QPainter,
-        width: int,
-        height: int,
-        series: list[tuple[list, str]],
-        v_min: float,
-        v_max: float,
-        unit: str,
-        bar_mode: bool = False,
         icons: list[tuple[str, str]] | None = None,
-        daily_series: list[tuple[list, str]] | None = None,
     ) -> None:
-        # Compute the proportional chart width for the hourly data span.
-        # The hourly data covers 3 days out of the 7-day chart, so it should
-        # occupy the left 3/7 of the chart width, not the full width.
-        full_chart_width = width - _LEFT_MARGIN - _RIGHT_MARGIN
-        if len(self._hourly) < 2 or len(self._days) < 2:
-            effective_width = full_chart_width
-        else:
-            hourly_start = self._hourly[0].time
-            hourly_end = self._hourly[-1].time
-            days_start = self._days[0].date
-            days_end = self._days[-1].date
-            total_span = (days_end - days_start).total_seconds()
-            hourly_span = (hourly_end - hourly_start).total_seconds()
-            if total_span > 0 and hourly_span > 0:
-                effective_width = full_chart_width * (hourly_span / total_span)
-            else:
-                effective_width = full_chart_width
-
-        # If daily overlay is requested, draw the daily data first (full width),
-        # then draw hourly on top (compressed to its time span).
-        if daily_series:
-            self._draw_lane_impl(
-                painter, width, height, daily_series, v_min, v_max, unit,
-                self._days, len(self._days), bar_mode, None,
-                effective_chart_width=None,  # use full chart width
-            )
-
-        self._draw_lane_impl(
-            painter, width, height, series, v_min, v_max, unit,
-            self._hourly, len(self._hourly), bar_mode, icons,
-            effective_chart_width=effective_width,
-        )
-
-    def _draw_lane_impl(
-        self,
-        painter: QPainter,
-        width: int,
-        height: int,
-        series: list[tuple[list, str]],
-        v_min: float,
-        v_max: float,
-        unit: str,
-        data_points: list,
-        n: int,
-        bar_mode: bool = False,
-        icons: list[tuple[str, str]] | None = None,
-        effective_chart_width: float | None = None,
-    ) -> None:
-        if n == 0:
+        """Paint one lane: grid + axis labels, lane icons, and one line per series."""
+        if not any(pts for pts, _ in series):
+            self._draw_lane_icons(painter, width, height, icons)
             painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
             painter.setFont(QFont("Arial", 11))
-            painter.drawText(
-                QRectF(0, 0, width, height),
-                Qt.AlignmentFlag.AlignCenter,
-                "No data available",
-            )
+            painter.drawText(QRectF(0, 0, width, height), Qt.AlignmentFlag.AlignCenter, "No data available")
             return
 
-        # --- Lane icons (left of Y-axis labels) ---
-        if icons:
-            icon_total = _ICON_SIZE + _ICON_BORDER * 2
-            icon_x = 4
-            if len(icons) == 1:
-                y_offsets = [height / 2]
-            else:
-                y_offsets = [height * (i + 1) / (len(icons) + 1) for i in range(len(icons))]
+        window_start, window_end = self._time_window()
 
-            for (icon_key, border_color), cy in zip(icons, y_offsets):
-                pixmap = self._lane_icons.get(icon_key)
-                if pixmap is None or pixmap.isNull():
-                    continue
-                y = int(cy - icon_total / 2)
-                # Border
-                painter.setPen(QPen(QColor(border_color), _ICON_BORDER))
-                painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
-                painter.drawRect(icon_x, y, icon_total, icon_total)
-                # Icon centred inside border
-                painter.setPen(QPen(Qt.PenStyle.NoPen))
-                target_size = icon_total - _ICON_BORDER * 2
-                scaled = pixmap.scaled(
-                    target_size, target_size,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-                draw_x = icon_x + _ICON_BORDER + (target_size - scaled.width()) // 2
-                draw_y = y + _ICON_BORDER + (target_size - scaled.height()) // 2
-                painter.drawPixmap(QRect(draw_x, draw_y, scaled.width(), scaled.height()), scaled)
+        self._draw_lane_icons(painter, width, height, icons)
 
         # --- Chart geometry ---
         chart_left = _LEFT_MARGIN
         chart_right = width - _RIGHT_MARGIN
-        full_chart_width = chart_right - chart_left
-        # If effective_chart_width is specified (e.g. hourly data covering
-        # only part of the chart), use it for x-positioning so data points
-        # are compressed into the correct region.
-        effective_width = effective_chart_width if effective_chart_width is not None else full_chart_width
-        # Inset the plot origin from the Y-axis so the first data point (and
-        # its dot/line) does not overdraw the axis line or Y-axis labels.
-        plot_left = chart_left + _DATA_LEFT_INSET
-        # The data region spans the (possibly compressed) effective width,
-        # measured from the inset origin.
-        plot_width = effective_width
         plot_top = _TOP_PADDING
         plot_bottom = height - _BOTTOM_PADDING
         plot_height = plot_bottom - plot_top
@@ -328,108 +294,129 @@ class WeatherGraphWidget(QWidget):
         painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
         painter.drawLine(int(chart_left), int(plot_bottom), int(chart_right), int(plot_bottom))
 
-        # X/Y position helpers
-        def x_pos(i: int) -> float:
-            if n == 1:
-                return plot_left + plot_width / 2
-            return plot_left + (plot_width * i) / (n - 1)
+        # X/Y position helpers (time based)
+        def x_pos(t: "datetime") -> float:
+            return self._x_for_time(t, window_start, window_end, width)
 
         def y_pos(value: float) -> float:
+            if v_max == v_min:
+                return plot_bottom
             ratio = (value - v_min) / (v_max - v_min)
             return plot_bottom - (plot_height * ratio)
 
-        # Draw each series
-        for vals, color in series:
-            if bar_mode:
-                self._draw_bars(painter, vals, color, x_pos, y_pos, plot_bottom, plot_width)
-            else:
-                self._draw_line(painter, vals, color, x_pos, y_pos)
+        # Draw each series as a continuous line
+        for points, color in series:
+            self._draw_line(painter, points, color, x_pos, y_pos)
+
+    def _draw_lane_icons(
+        self,
+        painter: QPainter,
+        width: int,
+        height: int,
+        icons: list[tuple[str, str]] | None,
+    ) -> None:
+        """Paint lane icons stacked in the left margin (shared by all lanes)."""
+        if not icons:
+            return
+        icon_total = _ICON_SIZE + _ICON_BORDER * 2
+        icon_x = 4
+        if len(icons) == 1:
+            y_offsets = [height / 2]
+        else:
+            y_offsets = [height * (i + 1) / (len(icons) + 1) for i in range(len(icons))]
+
+        for (icon_key, border_color), cy in zip(icons, y_offsets):
+            pixmap = self._lane_icons.get(icon_key)
+            if pixmap is None or pixmap.isNull():
+                continue
+            y = int(cy - icon_total / 2)
+            # Border
+            painter.setPen(QPen(QColor(border_color), _ICON_BORDER))
+            painter.setBrush(QBrush(Qt.BrushStyle.NoBrush))
+            painter.drawRect(icon_x, y, icon_total, icon_total)
+            # Icon centred inside border
+            painter.setPen(QPen(Qt.PenStyle.NoPen))
+            target_size = icon_total - _ICON_BORDER * 2
+            scaled = pixmap.scaled(
+                target_size, target_size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            draw_x = icon_x + _ICON_BORDER + (target_size - scaled.width()) // 2
+            draw_y = y + _ICON_BORDER + (target_size - scaled.height()) // 2
+            painter.drawPixmap(QRect(draw_x, draw_y, scaled.width(), scaled.height()), scaled)
 
     @staticmethod
-    def _draw_line(painter: QPainter, vals: list, color: str, x_pos, y_pos) -> None:
-        points: list[tuple[float, float]] = []
-        for i, val in enumerate(vals):
+    def _draw_line(
+        painter: QPainter,
+        points: list[tuple["datetime", float | None]],
+        color: str,
+        x_pos,
+        y_pos,
+    ) -> None:
+        pts: list[tuple[float, float]] = []
+        for t, val in points:
             if val is not None:
-                points.append((x_pos(i), y_pos(float(val))))
+                pts.append((x_pos(t), y_pos(float(val))))
 
-        if not points:
+        if not pts:
             return
 
-        if len(points) >= 2:
+        if len(pts) >= 2:
             painter.setPen(QPen(QColor(color), 2))
-            for i in range(len(points) - 1):
-                painter.drawLine(int(points[i][0]), int(points[i][1]), int(points[i + 1][0]), int(points[i + 1][1]))
+            for i in range(len(pts) - 1):
+                painter.drawLine(int(pts[i][0]), int(pts[i][1]), int(pts[i + 1][0]), int(pts[i + 1][1]))
 
-        painter.setBrush(QBrush(QColor(color)))
-        painter.setPen(QPen(QColor(color), 1))
-        for px, py in points:
-            painter.drawEllipse(int(px) - 3, int(py) - 3, 6, 6)
-
-    @staticmethod
-    def _draw_bars(painter: QPainter, vals: list, color: str, x_pos, y_pos, base_y: float, chart_width: float) -> None:
-        n = len(vals)
-        bar_width = max(10, min(36, (chart_width / max(n, 1)) * 0.55))
-        painter.setBrush(QBrush(QColor(color)))
-        painter.setPen(QPen(QColor(color), 1))
-
-        for i, val in enumerate(vals):
-            if val is None:
-                continue
-            x = x_pos(i) - bar_width / 2
-            bar_top = y_pos(float(val))
-            bar_h = base_y - bar_top
-            if bar_h < 2:
-                bar_h = 2
-            painter.drawRoundedRect(int(x), int(bar_top), int(bar_width), int(bar_h), 3, 3)
+        # With many points (dense hourly data) the per-point dots get crowded,
+        # so only draw them when the series is sparse enough.
+        if len(pts) <= 24:
+            painter.setBrush(QBrush(QColor(color)))
+            painter.setPen(QPen(QColor(color), 1))
+            for px, py in pts:
+                painter.drawEllipse(int(px) - 3, int(py) - 3, 6, 6)
 
     # ------------------------------------------------------------------
     # Per-lane paint callbacks (called by _LaneFrame.paintEvent)
     # ------------------------------------------------------------------
 
     def _paint_temp_lane(self, painter: QPainter, width: int, height: int) -> None:
-        if self._hourly:
-            hourly_series = [
-                ([h.screen_temperature_c for h in self._hourly], _TEMP_MAX_COLOR),
-                ([h.feels_like_temperature_c for h in self._hourly], _FEELS_LIKE_COLOR),
-            ]
-            daily_series = [
-                ([d.max_temperature_c for d in self._days], _TEMP_MAX_COLOR),
-                ([d.min_temperature_c for d in self._days], _TEMP_MIN_COLOR),
-                ([d.max_feels_like_c for d in self._days], _FEELS_LIKE_COLOR),
-            ]
-            all_vals: list[float] = []
-            for d in self._days:
-                for val in (d.max_temperature_c, d.min_temperature_c, d.max_feels_like_c):
-                    if val is not None:
-                        all_vals.append(float(val))
-            for h in self._hourly:
-                if h.screen_temperature_c is not None:
-                    all_vals.append(float(h.screen_temperature_c))
-                if h.feels_like_temperature_c is not None:
-                    all_vals.append(float(h.feels_like_temperature_c))
-            if not all_vals:
-                v_min, v_max = 0.0, 1.0
-            else:
-                v_min = min(all_vals) - 1.0
-                v_max = max(all_vals) + 1.0
-                if v_max == v_min:
-                    v_max = v_min + 1.0
+        if self._hourly or self._three_hourly:
+            min_series = self._continuous_series(
+                self._hourly, self._three_hourly,
+                lambda h: float(h.min_screen_temperature_c) if h.min_screen_temperature_c is not None else None,
+                lambda t: float(t.min_screen_temperature_c) if t.min_screen_temperature_c is not None else None,
+            )
+            max_series = self._continuous_series(
+                self._hourly, self._three_hourly,
+                lambda h: float(h.max_screen_temperature_c) if h.max_screen_temperature_c is not None else None,
+                lambda t: float(t.max_screen_temperature_c) if t.max_screen_temperature_c is not None else None,
+            )
+            feels_series = self._continuous_series(
+                self._hourly, self._three_hourly,
+                lambda h: float(h.feels_like_temperature_c) if h.feels_like_temperature_c is not None else None,
+                lambda t: float(t.feels_like_temperature_c) if t.feels_like_temperature_c is not None else None,
+            )
+            all_vals = self._collect_values([min_series, max_series, feels_series])
+            v_min, v_max = self._range_from_values(all_vals, pad=1.0)
             icons = [
                 ("temp_high", _TEMP_MAX_COLOR),
                 ("temp_feel", _FEELS_LIKE_COLOR),
                 ("temp_low", _TEMP_MIN_COLOR),
             ]
-            self._draw_lane_hourly(
-                painter, width, height, hourly_series, v_min, v_max,
-                unit="C", icons=icons, daily_series=daily_series,
+            self._draw_lane(
+                painter, width, height,
+                [(min_series, _TEMP_MIN_COLOR), (max_series, _TEMP_MAX_COLOR), (feels_series, _FEELS_LIKE_COLOR)],
+                v_min, v_max, unit="C", icons=icons,
             )
         else:
-            v_min, v_max = self._compute_temp_range(self._days)
+            # Defensive fallback: daily data only (e.g. tests without fine data).
             series = [
-                ([d.max_temperature_c for d in self._days], _TEMP_MAX_COLOR),
-                ([d.min_temperature_c for d in self._days], _TEMP_MIN_COLOR),
-                ([d.max_feels_like_c for d in self._days], _FEELS_LIKE_COLOR),
+                (self._daily_series(self._days, lambda d: d.min_temperature_c), _TEMP_MIN_COLOR),
+                (self._daily_series(self._days, lambda d: d.max_temperature_c), _TEMP_MAX_COLOR),
+                (self._daily_series(self._days, lambda d: d.max_feels_like_c), _FEELS_LIKE_COLOR),
             ]
+            all_vals = self._collect_values([s for s, _ in series])
+            v_min, v_max = self._range_from_values(all_vals, pad=1.0)
             icons = [
                 ("temp_high", _TEMP_MAX_COLOR),
                 ("temp_feel", _FEELS_LIKE_COLOR),
@@ -437,53 +424,168 @@ class WeatherGraphWidget(QWidget):
             ]
             self._draw_lane(painter, width, height, series, v_min, v_max, unit="C", icons=icons)
 
-    def _paint_rain_lane(self, painter: QPainter, width: int, height: int) -> None:
-        if self._hourly:
-            series = [([h.prob_of_precipitation_pct for h in self._hourly], _RAIN_COLOR)]
-            daily = [([d.rain_probability_pct for d in self._days], _RAIN_COLOR)]
-            icons = [("rain_pct", _RAIN_COLOR)]
-            self._draw_lane_hourly(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons, daily_series=daily)
-        else:
-            series = [([d.rain_probability_pct for d in self._days], _RAIN_COLOR)]
-            icons = [("rain_pct", _RAIN_COLOR)]
-            self._draw_lane(painter, width, height, series, 0.0, 100.0, unit="%", icons=icons)
-
-    def _paint_uv_lane(self, painter: QPainter, width: int, height: int) -> None:
-        if self._hourly:
-            series = [([h.uv_index for h in self._hourly], _UV_COLOR)]
-            daily = [([d.uv_index_max for d in self._days], _UV_COLOR)]
-            icons = [("uv_index", _UV_COLOR)]
-            self._draw_lane_hourly(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons, daily_series=daily)
-        else:
-            series = [([d.uv_index_max for d in self._days], _UV_COLOR)]
-            icons = [("uv_index", _UV_COLOR)]
-            self._draw_lane(painter, width, height, series, 0.0, _UV_AXIS_MAX, unit="", bar_mode=True, icons=icons)
-
     def _paint_wind_lane(self, painter: QPainter, width: int, height: int) -> None:
-        if self._hourly:
-            hourly_series = [([h.wind_speed_10m_mph for h in self._hourly], _WIND_COLOR)]
-            daily_series = [([d.wind_speed_midday_mph for d in self._days], _WIND_COLOR)]
-            all_vals: list[float] = []
-            for d in self._days:
-                if d.wind_speed_midday_mph is not None:
-                    all_vals.append(float(d.wind_speed_midday_mph))
-            for h in self._hourly:
-                if h.wind_speed_10m_mph is not None:
-                    all_vals.append(float(h.wind_speed_10m_mph))
-            v_max = max(all_vals, default=20.0) + 5.0
-            icons = [("wind", _WIND_COLOR)]
-            self._draw_lane_hourly(
-                painter, width, height, hourly_series, 0.0, v_max,
-                unit="mph", icons=icons, daily_series=daily_series,
+        if self._hourly or self._three_hourly:
+            avg_series = self._continuous_series(
+                self._hourly, self._three_hourly,
+                lambda h: float(h.wind_speed_10m_mph) if h.wind_speed_10m_mph is not None else None,
+                lambda t: float(t.wind_speed_10m_mph) if t.wind_speed_10m_mph is not None else None,
+            )
+            gust_series = self._continuous_series(
+                self._hourly, self._three_hourly,
+                lambda h: float(h.wind_gust_10m_mph) if h.wind_gust_10m_mph is not None else None,
+                lambda t: float(t.wind_gust_10m_mph) if t.wind_gust_10m_mph is not None else None,
+            )
+            all_vals = self._collect_values([avg_series, gust_series])
+            v_max = (max(all_vals, default=20.0) + 5.0) if all_vals else 25.0
+            icons = [("wind", _WIND_COLOR), ("wind", _WIND_GUST_COLOR)]
+            self._draw_lane(
+                painter, width, height,
+                [(avg_series, _WIND_COLOR), (gust_series, _WIND_GUST_COLOR)],
+                0.0, v_max, unit="mph", icons=icons,
             )
         else:
-            series = [([d.wind_speed_midday_mph for d in self._days], _WIND_COLOR)]
+            series = [(self._daily_series(self._days, lambda d: d.wind_speed_midday_mph), _WIND_COLOR)]
+            all_vals = self._collect_values([series[0][0]])
+            v_max = (max(all_vals, default=20.0) + 5.0) if all_vals else 25.0
             icons = [("wind", _WIND_COLOR)]
-            v_max = max(
-                (float(d.wind_speed_midday_mph) for d in self._days if d.wind_speed_midday_mph is not None),
-                default=20.0,
-            ) + 5.0
             self._draw_lane(painter, width, height, series, 0.0, v_max, unit="mph", icons=icons)
+
+    def _paint_rain_uv_lane(self, painter: QPainter, width: int, height: int) -> None:
+        if self._hourly or self._three_hourly:
+            rain_series = self._continuous_series(
+                self._hourly, self._three_hourly,
+                lambda h: float(h.prob_of_precipitation_pct) if h.prob_of_precipitation_pct is not None else None,
+                lambda t: float(t.prob_of_precipitation_pct) if t.prob_of_precipitation_pct is not None else None,
+            )
+            uv_series = self._continuous_series(
+                self._hourly, self._three_hourly,
+                lambda h: float(h.uv_index) if h.uv_index is not None else None,
+                lambda t: float(t.uv_index) if t.uv_index is not None else None,
+            )
+        else:
+            # Defensive fallback: daily data only.
+            rain_series = self._daily_series(self._days, lambda d: d.rain_probability_pct)
+            uv_series = self._daily_series(self._days, lambda d: d.uv_index_max)
+
+        icons = [("rain_pct", _RAIN_COLOR), ("uv_index", _UV_COLOR)]
+        self._draw_dual_axis_lane(painter, width, height, rain_series, uv_series, icons)
+
+    # ------------------------------------------------------------------
+    # Dual-axis lane (rain % on the left axis, UV index on the right axis)
+    # ------------------------------------------------------------------
+
+    def _draw_dual_axis_lane(
+        self,
+        painter: QPainter,
+        width: int,
+        height: int,
+        left_series: list[tuple["datetime", float | None]],
+        right_series: list[tuple["datetime", float | None]],
+        icons: list[tuple[str, str]] | None,
+    ) -> None:
+        left_max = 100.0   # rain probability 0-100
+        right_max = 11.0   # WHO UV index scale 0-11
+
+        if not (left_series or right_series):
+            self._draw_lane_icons(painter, width, height, icons)
+            painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
+            painter.setFont(QFont("Arial", 11))
+            painter.drawText(QRectF(0, 0, width, height), Qt.AlignmentFlag.AlignCenter, "No data available")
+            return
+
+        window_start, window_end = self._time_window()
+
+        self._draw_lane_icons(painter, width, height, icons)
+
+        chart_left = _LEFT_MARGIN
+        chart_right = width - _RIGHT_MARGIN
+        plot_top = _TOP_PADDING
+        plot_bottom = height - _BOTTOM_PADDING
+        plot_height = plot_bottom - plot_top
+
+        # Grid lines
+        painter.setFont(QFont("Arial", 9))
+        for i in range(3):
+            ratio = i / 2
+            y = plot_bottom - (plot_height * ratio)
+            painter.setPen(QPen(QColor(_GRID_COLOR), 1))
+            painter.drawLine(int(chart_left), int(y), int(chart_right), int(y))
+
+        # Left axis labels (rain %)
+        painter.setPen(QPen(QColor(_RAIN_COLOR), 1))
+        for i in range(3):
+            ratio = i / 2
+            y = plot_bottom - (plot_height * ratio)
+            val = left_max * ratio
+            label = f"{val:.0f}%"
+            label_rect = QRectF(4, y - 8, _LEFT_MARGIN - 8, 16)
+            painter.drawText(label_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, label)
+
+        # Right axis labels (UV index), in the right margin
+        painter.setPen(QPen(QColor(_UV_COLOR), 1))
+        for i in range(3):
+            ratio = i / 2
+            y = plot_bottom - (plot_height * ratio)
+            val = right_max * ratio
+            label = f"{val:.0f}"
+            label_rect = QRectF(chart_right, y - 8, _RIGHT_MARGIN + 8, 16)
+            painter.drawText(label_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, label)
+
+        # Bottom axis
+        painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
+        painter.drawLine(int(chart_left), int(plot_bottom), int(chart_right), int(plot_bottom))
+
+        def x_pos(t: "datetime") -> float:
+            return self._x_for_time(t, window_start, window_end, width)
+
+        def y_left(value: float) -> float:
+            if left_max == 0:
+                return plot_bottom
+            return plot_bottom - (plot_height * (value / left_max))
+
+        def y_right(value: float) -> float:
+            if right_max == 0:
+                return plot_bottom
+            return plot_bottom - (plot_height * (value / right_max))
+
+        self._draw_line(painter, left_series, _RAIN_COLOR, x_pos, y_left)
+        self._draw_line(painter, right_series, _UV_COLOR, x_pos, y_right)
+
+    # ------------------------------------------------------------------
+    # Small numeric helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _collect_values(series_list: list[list[tuple["datetime", float | None]]]) -> list[float]:
+        vals: list[float] = []
+        for series in series_list:
+            for _, v in series:
+                if v is not None:
+                    vals.append(v)
+        return vals
+
+    @staticmethod
+    def _range_from_values(vals: list[float], pad: float = 0.0) -> tuple[float, float]:
+        if not vals:
+            return 0.0, 1.0
+        v_min = min(vals) - pad
+        v_max = max(vals) + pad
+        if v_max == v_min:
+            v_max = v_min + 1.0
+        return v_min, v_max
+
+    @staticmethod
+    def _daily_series(
+        days: list[DailyForecastPoint],
+        getter: Callable[[DailyForecastPoint], float | None],
+    ) -> list[tuple["datetime", float | None]]:
+        """Fallback series built from daily data (used only when no fine data exists)."""
+        series: list[tuple["datetime", float | None]] = []
+        for d in days:
+            val = getter(d)
+            series.append((d.date, float(val) if val is not None else None))
+        return series
 
     # ------------------------------------------------------------------
     # Date labels (painted at the bottom of the main widget)

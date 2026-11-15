@@ -127,4 +127,5 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
             ),
         ],
         forecast_hourly=[],
+        forecast_three_hourly=[],
     )

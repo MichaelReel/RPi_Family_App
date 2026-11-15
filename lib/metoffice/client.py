@@ -5,7 +5,7 @@ from typing import Final
 import requests
 from requests.exceptions import RequestException
 
-from config import MET_DAILY_URL, MET_HEADERS, MET_PARAMS, MET_HOURLY_URL
+from config import MET_DAILY_URL, MET_HEADERS, MET_PARAMS, MET_HOURLY_URL, MET_THREE_HOURLY_URL
 from lib.metoffice.adapter import MetOfficeAdapter
 from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
@@ -16,11 +16,12 @@ HTTP_TIMEOUT: Final[int] = 30
 
 
 def get_human_readable_weather() -> HumanReadableWeatherReport | None:
-    # Fetch and parse daily data
+    # Fetch and parse daily, hourly and three-hourly data
     daily_raw = _fetch_endpoint(MET_DAILY_URL)
     hourly_raw = _fetch_endpoint(MET_HOURLY_URL)
+    three_hourly_raw = _fetch_endpoint(MET_THREE_HOURLY_URL)
 
-    return MetOfficeAdapter.to_human_readable(daily_raw, hourly_raw)
+    return MetOfficeAdapter.to_human_readable(daily_raw, hourly_raw, three_hourly_raw)
 
 
 def _fetch_endpoint(url: str) -> WeatherSchemaRoot | None:

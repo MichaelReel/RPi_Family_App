@@ -8,7 +8,7 @@ from typing import Any
 from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
 from lib.metoffice.adapter import MetOfficeAdapter
-from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint
+from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint, ThreeHourlyForecastPoint
 
 from test.test_data.metoffice_sitespecific_point_daily.model import expected_human_report_snapshot
 
@@ -130,3 +130,97 @@ def test_missing_weather_code_defaults_to_unknown(sample_weather_root: WeatherSc
 
     assert first_day.weather_code is None
     assert first_day.weather_condition == "Unknown"
+
+
+@pytest.fixture
+def sample_three_hourly_root() -> WeatherSchemaRoot:
+    """Load the 3-hourly sample JSON and deserialise it using the schema."""
+    file_path = Path("test/test_data/metoffice_sitespecific_point_threehourly/domain.json").resolve()
+    with open(file_path, "r", encoding="utf-8") as file:
+        json_data: Any = json.load(file)
+    schema: WeatherSchemaRootSchema = WeatherSchemaRootSchema()
+    return schema.load(json_data)
+
+
+def test_adapter_parses_three_hourly_points(sample_three_hourly_root: WeatherSchemaRoot) -> None:
+    """The adapter should map 3-hourly keys (incl. feelsLikeTemp/min|maxScreenAirTemp)."""
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(
+        None, None, sample_three_hourly_root
+    )
+
+    assert len(report.forecast_three_hourly) == 4
+
+    first = report.forecast_three_hourly[0]
+    assert isinstance(first, ThreeHourlyForecastPoint)
+    assert isinstance(first.time, datetime)
+    assert first.time.year == 2026 and first.time.month == 11 and first.time.day == 15
+
+    # 3-hourly specific fields
+    assert first.min_screen_temperature_c == Decimal("6.1")
+    assert first.max_screen_temperature_c == Decimal("11.4")
+    # feelsLikeTemp (3-hourly key, not feelsLikeTemperature) maps to feels_like
+    assert first.feels_like_temperature_c == Decimal("5.9")
+    assert first.screen_temperature_c == Decimal("8.2")
+
+    # Shared fields
+    assert first.wind_speed_10m_mph == Decimal("6.5")
+    assert first.wind_gust_10m_mph == Decimal("12.0")
+    assert first.wind_direction_10m_deg == 220
+    assert first.prob_of_precipitation_pct == 70
+    assert first.uv_index == 0
+    assert first.significant_weather_code == 10
+
+
+def test_adapter_three_hourly_defaults_empty_when_none() -> None:
+    """When no 3-hourly root is supplied the report should carry an empty list."""
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(None, None)
+    assert report.forecast_three_hourly == []
+
+
+def test_hourly_parser_captures_min_max_screen_temp() -> None:
+    """Hourly points must expose minScreenAirTemp/maxScreenAirTemp.
+
+    Regression for the flat min/max line: the 1-hourly API returns per-point
+    min/max temps, and the adapter must map them so the temp-lane min/max
+    lines can be continuous over the first 48h (hourly span).
+    """
+    hourly_payload = {
+        "type": "FeatureCollection",
+        "parameters": [],
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-7.3, 54.3, 0]},
+                "properties": {
+                    "requestPointDistance": 0.0,
+                    "modelRunDate": "2026-11-15T16:00Z",
+                    "timeSeries": [
+                        {
+                            "time": "2026-11-15T16:00Z",
+                            "screenTemperature": 8.4,
+                            "minScreenAirTemp": 6.2,
+                            "maxScreenAirTemp": 10.1,
+                            "feelsLikeTemperature": 6.0,
+                            "windSpeed10m": 7.0,
+                            "windGustSpeed10m": 14.0,
+                            "windDirectionFrom10m": 200,
+                            "screenRelativeHumidity": 88.0,
+                            "precipitationRate": 0.1,
+                            "totalPrecipAmount": 0.5,
+                            "probOfPrecipitation": 40,
+                            "uvIndex": 1,
+                            "significantWeatherCode": 3,
+                        }
+                    ],
+                },
+            }
+        ],
+    }
+    root: WeatherSchemaRoot = WeatherSchemaRootSchema().load(hourly_payload)
+    report: HumanReadableWeatherReport = MetOfficeAdapter.to_human_readable(None, root, None)
+
+    assert len(report.forecast_hourly) == 1
+    point = report.forecast_hourly[0]
+    assert point.min_screen_temperature_c == Decimal("6.2")
+    assert point.max_screen_temperature_c == Decimal("10.1")
+    assert point.screen_temperature_c == Decimal("8.4")

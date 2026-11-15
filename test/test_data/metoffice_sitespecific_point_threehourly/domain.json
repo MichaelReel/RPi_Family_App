@@ -1,0 +1,83 @@
+{
+  "type": "FeatureCollection",
+  "parameters": [],
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-7.4058, 54.3141, 74.0]
+      },
+      "properties": {
+        "requestPointDistance": 0.0,
+        "modelRunDate": "2026-11-15T00:00Z",
+        "timeSeries": [
+          {
+            "time": "2026-11-15T00:00Z",
+            "screenTemperature": 8.2,
+            "minScreenAirTemp": 6.1,
+            "maxScreenAirTemp": 11.4,
+            "feelsLikeTemp": 5.9,
+            "windSpeed10m": 6.5,
+            "windGustSpeed10m": 12.0,
+            "windDirectionFrom10m": 220,
+            "screenRelativeHumidity": 91.0,
+            "precipitationRate": 0.3,
+            "totalPrecipAmount": 1.2,
+            "probOfPrecipitation": 70,
+            "uvIndex": 0,
+            "significantWeatherCode": 10
+          },
+          {
+            "time": "2026-11-15T03:00Z",
+            "screenTemperature": 7.8,
+            "minScreenAirTemp": 5.8,
+            "maxScreenAirTemp": 10.9,
+            "feelsLikeTemp": 5.4,
+            "windSpeed10m": 7.1,
+            "windGustSpeed10m": 13.5,
+            "windDirectionFrom10m": 230,
+            "screenRelativeHumidity": 93.0,
+            "precipitationRate": 0.5,
+            "totalPrecipAmount": 2.4,
+            "probOfPrecipitation": 85,
+            "uvIndex": 0,
+            "significantWeatherCode": 14
+          },
+          {
+            "time": "2026-11-15T06:00Z",
+            "screenTemperature": 8.4,
+            "minScreenAirTemp": 6.2,
+            "maxScreenAirTemp": 12.1,
+            "feelsLikeTemp": 6.3,
+            "windSpeed10m": 5.8,
+            "windGustSpeed10m": 10.2,
+            "windDirectionFrom10m": 210,
+            "screenRelativeHumidity": 88.0,
+            "precipitationRate": 0.1,
+            "totalPrecipAmount": 0.6,
+            "probOfPrecipitation": 40,
+            "uvIndex": 1,
+            "significantWeatherCode": 10
+          },
+          {
+            "time": "2026-11-15T09:00Z",
+            "screenTemperature": 10.6,
+            "minScreenAirTemp": 7.4,
+            "maxScreenAirTemp": 13.8,
+            "feelsLikeTemp": 8.9,
+            "windSpeed10m": 8.4,
+            "windGustSpeed10m": 16.7,
+            "windDirectionFrom10m": 245,
+            "screenRelativeHumidity": 79.0,
+            "precipitationRate": 0.0,
+            "totalPrecipAmount": 0.0,
+            "probOfPrecipitation": 10,
+            "uvIndex": 3,
+            "significantWeatherCode": 3
+          }
+        ]
+      }
+    }
+  ]
+}

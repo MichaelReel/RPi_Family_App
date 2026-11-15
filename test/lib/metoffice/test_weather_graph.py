@@ -2,7 +2,12 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
+from lib.metoffice.models import (
+    DailyForecastPoint,
+    HourlyForecastPoint,
+    ThreeHourlyForecastPoint,
+    HumanReadableWeatherReport,
+)
 from lib.metoffice.widgets.weather_graph import WeatherGraphWidget
 
 
@@ -30,13 +35,18 @@ def _make_days(count: int = 7) -> list[DailyForecastPoint]:
     return days
 
 
-def _make_report(days: list[DailyForecastPoint]) -> HumanReadableWeatherReport:
+def _make_report(
+    days: list[DailyForecastPoint],
+    hourly: list[HourlyForecastPoint] | None = None,
+    three_hourly: list[ThreeHourlyForecastPoint] | None = None,
+) -> HumanReadableWeatherReport:
     return HumanReadableWeatherReport(
         location_name="Testville",
         coordinates=[Decimal("51.5"), Decimal("-0.1")],
         model_run_at=datetime(2026, 11, 9),
         forecast_days=days,
-        forecast_hourly=[],
+        forecast_hourly=hourly or [],
+        forecast_three_hourly=three_hourly or [],
     )
 
 
@@ -94,3 +104,183 @@ def test_graph_widget_takes_next_seven_days(qtbot) -> None:
     assert len(widget._days) == 7
     assert widget._days[0] == days[1]
     assert widget._days[-1] == days[7]
+
+
+# ------------------------------------------------------------------
+# Fine-data (hourly + three-hourly) series construction and lanes
+# ------------------------------------------------------------------
+
+
+def _make_hourly(points: list[tuple[int, float, float, float, float]]) -> list[HourlyForecastPoint]:
+    """Build hourly points. Each item is (hour_offset, screen, min, max, feels)."""
+    base = datetime(2026, 11, 15)
+    out: list[HourlyForecastPoint] = []
+    for offset, temp, mn, mx, feels in points:
+        out.append(
+            HourlyForecastPoint(
+                time=base + timedelta(hours=offset),
+                screen_temperature_c=Decimal(temp),
+                min_screen_temperature_c=Decimal(mn),
+                max_screen_temperature_c=Decimal(mx),
+                feels_like_temperature_c=Decimal(feels),
+                wind_speed_10m_mph=Decimal(5),
+                wind_gust_10m_mph=Decimal(10),
+                wind_direction_10m_deg=180,
+                relative_humidity_pct=Decimal(80),
+                precipitation_rate_mmh=Decimal(0),
+                total_precip_amount_mm=Decimal(0),
+                prob_of_precipitation_pct=20,
+                uv_index=1,
+                significant_weather_code=3,
+            )
+        )
+    return out
+
+
+def _make_three_hourly(points: list[tuple[int, float, float, float]]) -> list[ThreeHourlyForecastPoint]:
+    """Build 3-hourly points. Each item is (hour_offset, min_temp, max_temp, feels)."""
+    base = datetime(2026, 11, 15)
+    out: list[ThreeHourlyForecastPoint] = []
+    for offset, mn, mx, feels in points:
+        out.append(
+            ThreeHourlyForecastPoint(
+                time=base + timedelta(hours=offset),
+                screen_temperature_c=Decimal((mn + mx) / 2),
+                min_screen_temperature_c=Decimal(mn),
+                max_screen_temperature_c=Decimal(mx),
+                feels_like_temperature_c=Decimal(feels),
+                wind_speed_10m_mph=Decimal(6),
+                wind_gust_10m_mph=Decimal(12),
+                wind_direction_10m_deg=200,
+                relative_humidity_pct=Decimal(85),
+                precipitation_rate_mmh=Decimal(0),
+                total_precip_amount_mm=Decimal(0),
+                prob_of_precipitation_pct=30,
+                uv_index=0,
+                significant_weather_code=7,
+            )
+        )
+    return out
+
+
+def test_continuous_series_dedupes_shared_timestamps_hourly_wins() -> None:
+    """Where hourly and three-hourly share a timestamp, the hourly value is used."""
+    base = datetime(2026, 11, 15)
+    hourly = [
+        HourlyForecastPoint(
+            time=base,
+            screen_temperature_c=Decimal(10),
+            min_screen_temperature_c=Decimal(4),
+            max_screen_temperature_c=Decimal(12),
+            feels_like_temperature_c=Decimal(8),
+            wind_speed_10m_mph=Decimal(5), wind_gust_10m_mph=Decimal(10),
+            wind_direction_10m_deg=180, relative_humidity_pct=Decimal(80),
+            precipitation_rate_mmh=Decimal(0), total_precip_amount_mm=Decimal(0),
+            prob_of_precipitation_pct=20, uv_index=1, significant_weather_code=3,
+        )
+    ]
+    three_hourly = [
+        ThreeHourlyForecastPoint(
+            time=base,  # shared timestamp -> must be dropped (hourly wins)
+            screen_temperature_c=Decimal(99),
+            min_screen_temperature_c=Decimal(1),
+            max_screen_temperature_c=Decimal(99),
+            feels_like_temperature_c=Decimal(99),
+            wind_speed_10m_mph=Decimal(6), wind_gust_10m_mph=Decimal(12),
+            wind_direction_10m_deg=200, relative_humidity_pct=Decimal(85),
+            precipitation_rate_mmh=Decimal(0), total_precip_amount_mm=Decimal(0),
+            prob_of_precipitation_pct=30, uv_index=0, significant_weather_code=7,
+        ),
+        ThreeHourlyForecastPoint(
+            time=base + timedelta(hours=3),  # distinct timestamp -> kept
+            screen_temperature_c=Decimal(7),
+            min_screen_temperature_c=Decimal(5),
+            max_screen_temperature_c=Decimal(12),
+            feels_like_temperature_c=Decimal(6),
+            wind_speed_10m_mph=Decimal(6), wind_gust_10m_mph=Decimal(12),
+            wind_direction_10m_deg=200, relative_humidity_pct=Decimal(85),
+            precipitation_rate_mmh=Decimal(0), total_precip_amount_mm=Decimal(0),
+            prob_of_precipitation_pct=30, uv_index=0, significant_weather_code=7,
+        ),
+    ]
+
+    series = WeatherGraphWidget._continuous_series(
+        hourly, three_hourly,
+        lambda h: float(h.screen_temperature_c) if h.screen_temperature_c is not None else None,
+        lambda t: float(t.max_screen_temperature_c) if t.max_screen_temperature_c is not None else None,
+    )
+
+    by_time = dict(series)
+    assert by_time[base] == 10.0  # hourly screen temp, not the 3-hourly max
+    assert by_time[base + timedelta(hours=3)] == 12.0  # distinct 3-hourly max kept
+    assert len(series) == 2
+
+
+def test_temp_min_max_lines_are_continuous_from_hourly() -> None:
+    """Min/max lines must use hourly min/max in the first 48h, not go blank.
+
+    Regression: the 3-hourly series only starts ~day 3, so min/max built from
+    3-hourly alone left the first 48h blank. The hourly API also exposes
+    minScreenAirTemp/maxScreenAirTemp, which must fill that span.
+    """
+    base = datetime(2026, 11, 15)
+    hourly = _make_hourly([(0, 8, 6, 11, 5), (1, 7, 5, 10, 4), (2, 6, 4, 9, 3)])
+    three_hourly = _make_three_hourly([(3, 5, 12, 6), (6, 4, 13, 5)])
+
+    min_series = WeatherGraphWidget._continuous_series(
+        hourly, three_hourly,
+        lambda h: float(h.min_screen_temperature_c),
+        lambda t: float(t.min_screen_temperature_c),
+    )
+    max_series = WeatherGraphWidget._continuous_series(
+        hourly, three_hourly,
+        lambda h: float(h.max_screen_temperature_c),
+        lambda t: float(t.max_screen_temperature_c),
+    )
+
+    # The first 48h (the 3 hourly points) are populated from the hourly min/max,
+    # not dropped as None — this is what removed the old flat/blank stretch.
+    assert [t for t, _ in min_series[:3]] == [base + timedelta(hours=i) for i in range(3)]
+    assert [v for _, v in min_series[:3]] == [6.0, 5.0, 4.0]
+    assert [v for _, v in max_series[:3]] == [11.0, 10.0, 9.0]
+
+    # The 3-hourly segment still extends the lines beyond the hourly span.
+    assert min_series[-1][1] == 4.0
+    assert max_series[-1][1] == 13.0
+
+
+def test_continuous_series_is_sorted_by_time() -> None:
+    """The merged series must be in chronological order regardless of input order."""
+    base = datetime(2026, 11, 15)
+    hourly = _make_hourly([(24, 11, 7, 15, 9)])  # later than the 3-hourly point below
+    three_hourly = _make_three_hourly([(0, 5, 12, 6)])
+
+    series = WeatherGraphWidget._continuous_series(
+        hourly, three_hourly,
+        lambda h: float(h.screen_temperature_c),
+        lambda t: float(t.screen_temperature_c),
+    )
+    assert [t for t, _ in series] == sorted([t for t, _ in series])
+    assert series[0][0] == base
+    assert series[0][1] == 8.5  # 3-hourly screen temp ((5+12)/2) at the earliest time
+
+
+def test_widget_with_fine_data_populates_all_series_and_paints(qtbot) -> None:
+    """With hourly + three-hourly data the widget stores both and paints without error."""
+    days = _make_days(8)
+    hourly = _make_hourly([(0, 10, 6, 12, 8), (1, 11, 7, 13, 9), (2, 12, 8, 14, 10)])
+    three_hourly = _make_three_hourly([(3, 5, 12, 6), (6, 4, 13, 5), (24, 6, 15, 7)])
+    report = _make_report(days, hourly=hourly, three_hourly=three_hourly)
+
+    widget = WeatherGraphWidget(report_source=lambda: report)
+    qtbot.addWidget(widget)
+    widget.show()
+
+    assert len(widget._days) == 7
+    assert len(widget._hourly) == 3
+    assert len(widget._three_hourly) == 3
+
+    # Force a full paint of every lane; must not raise.
+    for frame in widget._frames:
+        frame.grab()
+    widget.grab()
