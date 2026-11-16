@@ -324,3 +324,51 @@ def test_temp_lane_draws_midnight_gridlines(qtbot) -> None:
                     and abs(c.blue() - target.blue()) <= tol):
                 hit += 1
     assert hit > 0, "expected midnight gridline colour to be painted in the temp lane"
+
+
+def test_temp_lane_zero_c_gridline_is_bold(qtbot) -> None:
+    """The temp lane must paint a slightly bolder 0°C gridline when the range crosses it.
+
+    Renders the temperature lane into a pixmap and checks the bold grid colour
+    (_GRID_COLOR_STRONG) appears alongside the normal grid colour (_GRID_COLOR),
+    i.e. horizontal lines are drawn at every 5°C with 0°C drawn bolder.
+    """
+    from lib.metoffice.widgets.weather_graph import _GRID_COLOR, _GRID_COLOR_STRONG
+
+    days = _make_days(8)
+    # Range spans -1.0 .. 11.0 so the 0 and 5 multiples both fall in range.
+    hourly = _make_hourly([(0, 5, -1, 8, 4), (1, 4, -1, 7, 3), (2, 6, 0, 9, 5)])
+    three_hourly = _make_three_hourly([(3, -1, 10, 4), (6, 0, 11, 5)])
+    report = _make_report(days, hourly=hourly, three_hourly=three_hourly)
+
+    widget = WeatherGraphWidget(report_source=lambda: report)
+    qtbot.addWidget(widget)
+    widget.resize(1200, 600)
+    widget.show()
+
+    frame = widget._frames[0]
+    frame.resize(frame.size())
+    pixmap = QPixmap(frame.size())
+    pixmap.fill(Qt.GlobalColor.transparent)
+    frame.render(pixmap)
+    image = pixmap.toImage()
+
+    tol = 12  # tolerate antialiasing / blending
+
+    def count_near(target: QColor) -> int:
+        n = 0
+        for y in range(image.height()):
+            for x in range(image.width()):
+                c = image.pixelColor(x, y)
+                if (abs(c.red() - target.red()) <= tol
+                        and abs(c.green() - target.green()) <= tol
+                        and abs(c.blue() - target.blue()) <= tol):
+                    n += 1
+        return n
+
+    assert count_near(QColor(_GRID_COLOR_STRONG)) > 0, (
+        "expected the bold 0°C gridline colour to be painted in the temp lane"
+    )
+    assert count_near(QColor(_GRID_COLOR)) > 0, (
+        "expected the normal 5°C gridline colour to be painted in the temp lane"
+    )

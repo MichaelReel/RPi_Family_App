@@ -3,6 +3,7 @@ from logging import Logger, getLogger
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Final
+import math
 
 from PyQt6.QtCore import QRectF, Qt, QRect
 from PyQt6.QtGui import QColor, QPen, QPainter, QFont, QBrush, QPixmap
@@ -31,6 +32,7 @@ _WIND_GUST_COLOR = "#FFFFFF"
 _AXIS_COLOR = "#555555"
 _TEXT_COLOR = "#cccccc"
 _GRID_COLOR = "#333355"
+_GRID_COLOR_STRONG = "#6A6A9A"  # bold 0°C reference line (slightly bolder/brighter than _GRID_COLOR)
 _LANE_BORDER_COLOR = "#444466"
 # Vertical reference lines: faint midnight gridlines and a distinct "now" marker.
 _MIDNIGHT_COLOR = "#3A3A5C"
@@ -274,15 +276,36 @@ class WeatherGraphWidget(QWidget):
         plot_bottom = height - _BOTTOM_PADDING
         plot_height = plot_bottom - plot_top
 
-        # Grid lines + Y-axis labels (3 lines: min, mid, max)
+        # Grid lines + Y-axis labels.
+        # Temperature lane (unit == "C"): a horizontal line at every 5°C within
+        # the data range, with the 0°C line drawn slightly bolder as a reference.
+        # Other lanes: the existing 3 lines at min / mid / max of the range.
         painter.setFont(QFont("Arial", 9))
-        for i in range(3):
-            ratio = i / 2
-            y = plot_bottom - (plot_height * ratio)
-            painter.setPen(QPen(QColor(_GRID_COLOR), 1))
+        if unit == "C":
+            grid_vals = list(range(
+                math.floor(v_min / 5) * 5,
+                math.ceil(v_max / 5) * 5 + 1,
+                5,
+            ))
+            grid_items = [(val, val == 0) for val in grid_vals]
+        else:
+            grid_items = [
+                (v_min, False),
+                (v_min + (v_max - v_min) / 2, False),
+                (v_max, False),
+            ]
+        for val, is_zero in grid_items:
+            if v_max == v_min:
+                y = plot_bottom
+            else:
+                ratio = (val - v_min) / (v_max - v_min)
+                y = plot_bottom - (plot_height * ratio)
+            if is_zero:
+                painter.setPen(QPen(QColor(_GRID_COLOR_STRONG), 2))
+            else:
+                painter.setPen(QPen(QColor(_GRID_COLOR), 1))
             painter.drawLine(int(chart_left), int(y), int(chart_right), int(y))
 
-            val = v_min + (v_max - v_min) * ratio
             if unit == "C":
                 label = f"{val:.0f}\u00b0C"
             elif unit == "%":
