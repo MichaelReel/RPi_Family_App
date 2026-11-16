@@ -372,3 +372,75 @@ def test_temp_lane_zero_c_gridline_is_bold(qtbot) -> None:
     assert count_near(QColor(_GRID_COLOR)) > 0, (
         "expected the normal 5°C gridline colour to be painted in the temp lane"
     )
+
+
+def test_date_labels_are_centred_on_noon(qtbot) -> None:
+    """Each on-screen date label must be centred on that day's noon on the time axis.
+
+    Renders the parent widget and checks that every painted date-label cluster
+    sits on the x position the code computes for that day's noon via
+    _x_for_time/_time_window — i.e. the labels sit on the same time-based x as
+    the vertical guide lines, not evenly spaced across the lane width.
+    """
+    from lib.metoffice.widgets.weather_graph import _TEXT_COLOR
+
+    # Daily dates run base+1d .. base+7d. The fine-data window below spans
+    # base .. base+2.1d, so the first two daily labels (base+1d, base+2d) fall
+    # inside the window and are expected to render on screen.
+    days = _make_days(8)
+    hourly = _make_hourly([(i, 10, 6, 12, 8) for i in range(0, 52, 3)])
+    report = _make_report(days, hourly=hourly)
+
+    widget = WeatherGraphWidget(report_source=lambda: report)
+    qtbot.addWidget(widget)
+    widget.resize(1200, 600)
+    widget.show()
+    widget.grab()  # force a full paint of the parent (incl. the date labels)
+
+    pixmap = QPixmap(widget.size())
+    pixmap.fill(Qt.GlobalColor.transparent)
+    widget.render(pixmap)
+    image = pixmap.toImage()
+
+    target = QColor(_TEXT_COLOR)
+    tol = 40  # tolerate antialiasing / blending
+    label_y = widget.height() - 22
+    y_lo, y_hi = max(0, label_y - 10), min(image.height(), label_y + 12)
+
+    xs: list[int] = []
+    for y in range(y_lo, y_hi):
+        for x in range(image.width()):
+            c = image.pixelColor(x, y)
+            if (abs(c.red() - target.red()) <= tol
+                    and abs(c.green() - target.green()) <= tol
+                    and abs(c.blue() - target.blue()) <= tol):
+                xs.append(x)
+    assert xs, "expected date label text to be painted in the bottom strip"
+
+    # Cluster the label pixels into the discrete per-day labels.
+    xs.sort()
+    clusters: list[list[int]] = [[xs[0]]]
+    for x in xs[1:]:
+        if x - clusters[-1][-1] > 15:  # gap between adjacent date labels
+            clusters.append([x])
+        else:
+            clusters[-1].append(x)
+
+    window_start, window_end = widget._time_window()
+    # Expected x for every daily label that falls inside the window.
+    expected = [
+        (day.date, widget._x_for_time(day.date.replace(hour=12),
+                                      window_start, window_end, widget.width()))
+        for day in widget._days
+        if window_start <= day.date.replace(hour=12) <= window_end
+    ]
+    assert expected, "expected at least one daily label to fall within the window"
+
+    for label_centre_x, (_, exp_x) in zip(
+        (sum(cl) / len(cl) for cl in clusters),
+        sorted(expected, key=lambda e: e[1]),
+    ):
+        assert abs(label_centre_x - exp_x) < 15, (
+            f"date label centred at x={label_centre_x:.1f} does not sit on its "
+            f"day's noon x={exp_x:.1f}"
+        )

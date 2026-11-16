@@ -678,21 +678,23 @@ class WeatherGraphWidget(QWidget):
         painter.end()
 
     def _draw_date_labels(self, painter: QPainter) -> None:
-        n = len(self._days)
-        w = self.width()
-        left_margin = _LEFT_MARGIN
-        right_margin = _RIGHT_MARGIN
-        chart_width = w - left_margin - right_margin
+        if not self._days:
+            return
+
+        # Position each date label so its centre sits on that day's noon on the
+        # shared time axis. Reusing _x_for_time/_time_window means the labels are
+        # computed in the same coordinate space as the vertical guide lines, so
+        # they line up with the midnight / "now" markers.
+        window_start, window_end = self._time_window()
 
         painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
         painter.setFont(QFont("Arial", 10))
 
         # Place labels in the 28px bottom strip (below the last lane frame)
         y = self.height() - 22
-        for i, day in enumerate(self._days):
-            if n == 1:
-                x = left_margin + chart_width / 2
-            else:
-                x = left_margin + (chart_width * i) / (n - 1)
+        for day in self._days:
+            # Centre of the date = that day's local noon on the shared time axis.
+            noon = day.date.replace(hour=12)
+            x = self._x_for_time(noon, window_start, window_end, self.width())
             label = day.date.strftime("%a %d")
             painter.drawText(int(x) - 30, y, 60, 16, Qt.AlignmentFlag.AlignCenter, label)
