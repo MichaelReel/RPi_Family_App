@@ -156,10 +156,46 @@ class WeatherGraphWidget(QWidget):
             self._repaint()
             return
 
-        self._days = report.forecast_days[1:8]
+        self._days = report.forecast_days[1:8]  # the 7 days the daily API provides (today is index 0)
         self._hourly = report.forecast_hourly
         self._three_hourly = getattr(report, "forecast_three_hourly", []) or []
+        self._extend_labels_to_fine_window()
         self._repaint()
+
+    def _extend_labels_to_fine_window(self) -> None:
+        """Add a date label for the next day when the plotted fine-data window
+        extends a full extra day beyond the last daily label.
+
+        The daily API only returns today + 7 days, but the 3-hourly series runs
+        ~8 days out, so the 8th day (same weekday next week) is drawn on the
+        graph without a label. Derive that day's date from the fine-data end so
+        the X-axis covers every day that is mostly displayed.
+        """
+        if not self._hourly and not self._three_hourly:
+            return
+        if not self._days:
+            return
+        window_start, window_end = self._time_window()
+        last_label = self._days[-1].date
+        # The plotted window must extend at least a day past the last label for
+        # the next day to be meaningfully (mostly) drawn.
+        if window_end <= last_label + timedelta(days=1):
+            return
+        extra = DailyForecastPoint(
+            date=last_label + timedelta(days=1),
+            max_temperature_c=None,
+            min_temperature_c=None,
+            max_feels_like_c=None,
+            rain_probability_pct=None,
+            snow_probability_pct=None,
+            wind_speed_midday_mph=None,
+            wind_direction_midday_deg=None,
+            visibility_midday_metres=None,
+            uv_index_max=None,
+            weather_code=None,
+            weather_condition="",
+        )
+        self._days.append(extra)
 
     def _repaint(self) -> None:
         for frame in self._frames:

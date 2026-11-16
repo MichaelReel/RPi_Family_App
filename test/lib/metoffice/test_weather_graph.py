@@ -60,7 +60,7 @@ def test_graph_widget_initialisation(qtbot) -> None:
     qtbot.addWidget(widget)
     widget.show()
 
-    # Should have 7 days (indices 1-7 of the 8-day report)
+    # 8-day report: the slice forecast_days[1:9] yields indices 1-7 (7 days).
     assert len(widget._days) == 7
     assert widget._days[0].max_temperature_c == Decimal(16)
 
@@ -107,6 +107,53 @@ def test_graph_widget_takes_next_seven_days(qtbot) -> None:
     assert len(widget._days) == 7
     assert widget._days[0] == days[1]
     assert widget._days[-1] == days[7]
+
+
+def test_eighth_day_label_derived_from_fine_data(qtbot) -> None:
+    """The 8th day's date label must be derived from the fine-data window.
+
+    The daily API only returns today + 7 days, but the 3-hourly series runs ~8
+    days out. When the plotted fine-data window extends a full extra day beyond
+    the last daily label, the widget must append a synthetic label for that day
+    so the X-axis covers every day that is mostly displayed.
+    """
+    from datetime import timedelta
+
+    days = _make_days(8)  # 8 daily days: today + 7
+    # 3-hourly data extends ~8 days beyond the first daily date, so the last
+    # daily date is ~1 day behind the fine-data end.
+    base = days[0].date
+    three_hourly = [
+        ThreeHourlyForecastPoint(
+            time=base + timedelta(hours=24 * i),
+            screen_temperature_c=Decimal(10),
+            min_screen_temperature_c=Decimal(5),
+            max_screen_temperature_c=Decimal(15),
+            feels_like_temperature_c=Decimal(10),
+            wind_speed_10m_mph=Decimal(5),
+            wind_gust_10m_mph=Decimal(10),
+            wind_direction_10m_deg=180,
+            relative_humidity_pct=Decimal(80),
+            precipitation_rate_mmh=Decimal(0),
+            total_precip_amount_mm=Decimal(0),
+            prob_of_precipitation_pct=20,
+            uv_index=1,
+            significant_weather_code=3,
+        )
+        for i in range(0, 24 * 8, 6)  # every 6h for 8 days
+    ]
+    report = _make_report(days, three_hourly=three_hourly)
+    widget = WeatherGraphWidget(report_source=lambda: report)
+    qtbot.addWidget(widget)
+    widget.show()
+
+    # 7 from the daily slice + 1 derived = 8 total labels.
+    assert len(widget._days) == 8
+    assert widget._days[0] == days[1]
+    assert widget._days[7].date == days[7].date + timedelta(days=1)
+    # The synthetic label carries no stats (date only).
+    assert widget._days[7].max_temperature_c is None
+    assert widget._days[7].weather_condition == ""
 
 
 # ------------------------------------------------------------------
