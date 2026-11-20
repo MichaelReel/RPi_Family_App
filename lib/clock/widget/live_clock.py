@@ -22,6 +22,7 @@ class LiveClockWidget(QWidget):
         self._date_color: str = date_color
         self._include_day: bool = include_day
         self._include_date: bool = include_date
+        self.seconds_font_size: int = 34
         self.init_ui()
 
     def init_ui(self):
@@ -102,8 +103,7 @@ class LiveClockWidget(QWidget):
         hours_minutes = now.strftime("%H:%M")
         seconds = now.strftime("%S")
 
-        # Check if font size variable exists yet (handles startup sequence)
-        sec_size = getattr(self, "seconds_font_size", 34)
+        sec_size = self.seconds_font_size
 
         # Inject dynamic pixel sizing (px) into the HTML instead of static points (pt)
         hh_mm_html: str = (
