@@ -18,3 +18,4 @@ MET_PARAMS: Final[dict[str, str]] = {
 }
 MET_REFRESH_MS: Final[int] = 60 * 60 * 1000
 WEATHER_SWAP_MS: Final[int] = 5 * 60 * 1000
+WEATHER_ICON_DIM: Final[int] = 48
