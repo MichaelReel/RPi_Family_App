@@ -11,7 +11,7 @@ MET_HEADERS: Final[dict[str, str]] = {
     "apikey": os.environ.get("METOFFICE_API_KEY", ""),
     "accept": "application/json",
 }
-MET_PARAMS: Final[dict[str, str]] = {
+MET_PARAMS: Final[dict[str, Decimal]] = {
     "latitude": Decimal(os.environ.get("METOFFICE_LATITUDE", "54.3")),
     "longitude": Decimal(os.environ.get("METOFFICE_LONGITUDE", "-7.3")),
 }
