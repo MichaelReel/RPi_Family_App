@@ -15,9 +15,9 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        self.main_layout = QBoxLayout(QBoxLayout.Direction.TopToBottom, central_widget)
-        self.main_layout.setSpacing(10)
-        self.main_layout.setContentsMargins(10, 10, 10, 10)
+        self._main_layout = QBoxLayout(QBoxLayout.Direction.TopToBottom, central_widget)
+        self._main_layout.setSpacing(10)
+        self._main_layout.setContentsMargins(10, 10, 10, 10)
 
         bg_color: str = "#000022"
         text_color: str = "#0000aa"
@@ -28,7 +28,7 @@ class MainWindow(QMainWindow):
 
         self.setStyleSheet(f"background-color: {bg_color};color: {text_color};")
 
-        self.clock_widget: LiveClockWidget = LiveClockWidget(
+        self._clock_widget: LiveClockWidget = LiveClockWidget(
             hour_minutes_color=hour_minutes_color,
             seconds_color=seconds_color,
             day_color=day_color,
@@ -48,28 +48,28 @@ class MainWindow(QMainWindow):
         location_name = initial_report.location_name if initial_report else None
         coordinates = initial_report.coordinates if initial_report else None
 
-        self.weather_group: WeatherGroupWidget = WeatherGroupWidget(
+        self._weather_group: WeatherGroupWidget = WeatherGroupWidget(
             report_source=weather_source.get_report,
             location_name=location_name,
             coordinates=coordinates,
             bg_color=bg_color,
         )
-        self.weather_graph: WeatherGraphWidget = WeatherGraphWidget(
+        self._weather_graph: WeatherGraphWidget = WeatherGraphWidget(
             report_source=weather_source.get_report,
             bg_color=bg_color,
         )
-        self.weather_container: SwappingContainerWidget = SwappingContainerWidget(
-            pages=[self.weather_group, self.weather_graph],
+        self._weather_container: SwappingContainerWidget = SwappingContainerWidget(
+            pages=[self._weather_group, self._weather_graph],
             swap_interval_ms=WEATHER_SWAP_MS,
             bg_color=bg_color,
         )
 
-        self.main_layout.addWidget(self.clock_widget)
-        self.main_layout.addWidget(self.weather_container)
+        self._main_layout.addWidget(self._clock_widget)
+        self._main_layout.addWidget(self._weather_container)
 
         exit_button = QPushButton("Exit")
         exit_button.pressed.connect(self.close)
-        self.main_layout.addWidget(exit_button)
+        self._main_layout.addWidget(exit_button)
 
         self.showFullScreen()
 

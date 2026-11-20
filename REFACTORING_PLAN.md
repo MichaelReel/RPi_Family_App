@@ -568,7 +568,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `location_widget` → `_location_widget`, `grid_widget` → `_grid_widget` (no external references — confirm with `grep -rn "weather_group\." lib/ demos/ test/`).
 - **Verify:** `make test`.
 
-### T9.11 — `main.py`
+### T9.11 — `main.py` — ✅ done
 - `main_layout`, `clock_widget`, `weather_group`, `weather_graph`, `weather_container` → `_`-prefixed (no external references).
 - **Verify:** `make test`, `uv run python -c "import main"`.
 
