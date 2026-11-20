@@ -16,8 +16,8 @@ def test_swapping_container_starts_on_first_page(qtbot: QtBot) -> None:
     qtbot.addWidget(container)
     container.show()
 
-    assert container.stacked.currentIndex() == 0
-    assert container.stacked.widget(0) is page1
+    assert container._stacked.currentIndex() == 0
+    assert container._stacked.widget(0) is page1
 
 
 def test_swapping_container_page_count(qtbot: QtBot) -> None:
@@ -26,7 +26,7 @@ def test_swapping_container_page_count(qtbot: QtBot) -> None:
     container = SwappingContainerWidget(pages=pages, swap_interval_ms=1000)
     qtbot.addWidget(container)
 
-    assert container.stacked.count() == 3
+    assert container._stacked.count() == 3
 
 
 def test_swapping_container_cycles_pages(qtbot: QtBot) -> None:
@@ -38,15 +38,15 @@ def test_swapping_container_cycles_pages(qtbot: QtBot) -> None:
 
     # Advance: 0 -> 1
     container._swap_page()
-    assert container.stacked.currentIndex() == 1
+    assert container._stacked.currentIndex() == 1
 
     # Advance: 1 -> 2
     container._swap_page()
-    assert container.stacked.currentIndex() == 2
+    assert container._stacked.currentIndex() == 2
 
     # Advance: 2 -> 0 (wrap around)
     container._swap_page()
-    assert container.stacked.currentIndex() == 0
+    assert container._stacked.currentIndex() == 0
 
 
 def test_swapping_container_timer_is_running(qtbot: QtBot) -> None:
@@ -69,9 +69,9 @@ def test_swapping_container_single_page(qtbot: QtBot) -> None:
     container = SwappingContainerWidget(pages=[page], swap_interval_ms=1000)
     qtbot.addWidget(container)
 
-    assert container.stacked.count() == 1
+    assert container._stacked.count() == 1
     container._swap_page()
-    assert container.stacked.currentIndex() == 0
+    assert container._stacked.currentIndex() == 0
 
 
 def test_swapping_container_click_swaps_page(qtbot: QtBot) -> None:
@@ -83,11 +83,11 @@ def test_swapping_container_click_swaps_page(qtbot: QtBot) -> None:
 
     # Simulate a click in the center of the container
     qtbot.mouseClick(container, Qt.MouseButton.LeftButton)
-    assert container.stacked.currentIndex() == 1
+    assert container._stacked.currentIndex() == 1
 
     # Second click advances again
     qtbot.mouseClick(container, Qt.MouseButton.LeftButton)
-    assert container.stacked.currentIndex() == 2
+    assert container._stacked.currentIndex() == 2
 
 
 def test_swapping_container_click_resets_timer(qtbot: QtBot) -> None:
@@ -105,7 +105,7 @@ def test_swapping_container_click_resets_timer(qtbot: QtBot) -> None:
     # Timer must still be active, and the page should have advanced
     assert container._swap_timer.isActive()
     assert container._swap_timer.interval() == 3000
-    assert container.stacked.currentIndex() == 1
+    assert container._stacked.currentIndex() == 1
 
 
 def test_swapping_container_timer_swap_resets_timer(qtbot: QtBot) -> None:
@@ -121,4 +121,4 @@ def test_swapping_container_timer_swap_resets_timer(qtbot: QtBot) -> None:
     assert container._swap_timer.isActive()
     assert container._swap_timer.interval() == 100
     # Page should have advanced at least once
-    assert container.stacked.currentIndex() >= 0
+    assert container._stacked.currentIndex() >= 0

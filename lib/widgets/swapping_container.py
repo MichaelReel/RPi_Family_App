@@ -41,15 +41,15 @@ class SwappingContainerWidget(QWidget):
         outer_layout.setSpacing(0)
         self.setLayout(outer_layout)
 
-        self.stacked: QStackedWidget = QStackedWidget()
-        outer_layout.addWidget(self.stacked)
+        self._stacked: QStackedWidget = QStackedWidget()
+        outer_layout.addWidget(self._stacked)
 
         # Add all pages to the stacked widget
         for widget in pages:
-            self.stacked.addWidget(widget)
+            self._stacked.addWidget(widget)
 
         # Start on the first page
-        self.stacked.setCurrentIndex(0)
+        self._stacked.setCurrentIndex(0)
 
         # Timer to advance pages
         self._swap_timer: QTimer = QTimer(self)
@@ -66,7 +66,7 @@ class SwappingContainerWidget(QWidget):
         Called both by the timer timeout and by user clicks so the countdown
         to the next auto-swap is reset whenever the page changes.
         """
-        current: int = self.stacked.currentIndex()
+        current: int = self._stacked.currentIndex()
         next_index: int = (current + 1) % self._page_count
-        self.stacked.setCurrentIndex(next_index)
+        self._stacked.setCurrentIndex(next_index)
         self._swap_timer.start(self._swap_timer.interval())

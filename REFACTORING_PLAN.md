@@ -555,7 +555,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - Update `test/lib/metoffice/test_widget.py` accordingly (`grid_widget.cards`, `main_layout`, `secondary_layout`, `refresh_timer`).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
 
-### T9.8 — `lib/widgets/swapping_container.py`
+### T9.8 — `lib/widgets/swapping_container.py` — ✅ done
 - `self.stacked` → `self._stacked` (`_swap_timer`, `_page_count` already private).
 - Update `test/lib/widgets/test_swapping_container.py` (all `container.stacked` references).
 - **Verify:** `uv run pytest test/lib/widgets/ -q`.
