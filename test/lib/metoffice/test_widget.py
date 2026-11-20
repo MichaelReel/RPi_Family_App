@@ -159,8 +159,8 @@ def test_location_label_shows_name(
     qtbot.addWidget(widget)
     widget.show()
 
-    assert widget.label.text() == "Falmouth"
-    assert widget.label.isVisible() is True
+    assert widget._label.text() == "Falmouth"
+    assert widget._label.isVisible() is True
 
 
 def test_location_label_hidden_when_none(qtbot: QtBot) -> None:
@@ -169,7 +169,7 @@ def test_location_label_hidden_when_none(qtbot: QtBot) -> None:
     qtbot.addWidget(widget)
     widget.show()
 
-    assert widget.label.isVisible() is False
+    assert widget._label.isVisible() is False
 
 
 def test_location_label_hidden_when_empty(qtbot: QtBot) -> None:
@@ -178,7 +178,7 @@ def test_location_label_hidden_when_empty(qtbot: QtBot) -> None:
     qtbot.addWidget(widget)
     widget.show()
 
-    assert widget.label.isVisible() is False
+    assert widget._label.isVisible() is False
 
 
 def test_location_label_shows_coordinates_when_no_name(qtbot: QtBot) -> None:
@@ -192,5 +192,5 @@ def test_location_label_shows_coordinates_when_no_name(qtbot: QtBot) -> None:
     qtbot.addWidget(widget)
     widget.show()
 
-    assert widget.label.text() == "54.3141, -7.4058"
-    assert widget.label.isVisible() is True
+    assert widget._label.text() == "54.3141, -7.4058"
+    assert widget._label.isVisible() is True

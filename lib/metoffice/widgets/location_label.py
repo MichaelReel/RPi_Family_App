@@ -38,9 +38,9 @@ class LocationLabelWidget(QWidget):
         super().__init__(parent)
         self._style: str = style
 
-        self.label = QLabel()
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setStyleSheet(self._style)
+        self._label = QLabel()
+        self._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._label.setStyleSheet(self._style)
 
         layout = self.layout()
         if layout is None:
@@ -50,14 +50,14 @@ class LocationLabelWidget(QWidget):
             layout.setContentsMargins(0, 0, 0, 0)
             self.setLayout(layout)
 
-        layout.addWidget(self.label)
+        layout.addWidget(self._label)
 
         if location_name:
-            self.label.setText(location_name)
-            self.label.setVisible(True)
+            self._label.setText(location_name)
+            self._label.setVisible(True)
         elif coordinates and len(coordinates) >= 2:
             lon, lat = coordinates[0], coordinates[1]
-            self.label.setText(f"{float(lat):.4f}, {float(lon):.4f}")
-            self.label.setVisible(True)
+            self._label.setText(f"{float(lat):.4f}, {float(lon):.4f}")
+            self._label.setVisible(True)
         else:
-            self.label.setVisible(False)
+            self._label.setVisible(False)

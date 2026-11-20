@@ -560,7 +560,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - Update `test/lib/widgets/test_swapping_container.py` (all `container.stacked` references).
 - **Verify:** `uv run pytest test/lib/widgets/ -q`.
 
-### T9.9 — `lib/metoffice/widgets/location_label.py`
+### T9.9 — `lib/metoffice/widgets/location_label.py` — ✅ done
 - `self.label` → `self._label`. Update `test/lib/metoffice/test_widget.py` (`widget.label`).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
 
