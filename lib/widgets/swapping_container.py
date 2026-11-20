@@ -60,15 +60,6 @@ class SwappingContainerWidget(QWidget):
         """Click anywhere on the container to swap to the next page immediately."""
         self._swap_page()
 
-    def _advance_page(self) -> None:
-        """Advance to the next page, wrapping around to the first.
-
-        .. deprecated::
-            Use :meth:`_swap_page` instead; retained for backwards
-            compatibility with existing callers.
-        """
-        self._swap_page()
-
     def _swap_page(self) -> None:
         """Advance to the next page (wrapping around) and restart the swap timer.
 

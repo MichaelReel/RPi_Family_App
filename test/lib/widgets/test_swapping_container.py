@@ -36,15 +36,15 @@ def test_swapping_container_cycles_pages(qtbot) -> None:
     container.show()
 
     # Advance: 0 -> 1
-    container._advance_page()
+    container._swap_page()
     assert container.stacked.currentIndex() == 1
 
     # Advance: 1 -> 2
-    container._advance_page()
+    container._swap_page()
     assert container.stacked.currentIndex() == 2
 
     # Advance: 2 -> 0 (wrap around)
-    container._advance_page()
+    container._swap_page()
     assert container.stacked.currentIndex() == 0
 
 
@@ -69,7 +69,7 @@ def test_swapping_container_single_page(qtbot) -> None:
     qtbot.addWidget(container)
 
     assert container.stacked.count() == 1
-    container._advance_page()
+    container._swap_page()
     assert container.stacked.currentIndex() == 0
 
 
