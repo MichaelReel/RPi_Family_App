@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path  # noqa: F401
 
 import pytest
 from PyQt6.QtGui import QImage, QPixmap

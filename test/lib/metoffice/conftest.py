@@ -2,8 +2,6 @@
 
 from lib.metoffice.icons import caches
 
-pytest_plugins = ["test.test_data.metoffice_sitespecific_point_daily.model"]
-
 
 def pytest_runtest_setup(item):
     """Reset icon singleton caches before each test across all test files."""
