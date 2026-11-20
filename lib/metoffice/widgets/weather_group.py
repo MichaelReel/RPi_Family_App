@@ -33,15 +33,15 @@ class WeatherGroupWidget(QWidget):
         layout.setSpacing(5)
         self.setLayout(layout)
 
-        self.location_widget: LocationLabelWidget = LocationLabelWidget(
+        self._location_widget: LocationLabelWidget = LocationLabelWidget(
             location_name=location_name,
             coordinates=coordinates,
         )
 
-        self.grid_widget: FourDayGridWidget = FourDayGridWidget(
+        self._grid_widget: FourDayGridWidget = FourDayGridWidget(
             report_source=report_source,
             bg_color=bg_color,
         )
 
-        layout.addWidget(self.location_widget)
-        layout.addWidget(self.grid_widget)
+        layout.addWidget(self._location_widget)
+        layout.addWidget(self._grid_widget)

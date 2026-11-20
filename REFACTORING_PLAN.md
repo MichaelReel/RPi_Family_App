@@ -564,7 +564,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `self.label` → `self._label`. Update `test/lib/metoffice/test_widget.py` (`widget.label`).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
 
-### T9.10 — `lib/metoffice/widgets/weather_group.py`
+### T9.10 — `lib/metoffice/widgets/weather_group.py` — ✅ done
 - `location_widget` → `_location_widget`, `grid_widget` → `_grid_widget` (no external references — confirm with `grep -rn "weather_group\." lib/ demos/ test/`).
 - **Verify:** `make test`.
 
