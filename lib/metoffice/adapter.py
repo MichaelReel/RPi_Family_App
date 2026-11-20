@@ -27,7 +27,7 @@ def _to_str(val: int | str | Decimal | None) -> str | None:
 
 
 # Weather definition lookup maps
-WEATHER_CODE_MAP: dict[int, str] = {
+_WEATHER_CODE_MAP: dict[int, str] = {
     0: "Clear night",
     1: "Sunny day",
     2: "Partly cloudy N",
@@ -129,7 +129,7 @@ class MetOfficeAdapter:
             )
             condition: str = "Unknown"
             if w_code is not None:
-                condition = WEATHER_CODE_MAP.get(w_code, f"Unknown Code ({w_code})")
+                condition = _WEATHER_CODE_MAP.get(w_code, f"Unknown Code ({w_code})")
 
             raw_vis = raw.get("middayVisibility") or raw.get("midnightVisibility")
             visibility_metres: int | None = (

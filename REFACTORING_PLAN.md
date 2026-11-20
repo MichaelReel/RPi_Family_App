@@ -523,7 +523,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `HTTP_TIMEOUT` → `_HTTP_TIMEOUT` (private constant, used only in this module).
 - **Verify:** `uv run pytest test/lib/metoffice/test_client.py -q`, `uv run mypy lib/metoffice/client.py`.
 
-### T9.2 — `lib/metoffice/adapter.py`
+### T9.2 — `lib/metoffice/adapter.py` — ✅ done
 - `WEATHER_CODE_MAP` → `_WEATHER_CODE_MAP`.
 - **Verify:** `uv run pytest test/lib/metoffice/test_adapter.py -q`.
 
