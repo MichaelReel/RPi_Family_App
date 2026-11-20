@@ -76,7 +76,9 @@ class MainWindow(QMainWindow):
 
 def main() -> None:
     app = QApplication([])
-    MainWindow()
+    # Keep a strong reference so the window is not garbage-collected before
+    # app.exec() runs (an unassigned top-level QWidget is destroyed immediately).
+    window = MainWindow()  # noqa: F841  # reference must outlive app.exec()
     app.exec()
 
 
