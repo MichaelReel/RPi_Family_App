@@ -93,9 +93,9 @@ class FourDayGridWidget(QWidget):
             )
 
         # Extract exactly 4 items (Indices 1 to 4)
-        for i, data_point in enumerate(self._report.forecast_days[1:5]):
+        for index, data_point in enumerate(self._report.forecast_days[1:5]):
             # Assign the large profile to the first index, and standard profiles to the rest
-            config = self._featured_config if i == 0 else self._secondary_config
+            config = self._featured_config if index == 0 else self._secondary_config
 
             card: DayCardWidget = DayCardWidget(data_point, config=config)
             self._cards.append(card)

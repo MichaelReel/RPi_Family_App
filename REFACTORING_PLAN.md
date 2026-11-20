@@ -589,7 +589,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `unit == "C"` string comparisons → in-file `_TEMP_UNIT: Final[str] = "C"`.
 - **Verify:** `uv run pytest test/lib/metoffice/test_weather_graph.py -q`.
 
-### T9.15 — `lib/metoffice/widgets/four_day_grid.py` (minor)
+### T9.15 — `lib/metoffice/widgets/four_day_grid.py` (minor) — ✅ done
 - `for i, data_point in enumerate(...)` → `for index, data_point in enumerate(...)` (2 sites).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
 
