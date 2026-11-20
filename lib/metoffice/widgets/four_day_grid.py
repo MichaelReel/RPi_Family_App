@@ -29,12 +29,12 @@ class FourDayGridWidget(QWidget):
         self.report_source: Callable[[], HumanReadableWeatherReport | None] = (
             report_source
         )
-        self.report: HumanReadableWeatherReport | None = None
+        self._report: HumanReadableWeatherReport | None = None
         self._bg_color: str = bg_color
-        self.cards: list[DayCardWidget] = []
+        self._cards: list[DayCardWidget] = []
 
         # 1. Initialize custom design configurations using the new data structure
-        self.feature_config: CardStyleConfig = CardStyleConfig(
+        self._featured_config: CardStyleConfig = CardStyleConfig(
             widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 0px solid #007bff; border-radius: 8px; }}",
             weather_icon_dim=400,
             metric_icon_dim=38,
@@ -49,7 +49,7 @@ class FourDayGridWidget(QWidget):
             metrics_style=UIElementStyle(font_size="38px", text_color="#999999"),
         )
 
-        self.secondary_config: CardStyleConfig = CardStyleConfig(
+        self._secondary_config: CardStyleConfig = CardStyleConfig(
             widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 1px solid #cccccc; border-radius: 6px; }}",
             weather_icon_dim=100,
             metric_icon_dim=16,
@@ -65,53 +65,53 @@ class FourDayGridWidget(QWidget):
         )
 
         # Core outer vertical container layout
-        self.main_layout: QVBoxLayout = QVBoxLayout()
-        self.main_layout.setSpacing(10)
-        self.setLayout(self.main_layout)
+        self._main_layout: QVBoxLayout = QVBoxLayout()
+        self._main_layout.setSpacing(10)
+        self.setLayout(self._main_layout)
 
         # Bottom row layout for the 3 secondary weather cards
-        self.secondary_layout: QHBoxLayout = QHBoxLayout()
-        self.secondary_layout.setSpacing(10)
-        self.secondary_layout.setContentsMargins(0, 0, 0, 0)
+        self._secondary_layout: QHBoxLayout = QHBoxLayout()
+        self._secondary_layout.setSpacing(10)
+        self._secondary_layout.setContentsMargins(0, 0, 0, 0)
 
         self.setup_grid_data()
 
-        self.refresh_timer: QTimer = QTimer(self)
-        self.refresh_timer.timeout.connect(self.update_grid_data)
-        self.refresh_timer.start(MET_REFRESH_MS)
+        self._refresh_timer: QTimer = QTimer(self)
+        self._refresh_timer.timeout.connect(self.update_grid_data)
+        self._refresh_timer.start(MET_REFRESH_MS)
 
     def setup_grid_data(self) -> None:
         try:
-            self.report = self.report_source()
+            self._report = self.report_source()
         except Exception:
             _LOGGER.exception("Error calling report_source during setup_grid_data")
-            self.report = None
+            self._report = None
 
-        if self.report is None:
+        if self._report is None:
             raise RuntimeError(
                 "Due to met office API issues, this widget cannot be built"
             )
 
         # Extract exactly 4 items (Indices 1 to 4)
-        for i, data_point in enumerate(self.report.forecast_days[1:5]):
+        for i, data_point in enumerate(self._report.forecast_days[1:5]):
             # Assign the large profile to the first index, and standard profiles to the rest
-            config = self.feature_config if i == 0 else self.secondary_config
+            config = self._featured_config if i == 0 else self._secondary_config
 
             card: DayCardWidget = DayCardWidget(data_point, config=config)
-            self.cards.append(card)
+            self._cards.append(card)
 
-        # Feature Card (Index 1 from the forecast pipeline, first item in self.cards)
-        feature_card: DayCardWidget = self.cards[0]
+        # Feature Card (Index 1 from the forecast pipeline, first item in self._cards)
+        feature_card: DayCardWidget = self._cards[0]
         # Stretch=2 makes the top card twice as tall as the bottom layout group
-        self.main_layout.addWidget(feature_card, stretch=2)
+        self._main_layout.addWidget(feature_card, stretch=2)
 
         # Populate the remaining 3 cards into the bottom row layout
         secondary_card: DayCardWidget
-        for secondary_card in self.cards[1:]:
-            self.secondary_layout.addWidget(secondary_card)
+        for secondary_card in self._cards[1:]:
+            self._secondary_layout.addWidget(secondary_card)
 
         # Add the bottom row layout directly to the main layout tree
-        self.main_layout.addLayout(self.secondary_layout, stretch=1)
+        self._main_layout.addLayout(self._secondary_layout, stretch=1)
 
     def update_grid_data(self) -> None:
         try:
@@ -124,12 +124,12 @@ class FourDayGridWidget(QWidget):
             _LOGGER.error("Due to met office API issues, this widget cannot be updated")
             return
 
-        self.report = report
+        self._report = report
 
         index: int
         card: DayCardWidget
-        for index, card in enumerate(self.cards):
+        for index, card in enumerate(self._cards):
             report_index: int = index + 1
-            if report_index < len(self.report.forecast_days):
+            if report_index < len(self._report.forecast_days):
                 # Data updates seamlessly because card properties read from its internal saved config
-                card.update_data(self.report.forecast_days[report_index])
+                card.update_data(self._report.forecast_days[report_index])

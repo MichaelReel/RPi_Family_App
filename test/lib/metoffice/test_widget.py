@@ -39,7 +39,7 @@ def test_widget_initialization_and_card_count(
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)  # Registers the widget for auto-cleanup
 
-    assert len(grid_widget.cards) == 4
+    assert len(grid_widget._cards) == 4
 
 
 def test_card_data_mapping_and_labels(
@@ -49,7 +49,7 @@ def test_card_data_mapping_and_labels(
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
 
-    first_card = grid_widget.cards[0]
+    first_card = grid_widget._cards[0]
 
     # First card uses forecast_days[1] (the widget skips index 0):
     # max_temp=18.47, min_temp=5.34, rain=5%, condition=Cloudy
@@ -76,7 +76,7 @@ def test_timer_updates_cards_automatically(
 
     # 3. Simulate an automatic background clock ticking event
     # This fires the .timeout signal instantly, bypassing the real delay
-    grid_widget.refresh_timer.timeout.emit()
+    grid_widget._refresh_timer.timeout.emit()
 
     # 4. Verify that the update method requested data again
     mock_source.assert_called_once()
@@ -90,13 +90,13 @@ def test_timer_configuration_properties(
     qtbot.addWidget(grid_widget)
 
     # Verify the background configuration is active
-    assert grid_widget.refresh_timer.isActive() is True
+    assert grid_widget._refresh_timer.isActive() is True
 
     # Verify it isn't restricted to a single shot execution loop
-    assert grid_widget.refresh_timer.isSingleShot() is False
+    assert grid_widget._refresh_timer.isSingleShot() is False
 
     # Verify it matches your configuration file settings exactly
-    assert grid_widget.refresh_timer.interval() == MET_REFRESH_MS
+    assert grid_widget._refresh_timer.interval() == MET_REFRESH_MS
 
 
 def test_featured_layout_initialization(
@@ -107,12 +107,12 @@ def test_featured_layout_initialization(
     qtbot.addWidget(grid_widget)
 
     # 1. Verify card array tracking matches limits
-    assert len(grid_widget.cards) == 4
+    assert len(grid_widget._cards) == 4
 
     # 2. Verify layout distributions structurally match expectations
-    assert grid_widget.main_layout.count() == 2  # Feature card + secondary layout track
+    assert grid_widget._main_layout.count() == 2  # Feature card + secondary layout track
     assert (
-        grid_widget.secondary_layout.count() == 3
+        grid_widget._secondary_layout.count() == 3
     )  # Contains remaining cards 2, 3, and 4
 
 

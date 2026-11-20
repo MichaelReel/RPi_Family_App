@@ -549,7 +549,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - _Note: the original plan listed `snow`/`visibility` attributes that do not exist in the current code — renamed what is actually present._
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
 
-### T9.7 — `lib/metoffice/widgets/four_day_grid.py`
+### T9.7 — `lib/metoffice/widgets/four_day_grid.py` — ✅ done
 - `cards` → `_cards`, `main_layout` → `_main_layout`, `secondary_layout` → `_secondary_layout`, `refresh_timer` → `_refresh_timer`, `report` → `_report`, `feature_config` → `_featured_config`, `secondary_config` → `_secondary_config` (or removed by T8.5).
 - **`report_source` stays public** (DI seam — tests assign to it).
 - Update `test/lib/metoffice/test_widget.py` accordingly (`grid_widget.cards`, `main_layout`, `secondary_layout`, `refresh_timer`).
