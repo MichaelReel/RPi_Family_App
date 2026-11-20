@@ -4,7 +4,6 @@ import pytest
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication
 
-# Assuming your code is inside weather_loader.py
 from lib.metoffice.icons import (
     _MET_OFFICE_WEATHER_MAP,
     _IconCaches,
