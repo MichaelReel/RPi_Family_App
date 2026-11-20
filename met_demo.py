@@ -1,4 +1,3 @@
-import requests
 from PyQt6.QtWidgets import QApplication
 
 from lib.metoffice.client import get_human_readable_weather
@@ -12,7 +11,6 @@ def main() -> None:
     )
     widget_window.setWindowTitle("8-Day Reflow Weather Grid Tracker")
 
-    # Might replace these 2 lines with widget_window.showFullScreen()
     widget_window.resize(850, 450)
     widget_window.show()
 
