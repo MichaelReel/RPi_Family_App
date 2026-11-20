@@ -519,7 +519,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 
 **Gate:** mypy + tests green after **each** rename (mypy catches broken references).
 
-### T9.1 — `lib/metoffice/client.py`
+### T9.1 — `lib/metoffice/client.py` — ✅ done
 - `HTTP_TIMEOUT` → `_HTTP_TIMEOUT` (private constant, used only in this module).
 - **Verify:** `uv run pytest test/lib/metoffice/test_client.py -q`, `uv run mypy lib/metoffice/client.py`.
 

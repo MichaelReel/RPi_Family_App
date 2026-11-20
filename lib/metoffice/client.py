@@ -18,7 +18,7 @@ from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
 from lib.metoffice.models import HumanReadableWeatherReport
 
 _LOGGER: Final[Logger] = getLogger(__name__)
-HTTP_TIMEOUT: Final[int] = 30
+_HTTP_TIMEOUT: Final[int] = 30
 
 
 def get_human_readable_weather() -> HumanReadableWeatherReport | None:
@@ -33,7 +33,7 @@ def get_human_readable_weather() -> HumanReadableWeatherReport | None:
 def _fetch_endpoint(url: str) -> WeatherSchemaRoot | None:
     try:
         response = requests.get(
-            url, headers=MET_HEADERS, params=MET_PARAMS, timeout=HTTP_TIMEOUT
+            url, headers=MET_HEADERS, params=MET_PARAMS, timeout=_HTTP_TIMEOUT
         )
     except RequestException as req_error:
         _LOGGER.error("Exception occurred getting weather info: %s", req_error)
