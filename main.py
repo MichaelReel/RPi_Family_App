@@ -11,7 +11,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Custom Full Screen App")
-        # self.resize(400, 600)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -77,7 +76,7 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication([])
-    window = MainWindow()
+    MainWindow()
     app.exec()
 
 
