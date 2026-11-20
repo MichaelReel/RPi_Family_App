@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from marshmallow import ValidationError
 
-# Import your classes and schemas from your module
 from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
 
