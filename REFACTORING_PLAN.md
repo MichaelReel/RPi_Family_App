@@ -6,7 +6,24 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 - "Verify" commands assume the project root. Use `make …` targets from §T0 (or `uv run …` directly before T0 exists).
 - A task touching tests always lists them — no task may leave the suite red.
 
-## T0 — Tooling & enforcement (do first)
+## Status — completed so far (as of 20/11/2026)
+
+| Section | Status | Evidence |
+|---|---|---|
+| **T0 — Tooling & enforcement** | ✅ **DONE** (T0.1–T0.4) | ruff + mypy config in `pyproject.toml`; `Makefile` present; `ruff check .` and `ruff format --check .` clean. T0.5 (pre-commit) ⬜ skipped (optional). |
+| **§7 — Remove superfluous code** | ✅ **DONE** (T7.2–T7.17) | unused imports/vars + stale comments removed, `_advance_page` shim gone, `temp/` deleted; `ruff check .` clean. ⚠️ T7.1 corrected — see below. |
+| **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
+| §2 — Short functions | ⬜ not started | `init_ui` / `update_clock` still monolithic |
+| §3 — Blank-line separation | ⬜ not started | — |
+| §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
+| §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
+| §6 — Accurate READMEs | ⬜ not started | READMEs last edited in the pre-plan "ACTION_ITEMS" era |
+| §8 — Config in `config/` | ⬜ not started | attempted & reverted; `config/` absent |
+| §9 — UPPER_CASE / underscore privates | ⬜ not started | `self.label`, `self.seconds_font_size`, `self.main_layout` still public |
+
+> **⚠️ Bug fixed that the plan would have re-introduced.** The app stopped showing its window because `main.py` was left with an unassigned `MainWindow()` — CPython garbage-collects a top-level widget nothing references, so it is destroyed before `app.exec()`. Fixed in commit `686922a` by restoring `window = MainWindow()`. **T7.1 below endorses the broken form and must not be re-applied as written.**
+
+## T0 — Tooling & enforcement (do first) — ✅ DONE (T0.1–T0.4; T0.5 skipped)
 
 ### T0.1 — Add mypy to the dev dependencies
 - **File:** `pyproject.toml` (via CLI)
@@ -47,7 +64,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 
 **Gate after T0:** `make check` (lint + typecheck + test) green.
 
-## 1. Full type annotations
+## 1. Full type annotations — ✅ DONE (T1.1–T1.19, commit `d8b6812`)
 
 Every function parameter, return type, local variable and instance attribute gets an explicit annotation. Enforced by mypy (T0.2). **Gate after this section:** `make typecheck` clean + `make test` green (71/71).
 
@@ -168,7 +185,7 @@ Every function parameter, return type, local variable and instance attribute get
 
 **Gate after §1:** `make typecheck` clean, `make test` 71/71.
 
-## 2. Short functions, single responsibility
+## 2. Short functions, single responsibility — ⬜ not started
 
 Extract cohesive private `_` methods; the public API of widgets/modules stays unchanged unless a task says otherwise. Target: no function over ~40 lines. **Gate:** `make test` green + import-check `uv run python -c "import main"`.
 
@@ -221,7 +238,7 @@ Extract cohesive private `_` methods; the public API of widgets/modules stays un
 
 **Gate after §2:** `make check` green; public surface of all widgets unchanged (tests prove it).
 
-## 3. Blank lines between logical sections in long functions
+## 3. Blank lines between logical sections in long functions — ⬜ not started
 
 Apply **after §2**, to the functions that legitimately stay long. Rule: one blank line between logical blocks (setup → compute → apply / fetch → map → return). **Gate:** `make test` green (purely formatting).
 
@@ -244,7 +261,7 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 - `resizeEvent`: scale-compute → font-build → apply.
 - **Verify (all §3):** `make test` green.
 
-## 4. Names that correctly represent purpose
+## 4. Names that correctly represent purpose — ⬜ not started
 
 ### T4.1 — `clock_demo.py` (root before T5.2)
 - `widget_window` → `clock_widget` (it's a `LiveClockWidget`, not a window).
@@ -282,7 +299,7 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 - `report_source` stays **public** — it's the DI seam tests and demos assign to (note it in the class docstring).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`, import-check the demo.
 
-## 5. Logical structure; paths that show purpose
+## 5. Logical structure; paths that show purpose — ⬜ not started
 
 ### T5.1 — Rename `lib/metoffice/domain/` → `lib/metoffice/api/`
 - **Why:** it holds the **wire-format contract** (marshmallow schemas + raw API models), and the name `domain` collides with `lib/metoffice/models.py` (the app-facing models) — two `models.py` in one tree.
@@ -310,7 +327,7 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 - **Decision:** this is an unused-but-intentional local asset folder (manual icon-swap workflow, git-ignored). Document it in the icons README (T6.4) rather than deleting.
 - **Verify:** none (no code change); `git status` stays clean.
 
-## 6. Accurate READMEs with complete steps
+## 6. Accurate READMEs with complete steps — ⬜ not started
 
 Do this **last** — after T0.3/T5.2 — so the documented commands match reality.
 
@@ -352,14 +369,15 @@ Specific fixes:
 - `description = "Add your description here"` → `"A PyQt6 Raspberry Pi display app: live clock + Met Office weather forecast with auto-swapping views."`
 - **Verify (all §6):** grep the READMEs for old paths (`clock_demo.py` at root, `domain/`) — none remain.
 
-## 7. Remove superfluous code
+## 7. Remove superfluous code — ✅ DONE (T7.2–T7.17; T7.1 corrected — see below)
 
 **Gate:** `uv run ruff check .` clean + `make test` green (71/71).
 
-### T7.1 — `main.py`
-- Delete commented-out line `# self.resize(400, 600)`.
-- `window = MainWindow()` → inline `MainWindow()` (F841 unused var).
-- **Verify:** `uv run ruff check main.py`, `make test`.
+### T7.1 — `main.py` — ⚠️ DO NOT APPLY THE "inline" STEP (superseded by fix `686922a`)
+- Delete commented-out line `# self.resize(400, 600)`. — ✅ done
+- ~~`window = MainWindow()` → inline `MainWindow()` (F841 unused var)~~ — **WRONG — do not do this.** That local is *not* dead code: it is the only reference keeping the top-level `QMainWindow` alive. Inlining it lets CPython garbage-collect the window before `app.exec()` runs, so **no window appears** (bug reported 20/11/2026, fixed in `686922a`).
+- **Correct form (already in place):** `window = MainWindow()  # noqa: F841  # reference must outlive app.exec()`.
+- **Verify:** `make run` shows the window; `ruff check main.py` clean (the noqa suppresses the false-positive F841); `make test` green.
 
 ### T7.2 — `met_demo.py` (root before T5.2)
 - Remove `import requests` (F401 — never used).
@@ -433,7 +451,7 @@ Specific fixes:
 - Optional: `make clean` to drop the stale root `__pycache__/`.
 - **Verify (all §7):** `uv run ruff check .` clean, `make test` 71/71.
 
-## 8. Config in `config/`
+## 8. Config in `config/` — ⬜ not started (attempted & reverted)
 
 New layout:
 
@@ -497,7 +515,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `WEATHER_SWAP_MS`, `MET_REFRESH_MS`, `MET_*` constants stay as-is (already correct UPPER_CASE public config). `client.py`'s `HTTP_TIMEOUT` stays in-file (renamed by T9.1).
 - **Verify (all §8):** `make check` green, plus run each demo once to confirm visuals are unchanged.
 
-## 9. UPPER_CASE constants and underscore-prefixed privates
+## 9. UPPER_CASE constants and underscore-prefixed privates — ⬜ not started
 
 **Gate:** mypy + tests green after **each** rename (mypy catches broken references).
 
