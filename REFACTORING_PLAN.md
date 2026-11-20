@@ -531,8 +531,8 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `caches` → `_caches`. Update internal uses (3 sites) + `test/lib/metoffice/conftest.py` (1 site: `caches.weather_icons = {}`) + `test/lib/metoffice/test_icons.py` (4 sites).
 - **Verify:** `uv run pytest test/lib/metoffice/ -q`.
 
-### T9.4 — `lib/metoffice/widgets/weather_graph.py`
-- Palette constants → `Final` (done with T8.6). `_LaneFrame` already correctly private.
+### T9.4 — `lib/metoffice/widgets/weather_graph.py` — ✅ done
+- _LaneFrame_ and all module-level constants are already `_`-prefixed (privacy satisfied). The `Final` typing on the palette constants is T8.6's job in §8 (deferred).
 - **Verify:** mypy clean.
 
 ### T9.5 — `lib/clock/widget/live_clock.py`
