@@ -1,20 +1,13 @@
-from datetime import datetime, timedelta
-from decimal import Decimal
 from unittest.mock import MagicMock
 
 import pytest
-from PyQt6.QtCore import QSize
-from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QApplication
+from pytestqt.qtbot import QtBot
 
 from config import MET_REFRESH_MS
-from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
-from lib.metoffice.widgets.day_card import DayCardWidget
+from lib.metoffice.models import HumanReadableWeatherReport
 from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
 from lib.metoffice.widgets.location_label import LocationLabelWidget
-from test.test_data.metoffice_sitespecific_point_daily.model import (
-    expected_human_report_snapshot,
-)
 
 
 @pytest.fixture(scope="session", autouse=True)
