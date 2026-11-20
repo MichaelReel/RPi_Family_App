@@ -1,6 +1,6 @@
 """Tests for CachedWeatherSource (lib/metoffice/weather_source.py)."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from unittest.mock import patch
 
