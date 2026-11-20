@@ -166,7 +166,7 @@ class WeatherGraphWidget(QWidget):
             1:8
         ]  # the 7 days the daily API provides (today is index 0)
         self._hourly = report.forecast_hourly
-        self._three_hourly = getattr(report, "forecast_three_hourly", []) or []
+        self._three_hourly = report.forecast_three_hourly or []
         self._extend_labels_to_fine_window()
         self._repaint()
 

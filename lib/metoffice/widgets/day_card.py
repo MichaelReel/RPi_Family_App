@@ -247,7 +247,7 @@ class DayCardWidget(QFrame):
         self._set_stats_icon(self.ico_rain, "rain_pct", size=metric_dim)
         self._set_stats_icon(self.ico_uv, "uv_index", size=metric_dim)
 
-        weather_code = getattr(data, "weather_code", None)
+        weather_code = data.weather_code
         pixmap = self._icon_cache.get(weather_code)
 
         if pixmap and not pixmap.isNull():
