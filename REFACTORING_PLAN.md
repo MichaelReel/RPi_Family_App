@@ -535,7 +535,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - _LaneFrame_ and all module-level constants are already `_`-prefixed (privacy satisfied). The `Final` typing on the palette constants is T8.6's job in §8 (deferred).
 - **Verify:** mypy clean.
 
-### T9.5 — `lib/clock/widget/live_clock.py`
+### T9.5 — `lib/clock/widget/live_clock.py` — ✅ done
 - `time_label` / `day_label` / `date_label` / `timer` → `_time_label` / `_day_label` / `_date_label` / `_timer`.
 - `seconds_font_size` → `_seconds_font_size` (initialised in `__init__` per T7.16).
 - Update `test/lib/clock/test_widget.py` (uses `widget.day_label`, `widget.date_label`, `widget.time_label`).

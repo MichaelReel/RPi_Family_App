@@ -22,7 +22,7 @@ class LiveClockWidget(QWidget):
         self._date_color: str = date_color
         self._include_day: bool = include_day
         self._include_date: bool = include_date
-        self.seconds_font_size: int = 34
+        self._seconds_font_size: int = 34
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -36,34 +36,34 @@ class LiveClockWidget(QWidget):
         layout.setSpacing(0)
 
         # 1. Top Element: Time
-        self.time_label = QLabel()
-        self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._time_label = QLabel()
+        self._time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # 2. Middle Element: Day of the week
-        self.day_label = QLabel()
-        self.day_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._day_label = QLabel()
+        self._day_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # 3. Bottom Element: Date
-        self.date_label = QLabel()
-        self.date_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._date_label = QLabel()
+        self._date_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Assemble layout with identical spacing blocks
         layout.addStretch(1)
-        layout.addWidget(self.time_label)
+        layout.addWidget(self._time_label)
         layout.addStretch(1)
 
         if self._include_day:
-            layout.addWidget(self.day_label)
+            layout.addWidget(self._day_label)
             layout.addStretch(1)
 
         if self._include_date:
-            layout.addWidget(self.date_label)
+            layout.addWidget(self._date_label)
             layout.addStretch(1)
 
         # Initialize Timer for live updates
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_clock)
-        self.timer.start(1000)
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self.update_clock)
+        self._timer.start(1000)
 
         self.update_clock()
 
@@ -77,7 +77,7 @@ class LiveClockWidget(QWidget):
         # Calculate proportional pixel sizes
         time_font_size = max(16, int(base_height * 0.5))  # % of widget height
         sub_font_size = max(10, int(base_height * 0.07))  # % of widget height
-        self.seconds_font_size = max(
+        self._seconds_font_size = max(
             12, int(base_height * 0.11)
         )  # Saved for HTML string
 
@@ -85,14 +85,14 @@ class LiveClockWidget(QWidget):
         time_font = QFont("Arial", time_font_size, QFont.Weight.Bold)
         sub_font = QFont("Arial", sub_font_size)
 
-        self.time_label.setFont(time_font)
-        self.time_label.setMinimumHeight(int(base_height * 0.25))
+        self._time_label.setFont(time_font)
+        self._time_label.setMinimumHeight(int(base_height * 0.25))
 
-        self.day_label.setFont(sub_font)
-        self.day_label.setMinimumHeight(int(base_height * 0.12))
+        self._day_label.setFont(sub_font)
+        self._day_label.setMinimumHeight(int(base_height * 0.12))
 
-        self.date_label.setFont(sub_font)
-        self.date_label.setMinimumHeight(int(base_height * 0.12))
+        self._date_label.setFont(sub_font)
+        self._date_label.setMinimumHeight(int(base_height * 0.12))
 
         # Refresh the clock text instantly to apply the new inline HTML size
         self.update_clock()
@@ -103,7 +103,7 @@ class LiveClockWidget(QWidget):
         hours_minutes = now.strftime("%H:%M")
         seconds = now.strftime("%S")
 
-        sec_size = self.seconds_font_size
+        sec_size = self._seconds_font_size
 
         # Inject dynamic pixel sizing (px) into the HTML instead of static points (pt)
         hh_mm_html: str = (
@@ -116,6 +116,6 @@ class LiveClockWidget(QWidget):
         )
         date_text: str = f"<span style='color: {self._date_color};'>{now.strftime('%d/%m/%Y')}</span>"
 
-        self.time_label.setText(time_html)
-        self.day_label.setText(day_text)
-        self.date_label.setText(date_text)
+        self._time_label.setText(time_html)
+        self._day_label.setText(day_text)
+        self._date_label.setText(date_text)
