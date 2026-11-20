@@ -14,9 +14,6 @@ from lib.metoffice.models import (
     HumanReadableWeatherReport,
     ThreeHourlyForecastPoint,
 )
-from test.test_data.metoffice_sitespecific_point_daily.model import (
-    expected_human_report_snapshot,
-)
 
 
 @pytest.fixture
