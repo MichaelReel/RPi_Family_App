@@ -82,7 +82,7 @@ class DayCardWidget(QFrame):
         super().__init__(parent)
 
         # Fallback if no specific style object is given
-        self.config: CardStyleConfig = (
+        self._style_config: CardStyleConfig = (
             config if config is not None else CardStyleConfig()
         )
 
@@ -95,71 +95,71 @@ class DayCardWidget(QFrame):
         self.setFrameShape(QFrame.Shape.StyledPanel)
 
         # 1. Initialize main weather elements
-        self.lbl_date: QLabel = QLabel()
-        self.lbl_date.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._label_date: QLabel = QLabel()
+        self._label_date.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.lbl_icon: QLabel = QLabel()
-        self.lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._label_icon: QLabel = QLabel()
+        self._label_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.lbl_cond: QLabel = QLabel()
-        self.lbl_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._label_cond: QLabel = QLabel()
+        self._label_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # 2. Initialize metrics row elements
-        self.ico_temp_high: QLabel = QLabel()
-        self.lbl_temp_high: QLabel = QLabel()
+        self._icon_temp_high: QLabel = QLabel()
+        self._label_temp_high: QLabel = QLabel()
 
-        self.ico_temp_low: QLabel = QLabel()
-        self.lbl_temp_low: QLabel = QLabel()
+        self._icon_temp_low: QLabel = QLabel()
+        self._label_temp_low: QLabel = QLabel()
 
-        self.ico_wind: QLabel = QLabel()
-        self.lbl_wind: QLabel = QLabel()
+        self._icon_wind: QLabel = QLabel()
+        self._label_wind: QLabel = QLabel()
 
-        self.ico_feels: QLabel = QLabel()
-        self.lbl_feels: QLabel = QLabel()
+        self._icon_feels: QLabel = QLabel()
+        self._label_feels: QLabel = QLabel()
 
-        self.ico_rain: QLabel = QLabel()
-        self.lbl_rain: QLabel = QLabel()
+        self._icon_rain: QLabel = QLabel()
+        self._label_rain: QLabel = QLabel()
 
-        self.ico_uv: QLabel = QLabel()
-        self.lbl_uv: QLabel = QLabel()
+        self._icon_uv: QLabel = QLabel()
+        self._label_uv: QLabel = QLabel()
 
-        self.ico_temp_high.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ico_temp_low.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ico_wind.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ico_feels.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ico_rain.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ico_uv.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._icon_temp_high.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._icon_temp_low.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._icon_wind.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._icon_feels.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._icon_rain.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._icon_uv.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.lbl_temp_high.setAlignment(
+        self._label_temp_high.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        self.lbl_temp_low.setAlignment(
+        self._label_temp_low.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        self.lbl_wind.setAlignment(
+        self._label_wind.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        self.lbl_feels.setAlignment(
+        self._label_feels.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        self.lbl_rain.setAlignment(
+        self._label_rain.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        self.lbl_uv.setAlignment(
+        self._label_uv.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
 
         # 3. Build the visual layout skeleton
         layout: QVBoxLayout = QVBoxLayout()
-        layout.setSpacing(self.config.layout_spacing)
-        layout.addWidget(self.lbl_date)
-        layout.addWidget(self.lbl_icon)
-        layout.addWidget(self.lbl_cond)
+        layout.setSpacing(self._style_config.layout_spacing)
+        layout.addWidget(self._label_date)
+        layout.addWidget(self._label_icon)
+        layout.addWidget(self._label_cond)
         layout.addSpacing(4)
 
         def create_metric_row(*args: QLabel) -> QHBoxLayout:
             row = QHBoxLayout()
-            row.setSpacing(self.config.row_spacing)
+            row.setSpacing(self._style_config.row_spacing)
             row.setAlignment(Qt.AlignmentFlag.AlignCenter)
             label: QLabel
             for label in args:
@@ -168,19 +168,19 @@ class DayCardWidget(QFrame):
 
         layout.addLayout(
             create_metric_row(
-                self.ico_temp_high,
-                self.lbl_temp_high,
-                self.ico_temp_low,
-                self.lbl_temp_low,
+                self._icon_temp_high,
+                self._label_temp_high,
+                self._icon_temp_low,
+                self._label_temp_low,
             )
         )
         layout.addLayout(
             create_metric_row(
-                self.ico_wind, self.lbl_wind, self.ico_feels, self.lbl_feels
+                self._icon_wind, self._label_wind, self._icon_feels, self._label_feels
             )
         )
         layout.addLayout(
-            create_metric_row(self.ico_rain, self.lbl_rain, self.ico_uv, self.lbl_uv)
+            create_metric_row(self._icon_rain, self._label_rain, self._icon_uv, self._label_uv)
         )
 
         self.setLayout(layout)
@@ -213,44 +213,44 @@ class DayCardWidget(QFrame):
         """Applies configuration data structures directly to UI layouts and controls."""
 
         # Apply configurations from the instance data structure
-        self.setStyleSheet(self.config.widget_stylesheet)
-        self.lbl_icon.setMinimumSize(
-            self.config.weather_icon_dim, self.config.weather_icon_dim
+        self.setStyleSheet(self._style_config.widget_stylesheet)
+        self._label_icon.setMinimumSize(
+            self._style_config.weather_icon_dim, self._style_config.weather_icon_dim
         )
 
         # Assign dynamically converted stylesheets
-        self.lbl_date.setStyleSheet(self.config.date_style.to_stylesheet())
-        self.lbl_cond.setStyleSheet(self.config.condition_style.to_stylesheet())
+        self._label_date.setStyleSheet(self._style_config.date_style.to_stylesheet())
+        self._label_cond.setStyleSheet(self._style_config.condition_style.to_stylesheet())
 
-        metrics_css = self.config.metrics_style.to_stylesheet()
-        self.lbl_temp_high.setStyleSheet(metrics_css)
-        self.lbl_temp_low.setStyleSheet(metrics_css)
-        self.lbl_wind.setStyleSheet(metrics_css)
-        self.lbl_feels.setStyleSheet(metrics_css)
-        self.lbl_rain.setStyleSheet(metrics_css)
-        self.lbl_uv.setStyleSheet(metrics_css)
+        metrics_css = self._style_config.metrics_style.to_stylesheet()
+        self._label_temp_high.setStyleSheet(metrics_css)
+        self._label_temp_low.setStyleSheet(metrics_css)
+        self._label_wind.setStyleSheet(metrics_css)
+        self._label_feels.setStyleSheet(metrics_css)
+        self._label_rain.setStyleSheet(metrics_css)
+        self._label_uv.setStyleSheet(metrics_css)
 
         def fmt(val: Decimal | int | None, suffix: str = "") -> str:
             return f"{val}{suffix}" if val is not None else "--"
 
-        self.lbl_date.setText(data.date.strftime("%A, %b %d"))
-        self.lbl_cond.setText(data.weather_condition)
+        self._label_date.setText(data.date.strftime("%A, %b %d"))
+        self._label_cond.setText(data.weather_condition)
 
-        self.lbl_temp_high.setText(f"{fmt(data.max_temperature_c, '°C')}")
-        self.lbl_temp_low.setText(f"{fmt(data.min_temperature_c, '°C')}")
-        self.lbl_wind.setText(f"{fmt(data.wind_speed_midday_mph, 'mph')}")
-        self.lbl_feels.setText(fmt(data.max_feels_like_c, "°C"))
-        self.lbl_rain.setText(fmt(data.rain_probability_pct, "%"))
-        self.lbl_uv.setText(fmt(data.uv_index_max))
+        self._label_temp_high.setText(f"{fmt(data.max_temperature_c, '°C')}")
+        self._label_temp_low.setText(f"{fmt(data.min_temperature_c, '°C')}")
+        self._label_wind.setText(f"{fmt(data.wind_speed_midday_mph, 'mph')}")
+        self._label_feels.setText(fmt(data.max_feels_like_c, "°C"))
+        self._label_rain.setText(fmt(data.rain_probability_pct, "%"))
+        self._label_uv.setText(fmt(data.uv_index_max))
 
         # Size mapping via configuration properties
-        metric_dim = self.config.metric_icon_dim
-        self._set_stats_icon(self.ico_temp_high, "temp_high", size=metric_dim)
-        self._set_stats_icon(self.ico_temp_low, "temp_low", size=metric_dim)
-        self._set_stats_icon(self.ico_wind, "wind", size=metric_dim)
-        self._set_stats_icon(self.ico_feels, "temp_feel", size=metric_dim)
-        self._set_stats_icon(self.ico_rain, "rain_pct", size=metric_dim)
-        self._set_stats_icon(self.ico_uv, "uv_index", size=metric_dim)
+        metric_dim = self._style_config.metric_icon_dim
+        self._set_stats_icon(self._icon_temp_high, "temp_high", size=metric_dim)
+        self._set_stats_icon(self._icon_temp_low, "temp_low", size=metric_dim)
+        self._set_stats_icon(self._icon_wind, "wind", size=metric_dim)
+        self._set_stats_icon(self._icon_feels, "temp_feel", size=metric_dim)
+        self._set_stats_icon(self._icon_rain, "rain_pct", size=metric_dim)
+        self._set_stats_icon(self._icon_uv, "uv_index", size=metric_dim)
 
         weather_code = data.weather_code
         pixmap: QPixmap | None = (
@@ -259,11 +259,11 @@ class DayCardWidget(QFrame):
 
         if pixmap and not pixmap.isNull():
             scaled_pixmap = pixmap.scaled(
-                self.config.weather_icon_dim,
-                self.config.weather_icon_dim,
+                self._style_config.weather_icon_dim,
+                self._style_config.weather_icon_dim,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation,
             )
-            self.lbl_icon.setPixmap(scaled_pixmap)
+            self._label_icon.setPixmap(scaled_pixmap)
         else:
-            self.lbl_icon.setText("❓")
+            self._label_icon.setText("❓")

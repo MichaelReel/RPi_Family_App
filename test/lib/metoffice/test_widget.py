@@ -53,10 +53,10 @@ def test_card_data_mapping_and_labels(
 
     # First card uses forecast_days[1] (the widget skips index 0):
     # max_temp=18.47, min_temp=5.34, rain=5%, condition=Cloudy
-    assert "18.47°C" in first_card.lbl_temp_high.text()
-    assert "5.34°C" in first_card.lbl_temp_low.text()
-    assert first_card.lbl_cond.text() == "Cloudy"
-    assert "5%" in first_card.lbl_rain.text()
+    assert "18.47°C" in first_card._label_temp_high.text()
+    assert "5.34°C" in first_card._label_temp_low.text()
+    assert first_card._label_cond.text() == "Cloudy"
+    assert "5%" in first_card._label_rain.text()
 
 
 def test_timer_updates_cards_automatically(

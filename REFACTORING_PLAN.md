@@ -541,11 +541,12 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - Update `test/lib/clock/test_widget.py` (uses `widget.day_label`, `widget.date_label`, `widget.time_label`).
 - **Verify:** `uv run pytest test/lib/clock/ -q`.
 
-### T9.6 — `lib/metoffice/widgets/day_card.py`
+### T9.6 — `lib/metoffice/widgets/day_card.py` — ✅ done
 - `self.config` → `self._style_config`.
-- `lbl_*` → `_label_*`: `_label_temp_high`, `_label_temp_low`, `_label_feels_like`, `_label_rain`, `_label_snow`, `_label_wind`, `_label_visibility`, `_label_uv`.
-- `ico_*` → `_icon_*`: `_icon_temp`, `_icon_rain`, `_icon_snow`, `_icon_wind`, `_icon_visibility`, `_icon_uv`.
-- Update `test/lib/metoffice/test_widget.py` (`first_card.lbl_temp_high`, `lbl_temp_low`, `lbl_feels_like`, `lbl_rain`, `lbl_snow`, `lbl_wind`, `lbl_visibility`, `lbl_uv`).
+- `self.lbl_*` → `self._label_*`: `_label_date`, `_label_icon`, `_label_cond`, `_label_temp_high`, `_label_temp_low`, `_label_wind`, `_label_feels`, `_label_rain`, `_label_uv`.
+- `self.ico_*` → `self._icon_*`: `_icon_temp_high`, `_icon_temp_low`, `_icon_wind`, `_icon_feels`, `_icon_rain`, `_icon_uv`.
+- Updated `test/lib/metoffice/test_widget.py` (`first_card._label_temp_high`, `_label_temp_low`, `_label_cond`, `_label_rain`).
+- _Note: the original plan listed `snow`/`visibility` attributes that do not exist in the current code — renamed what is actually present._
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
 
 ### T9.7 — `lib/metoffice/widgets/four_day_grid.py`
