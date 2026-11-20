@@ -93,7 +93,6 @@ class _IconCaches:
                 loaded_icons[code] = pixmap
             else:
                 _LOGGER.warning("Missing icon file: %s", file_path)
-                # Optional: loaded_icons[code] = pixmap_cache.get("default.png")
 
         self._loaded_weather_icons = loaded_icons
         self._weather_icons_loaded = True
@@ -127,7 +126,6 @@ class _IconCaches:
                 loaded_icons[code] = pixmap
             else:
                 _LOGGER.warning("Missing icon file: %s", file_path)
-                # Optional: loaded_icons[code] = pixmap_cache.get("default.png")
 
         self._loaded_stats_icons = loaded_icons
         self._stats_icons_loaded = True
