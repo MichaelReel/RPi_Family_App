@@ -83,7 +83,7 @@ class MetOfficeAdapter:
             )
             coordinates = feature.geometry.coordinates
             model_run_at = datetime.fromisoformat(
-                feature.properties.modelRunDate.replace("Z", "+00:00")
+                feature.properties.model_run_date.replace("Z", "+00:00")
             )
 
         days = MetOfficeAdapter._to_daily_report(daily_root)
@@ -109,11 +109,11 @@ class MetOfficeAdapter:
 
         feature = root_data.features[0]
         model_run_at = datetime.fromisoformat(
-            feature.properties.modelRunDate.replace("Z", "+00:00")
+            feature.properties.model_run_date.replace("Z", "+00:00")
         )
         human_days: list[DailyForecastPoint] = []
 
-        for entry in feature.properties.timeSeries:
+        for entry in feature.properties.time_series:
             raw: dict[str, int | str | Decimal] = entry.data
 
             raw_time: str | None = _to_str(raw.get("time"))
@@ -168,11 +168,11 @@ class MetOfficeAdapter:
 
         feature = root_data.features[0]
         model_run_at = datetime.fromisoformat(
-            feature.properties.modelRunDate.replace("Z", "+00:00")
+            feature.properties.model_run_date.replace("Z", "+00:00")
         )
         hourly_points: list[HourlyForecastPoint] = []
 
-        for entry in feature.properties.timeSeries:
+        for entry in feature.properties.time_series:
             raw: dict[str, int | str | Decimal] = entry.data
 
             raw_time: str | None = _to_str(raw.get("time"))
@@ -212,11 +212,11 @@ class MetOfficeAdapter:
 
         feature = root_data.features[0]
         model_run_at = datetime.fromisoformat(
-            feature.properties.modelRunDate.replace("Z", "+00:00")
+            feature.properties.model_run_date.replace("Z", "+00:00")
         )
         three_hourly_points: list[ThreeHourlyForecastPoint] = []
 
-        for entry in feature.properties.timeSeries:
+        for entry in feature.properties.time_series:
             raw: dict[str, int | str | Decimal] = entry.data
 
             raw_time: str | None = _to_str(raw.get("time"))

@@ -150,7 +150,7 @@ def test_missing_weather_code_defaults_to_unknown(
 ) -> None:
     """When both day and night weather codes are missing, the adapter should produce None and 'Unknown'."""
     # Mutate the first timeSeries entry to strip both weather code keys
-    first_entry = sample_weather_root.features[0].properties.timeSeries[0]
+    first_entry = sample_weather_root.features[0].properties.time_series[0]
     first_entry.data.pop("daySignificantWeatherCode", None)
     first_entry.data.pop("nightSignificantWeatherCode", None)
 

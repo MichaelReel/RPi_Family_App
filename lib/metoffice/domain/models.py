@@ -22,9 +22,9 @@ class TimeSeries:
 
 @dataclass
 class Properties:
-    modelRunDate: str
-    requestPointDistance: Decimal
-    timeSeries: list[TimeSeries]
+    model_run_date: str
+    request_point_distance: Decimal
+    time_series: list[TimeSeries]
     location: Location | None = None
 
 

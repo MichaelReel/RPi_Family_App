@@ -42,7 +42,7 @@ def test_extracted_dataclass_values(sample_json_data: dict[str, Any]) -> None:
     # Test feature geometric structures
     first_feature = weather_obj.features[0]
     assert isinstance(first_feature.geometry.coordinates, list)
-    assert isinstance(first_feature.properties.modelRunDate, str)
+    assert isinstance(first_feature.properties.model_run_date, str)
 
     # Test the dynamic dictionary structure in parameters
     if weather_obj.parameters:

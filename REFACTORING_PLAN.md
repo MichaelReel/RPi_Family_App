@@ -576,7 +576,8 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - Loop local `max_columns` → module-level `ICON_GRID_COLUMNS: Final[int] = 4` (shared with T8.9).
 - **Verify:** import-check the demo.
 
-### T9.13 — (Optional, cross-file) camelCase wire-model fields → snake_case
+### T9.13 — (Optional, cross-file) camelCase wire-model fields → snake_case — ✅ done
+- _Applied against `domain/` (T5.1 not yet run). Renamed in `domain/models.py`, `domain/schemas.py` (with `data_key`), `adapter.py` (7 sites), and `test_schemas.py` + `test_adapter.py`; JSON wire keys in fixtures left camelCase._
 - `api/models.py` (or `domain/models.py` if T5.1 was rejected): `modelRunDate` → `model_run_date`, `requestPointDistance` → `request_point_distance`, `timeSeries` → `time_series`.
 - `api/schemas.py`: rename the schema fields and add `data_key="modelRunDate"`, `data_key="requestPointDistance"`, `data_key="timeSeries"` so JSON (de)serialisation is unchanged.
 - `adapter.py`: `feature.properties.modelRunDate` → `.model_run_date` (3 sites).
