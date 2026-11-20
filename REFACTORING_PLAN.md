@@ -585,7 +585,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - **Trade-off:** camelCase is defensible as an API wire contract; this task makes the code PEP8 at the cost of the `data_key` indirection.
 - **Verify:** full `make test` + mypy.
 
-### T9.14 — `lib/metoffice/widgets/weather_graph.py` (minor)
+### T9.14 — `lib/metoffice/widgets/weather_graph.py` (minor) — ✅ done
 - `unit == "C"` string comparisons → in-file `_TEMP_UNIT: Final[str] = "C"`.
 - **Verify:** `uv run pytest test/lib/metoffice/test_weather_graph.py -q`.
 

@@ -42,6 +42,9 @@ _LANE_BORDER_COLOR = "#444466"
 _MIDNIGHT_COLOR = "#3A3A5C"
 _NOW_COLOR = "#E86A5E"
 
+# The temperature lane's unit string (distinguishes °C lanes from %/mph lanes).
+_TEMP_UNIT: Final[str] = "C"
+
 # Layout dimensions
 _ICON_SIZE: Final[int] = 28  # icon pixel size
 _ICON_BORDER: Final[int] = 2  # border width around icons
@@ -334,11 +337,11 @@ class WeatherGraphWidget(QWidget):
         plot_height = plot_bottom - plot_top
 
         # Grid lines + Y-axis labels.
-        # Temperature lane (unit == "C"): a horizontal line at every 5°C within
+        # Temperature lane (Celsius): a horizontal line at every 5°C within
         # the data range, with the 0°C line drawn slightly bolder as a reference.
         # Other lanes: the existing 3 lines at min / mid / max of the range.
         painter.setFont(QFont("Arial", 9))
-        if unit == "C":
+        if unit == _TEMP_UNIT:
             grid_vals = list(
                 range(
                     math.floor(v_min / 5) * 5,
@@ -365,7 +368,7 @@ class WeatherGraphWidget(QWidget):
                 painter.setPen(QPen(QColor(_GRID_COLOR), 1))
             painter.drawLine(int(chart_left), int(y), int(chart_right), int(y))
 
-            if unit == "C":
+            if unit == _TEMP_UNIT:
                 label = f"{val:.0f}\u00b0C"
             elif unit == "%":
                 label = f"{val:.0f}%"
@@ -592,7 +595,7 @@ class WeatherGraphWidget(QWidget):
                 ],
                 v_min,
                 v_max,
-                unit="C",
+                unit=_TEMP_UNIT,
                 icons=icons,
             )
         else:
@@ -619,7 +622,7 @@ class WeatherGraphWidget(QWidget):
                 ("temp_low", _TEMP_MIN_COLOR),
             ]
             self._draw_lane(
-                painter, width, height, series, v_min, v_max, unit="C", icons=icons
+                painter, width, height, series, v_min, v_max, unit=_TEMP_UNIT, icons=icons
             )
 
     def _paint_wind_lane(self, painter: QPainter, width: int, height: int) -> None:
