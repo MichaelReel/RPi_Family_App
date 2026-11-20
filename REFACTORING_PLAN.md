@@ -19,7 +19,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
 | §6 — Accurate READMEs | ⬜ not started | READMEs last edited in the pre-plan "ACTION_ITEMS" era |
 | §8 — Config in `config/` | ⬜ not started | attempted & reverted; `config/` absent |
-| §9 — UPPER_CASE / underscore privates | ⬜ not started | `self.label`, `self.seconds_font_size`, `self.main_layout` still public |
+| §9 — UPPER_CASE / underscore privates | ✅ DONE | All internal attributes now `_private`; config constants intentionally public (T9.16) |
 
 > **⚠️ Bug fixed that the plan would have re-introduced.** The app stopped showing its window because `main.py` was left with an unassigned `MainWindow()` — CPython garbage-collects a top-level widget nothing references, so it is destroyed before `app.exec()`. Fixed in commit `686922a` by restoring `window = MainWindow()`. **T7.1 below endorses the broken form and must not be re-applied as written.**
 
@@ -515,7 +515,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `WEATHER_SWAP_MS`, `MET_REFRESH_MS`, `MET_*` constants stay as-is (already correct UPPER_CASE public config). `client.py`'s `HTTP_TIMEOUT` stays in-file (renamed by T9.1).
 - **Verify (all §8):** `make check` green, plus run each demo once to confirm visuals are unchanged.
 
-## 9. UPPER_CASE constants and underscore-prefixed privates — ⬜ not started
+## 9. UPPER_CASE constants and underscore-prefixed privates — ✅ DONE (T9.1–T9.16)
 
 **Gate:** mypy + tests green after **each** rename (mypy catches broken references).
 
@@ -593,8 +593,8 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `for i, data_point in enumerate(...)` → `for index, data_point in enumerate(...)` (2 sites).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
 
-### T9.16 — `config/metoffice.py`
-- **No change:** `MET_*` / `WEATHER_SWAP_MS` / `MET_REFRESH_MS` are intentionally public UPPER_CASE config — recorded decision.
+### T9.16 — `config/metoffice.py` — ✅ done (no change)
+- **No change:** `MET_*` / `WEATHER_SWAP_MS` / `MET_REFRESH_MS` are intentionally public UPPER_CASE config — recorded decision. (Currently in `config.py`; moves to `config/` in §8/T8.1.)
 
 ## Execution order
 
