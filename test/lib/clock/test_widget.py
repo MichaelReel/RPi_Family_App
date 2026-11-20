@@ -1,10 +1,12 @@
 from datetime import datetime
 from unittest.mock import patch  # Built-in standard library module
 
+from pytestqt.qtbot import QtBot
+
 from lib.clock.widget.live_clock import LiveClockWidget
 
 
-def test_clock_initial_values(qtbot):
+def test_clock_initial_values(qtbot: QtBot) -> None:
     """Test using only built-in Python mocking tools."""
 
     # Freeze the time to a specific target point

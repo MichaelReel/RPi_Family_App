@@ -3,7 +3,7 @@ import os
 from pytest import Config
 
 
-def pytest_configure(config: Config):
+def pytest_configure(config: Config) -> None:
     """Ensure METOFFICE_API_KEY is set before any test module is imported."""
     os.environ.setdefault("METOFFICE_API_KEY", "test-key")
 

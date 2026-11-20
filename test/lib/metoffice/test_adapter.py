@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -29,7 +29,7 @@ def sample_weather_root() -> WeatherSchemaRoot:
 
     # Deserialise into the raw strongly typed schema root object
     schema: WeatherSchemaRootSchema = WeatherSchemaRootSchema()
-    return schema.load(json_data)
+    return cast(WeatherSchemaRoot, schema.load(json_data))
 
 
 def test_adapter_transforms_metadata_correctly(
@@ -172,7 +172,7 @@ def sample_three_hourly_root() -> WeatherSchemaRoot:
     with open(file_path, encoding="utf-8") as file:
         json_data: Any = json.load(file)
     schema: WeatherSchemaRootSchema = WeatherSchemaRootSchema()
-    return schema.load(json_data)
+    return cast(WeatherSchemaRoot, schema.load(json_data))
 
 
 def test_adapter_parses_three_hourly_points(

@@ -14,16 +14,18 @@ from lib.metoffice.icons import (
 
 
 @pytest.fixture(scope="session")
-def qapp():
+def qapp() -> QApplication:
     """Provides a persistent QApplication instance required for QPixmap operations."""
     app = QApplication.instance()
-    if app is None:
+    if not isinstance(app, QApplication):
         app = QApplication([])
     return app
 
 
 @pytest.fixture
-def mock_icon_dir(tmp_path, qapp):  # Added qapp here so Qt is ready before saving
+def mock_icon_dir(
+    tmp_path: Path, qapp: QApplication
+) -> Path:  # Added qapp here so Qt is ready before saving
     """Creates a temporary directory filled with valid, test PNG assets using QImage."""
 
     # Create a simple blank 10x10 image using native Qt structures
@@ -43,7 +45,7 @@ def mock_icon_dir(tmp_path, qapp):  # Added qapp here so Qt is ready before savi
     return tmp_path
 
 
-def test_load_weather_icons_success(qapp, mock_icon_dir):
+def test_load_weather_icons_success(qapp: QApplication, mock_icon_dir: Path) -> None:
     """Verifies that valid icons are successfully loaded into QPixmaps."""
     icons = load_weather_icons(mock_icon_dir)
 
@@ -53,7 +55,9 @@ def test_load_weather_icons_success(qapp, mock_icon_dir):
     assert not icons[0].isNull()  # Checks that PyQt successfully parsed the image data
 
 
-def test_load_weather_icons_missing_file(qapp, mock_icon_dir, caplog):
+def test_load_weather_icons_missing_file(
+    qapp: QApplication, mock_icon_dir: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Verifies that missing files are handled gracefully without crashing."""
     icons = load_weather_icons(mock_icon_dir)
 
@@ -67,7 +71,9 @@ def test_load_weather_icons_missing_file(qapp, mock_icon_dir, caplog):
     assert "30_heavyrainandthunder.png" in caplog.text
 
 
-def test_load_weather_icons_caching(qapp, mock_icon_dir, monkeypatch):
+def test_load_weather_icons_caching(
+    qapp: QApplication, mock_icon_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Verifies that the internal cache prevents duplicate disk/QPixmap initializations."""
     # Spy on QPixmap initialization by modifying the dictionary mapping to create a duplicate
     # Let's map code 5 and code 6 to the exact same file name to force a cache hit
@@ -83,19 +89,23 @@ def test_load_weather_icons_caching(qapp, mock_icon_dir, monkeypatch):
 # ── _IconCaches singleton tests ──────────────────────────────────
 
 
-def test_iconcaches_is_singleton_class(qapp):
+def test_iconcaches_is_singleton_class(qapp: QApplication) -> None:
     """Verify _IconCaches is the class behind the module-level singleton."""
     assert isinstance(caches, _IconCaches)
 
 
-def test_load_weather_icons_returns_same_ref_on_repeated_call(qapp, mock_icon_dir):
+def test_load_weather_icons_returns_same_ref_on_repeated_call(
+    qapp: QApplication, mock_icon_dir: Path
+) -> None:
     """load_weather_icons should cache its result so repeated calls return the same object."""
     first = load_weather_icons(mock_icon_dir)
     second = load_weather_icons(mock_icon_dir)
     assert first is second
 
 
-def test_load_stats_icons_returns_same_ref_on_repeated_call(qapp, mock_icon_dir):
+def test_load_stats_icons_returns_same_ref_on_repeated_call(
+    qapp: QApplication, mock_icon_dir: Path
+) -> None:
     """load_stats_icons should cache its result so repeated calls return the same object."""
     first = load_stats_icons(mock_icon_dir)
     second = load_stats_icons(mock_icon_dir)

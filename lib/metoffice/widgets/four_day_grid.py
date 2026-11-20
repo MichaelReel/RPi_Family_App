@@ -21,12 +21,14 @@ class FourDayGridWidget(QWidget):
 
     def __init__(
         self,
-        report_source: Callable[[], HumanReadableWeatherReport],
+        report_source: Callable[[], HumanReadableWeatherReport | None],
         bg_color: str = "#000022",
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
-        self.report_source: Callable[[], HumanReadableWeatherReport] = report_source
+        self.report_source: Callable[[], HumanReadableWeatherReport | None] = (
+            report_source
+        )
         self.report: HumanReadableWeatherReport | None = None
         self._bg_color: str = bg_color
         self.cards: list[DayCardWidget] = []

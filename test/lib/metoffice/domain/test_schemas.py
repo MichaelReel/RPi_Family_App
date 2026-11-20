@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from marshmallow import ValidationError
@@ -10,17 +11,17 @@ from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
 
 # A pytest fixture to find and load your sample JSON file safely
 @pytest.fixture
-def sample_json_data():
+def sample_json_data() -> dict[str, Any]:
     # Looks for sample.json in the same directory as this test file
     file_path = Path(
         "test/test_data/metoffice_sitespecific_point_daily/domain.json"
     ).resolve()
 
     with open(file_path, encoding="utf-8") as file:
-        return json.load(file)
+        return cast(dict[str, Any], json.load(file))
 
 
-def test_schema_loads_valid_json(sample_json_data):
+def test_schema_loads_valid_json(sample_json_data: dict[str, Any]) -> None:
     """Verifies that valid Met Office JSON passes structural validation."""
     schema = WeatherSchemaRootSchema()
 
@@ -33,7 +34,7 @@ def test_schema_loads_valid_json(sample_json_data):
     assert len(result.features) > 0
 
 
-def test_extracted_dataclass_values(sample_json_data):
+def test_extracted_dataclass_values(sample_json_data: dict[str, Any]) -> None:
     """Verifies specific deep attributes parse correctly after deserialisation."""
     schema = WeatherSchemaRootSchema()
     weather_obj = schema.load(sample_json_data)
@@ -54,7 +55,7 @@ def test_extracted_dataclass_values(sample_json_data):
         assert isinstance(details.unit.label, str)
 
 
-def test_schema_rejects_missing_required_fields():
+def test_schema_rejects_missing_required_fields() -> None:
     """Ensures the schema correctly raises errors on corrupted payloads."""
     schema = WeatherSchemaRootSchema()
 

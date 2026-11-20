@@ -2,12 +2,13 @@
 
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QLabel, QWidget
+from pytestqt.qtbot import QtBot
 
 from lib.widgets.swapping_container import SwappingContainerWidget
 
 
-def test_swapping_container_starts_on_first_page(qtbot) -> None:
+def test_swapping_container_starts_on_first_page(qtbot: QtBot) -> None:
     """Widget should show the first widget on page 0 initially."""
     page1 = QLabel("Hello")
     page2 = QLabel("World")
@@ -19,18 +20,18 @@ def test_swapping_container_starts_on_first_page(qtbot) -> None:
     assert container.stacked.widget(0) is page1
 
 
-def test_swapping_container_page_count(qtbot) -> None:
+def test_swapping_container_page_count(qtbot: QtBot) -> None:
     """The stacked widget should have one page per widget in the list."""
-    pages = [QLabel(f"Page {i}") for i in range(3)]
+    pages: list[QWidget] = [QLabel(f"Page {i}") for i in range(3)]
     container = SwappingContainerWidget(pages=pages, swap_interval_ms=1000)
     qtbot.addWidget(container)
 
     assert container.stacked.count() == 3
 
 
-def test_swapping_container_cycles_pages(qtbot) -> None:
+def test_swapping_container_cycles_pages(qtbot: QtBot) -> None:
     """Advancing should cycle through all pages and wrap around."""
-    pages = [QLabel(f"Page {i}") for i in range(3)]
+    pages: list[QWidget] = [QLabel(f"Page {i}") for i in range(3)]
     container = SwappingContainerWidget(pages=pages, swap_interval_ms=10)
     qtbot.addWidget(container)
     container.show()
@@ -48,7 +49,7 @@ def test_swapping_container_cycles_pages(qtbot) -> None:
     assert container.stacked.currentIndex() == 0
 
 
-def test_swapping_container_timer_is_running(qtbot) -> None:
+def test_swapping_container_timer_is_running(qtbot: QtBot) -> None:
     """The swap timer should be running after initialisation."""
     container = SwappingContainerWidget(pages=[QLabel("test")], swap_interval_ms=5000)
     qtbot.addWidget(container)
@@ -62,7 +63,7 @@ def test_swapping_container_rejects_empty_list() -> None:
         SwappingContainerWidget(pages=[], swap_interval_ms=1000)
 
 
-def test_swapping_container_single_page(qtbot) -> None:
+def test_swapping_container_single_page(qtbot: QtBot) -> None:
     """A single page should work and 'advancing' stays on the same page."""
     page = QLabel("Only")
     container = SwappingContainerWidget(pages=[page], swap_interval_ms=1000)
@@ -73,9 +74,9 @@ def test_swapping_container_single_page(qtbot) -> None:
     assert container.stacked.currentIndex() == 0
 
 
-def test_swapping_container_click_swaps_page(qtbot) -> None:
+def test_swapping_container_click_swaps_page(qtbot: QtBot) -> None:
     """A click anywhere on the container should immediately swap to the next page."""
-    pages = [QLabel(f"Page {i}") for i in range(3)]
+    pages: list[QWidget] = [QLabel(f"Page {i}") for i in range(3)]
     container = SwappingContainerWidget(pages=pages, swap_interval_ms=5000)
     qtbot.addWidget(container)
     container.show()
@@ -89,7 +90,7 @@ def test_swapping_container_click_swaps_page(qtbot) -> None:
     assert container.stacked.currentIndex() == 2
 
 
-def test_swapping_container_click_resets_timer(qtbot) -> None:
+def test_swapping_container_click_resets_timer(qtbot: QtBot) -> None:
     """After a click-driven swap the timer should be restarted (still active, full interval)."""
     container = SwappingContainerWidget(
         pages=[QLabel("a"), QLabel("b")], swap_interval_ms=3000
@@ -107,7 +108,7 @@ def test_swapping_container_click_resets_timer(qtbot) -> None:
     assert container.stacked.currentIndex() == 1
 
 
-def test_swapping_container_timer_swap_resets_timer(qtbot) -> None:
+def test_swapping_container_timer_swap_resets_timer(qtbot: QtBot) -> None:
     """After a timer-driven swap the timer should be restarted (still active, full interval)."""
     container = SwappingContainerWidget(
         pages=[QLabel("a"), QLabel("b")], swap_interval_ms=100

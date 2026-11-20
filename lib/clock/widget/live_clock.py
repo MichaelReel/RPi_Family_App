@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QResizeEvent
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 
@@ -25,7 +25,7 @@ class LiveClockWidget(QWidget):
         self.seconds_font_size: int = 34
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         layout = QVBoxLayout()
         self.setLayout(layout)
         self.setWindowTitle("Live Clock")
@@ -67,7 +67,7 @@ class LiveClockWidget(QWidget):
 
         self.update_clock()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
         """Automatically recalculates font sizes whenever the widget is resized."""
         super().resizeEvent(event)
 
@@ -97,7 +97,7 @@ class LiveClockWidget(QWidget):
         # Refresh the clock text instantly to apply the new inline HTML size
         self.update_clock()
 
-    def update_clock(self):
+    def update_clock(self) -> None:
         now = datetime.now()  # noqa: DTZ005
 
         hours_minutes = now.strftime("%H:%M")

@@ -21,6 +21,11 @@ def _to_int(val: int | str | Decimal | None) -> int | None:
     return int(val) if val is not None else None
 
 
+def _to_str(val: int | str | Decimal | None) -> str | None:
+    """Convert a value to str, returning None if the input is None."""
+    return str(val) if val is not None else None
+
+
 # Weather definition lookup maps
 WEATHER_CODE_MAP: dict[int, str] = {
     0: "Clear night",
@@ -111,23 +116,22 @@ class MetOfficeAdapter:
         for entry in feature.properties.timeSeries:
             raw: dict[str, int | str | Decimal] = entry.data
 
-            raw_time: str | None = raw.get("time")
+            raw_time: str | None = _to_str(raw.get("time"))
             forecast_date: datetime = (
                 datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
                 if raw_time
                 else model_run_at
             )
 
-            w_code: int | None = raw.get("daySignificantWeatherCode") or raw.get(
-                "nightSignificantWeatherCode"
+            w_code: int | None = _to_int(
+                raw.get("daySignificantWeatherCode")
+                or raw.get("nightSignificantWeatherCode")
             )
             condition: str = "Unknown"
             if w_code is not None:
                 condition = WEATHER_CODE_MAP.get(w_code, f"Unknown Code ({w_code})")
 
-            raw_vis: int | float | str | None = raw.get("middayVisibility") or raw.get(
-                "midnightVisibility"
-            )
+            raw_vis = raw.get("middayVisibility") or raw.get("midnightVisibility")
             visibility_metres: int | None = (
                 int(raw_vis) if raw_vis is not None else None
             )
@@ -171,7 +175,7 @@ class MetOfficeAdapter:
         for entry in feature.properties.timeSeries:
             raw: dict[str, int | str | Decimal] = entry.data
 
-            raw_time: str | None = raw.get("time")
+            raw_time: str | None = _to_str(raw.get("time"))
             point_time: datetime = (
                 datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
                 if raw_time
@@ -215,7 +219,7 @@ class MetOfficeAdapter:
         for entry in feature.properties.timeSeries:
             raw: dict[str, int | str | Decimal] = entry.data
 
-            raw_time: str | None = raw.get("time")
+            raw_time: str | None = _to_str(raw.get("time"))
             point_time: datetime = (
                 datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
                 if raw_time

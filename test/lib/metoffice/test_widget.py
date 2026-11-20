@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,10 +12,10 @@ from lib.metoffice.widgets.location_label import LocationLabelWidget
 
 
 @pytest.fixture(scope="session", autouse=True)
-def q_application():
+def q_application() -> QApplication:
     """Ensures a single QApplication instance exists for the test session lifecycle."""
     app = QApplication.instance()
-    if app is None:
+    if not isinstance(app, QApplication):
         app = QApplication([])
     return app
 
@@ -22,7 +23,7 @@ def q_application():
 @pytest.fixture()
 def report_source(
     expected_human_report_snapshot: HumanReadableWeatherReport,
-) -> callable[[], HumanReadableWeatherReport]:
+) -> Callable[[], HumanReadableWeatherReport]:
     """Provide a source of a test report"""
 
     def _report_source() -> HumanReadableWeatherReport:
@@ -31,7 +32,9 @@ def report_source(
     return _report_source
 
 
-def test_widget_initialization_and_card_count(qtbot, report_source):
+def test_widget_initialization_and_card_count(
+    qtbot: QtBot, report_source: Callable[[], HumanReadableWeatherReport]
+) -> None:
     """Verifies grid container instantiates exactly 8 interior card objects."""
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)  # Registers the widget for auto-cleanup
@@ -39,7 +42,9 @@ def test_widget_initialization_and_card_count(qtbot, report_source):
     assert len(grid_widget.cards) == 4
 
 
-def test_card_data_mapping_and_labels(qtbot, report_source):
+def test_card_data_mapping_and_labels(
+    qtbot: QtBot, report_source: Callable[[], HumanReadableWeatherReport]
+) -> None:
     """Verifies data properties accurately map to visual text layouts."""
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
@@ -54,7 +59,9 @@ def test_card_data_mapping_and_labels(qtbot, report_source):
     assert "5%" in first_card.lbl_rain.text()
 
 
-def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot):
+def test_timer_updates_cards_automatically(
+    qtbot: QtBot, expected_human_report_snapshot: HumanReadableWeatherReport
+) -> None:
     """Verifies that the grid automatically triggers updates when the timer fires."""
 
     # 1. Create a mock function that we can track
@@ -75,7 +82,9 @@ def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot
     mock_source.assert_called_once()
 
 
-def test_timer_configuration_properties(qtbot, report_source):
+def test_timer_configuration_properties(
+    qtbot: QtBot, report_source: Callable[[], HumanReadableWeatherReport]
+) -> None:
     """Verifies the underlying timer structure runs continuously with correct ms."""
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
@@ -90,7 +99,9 @@ def test_timer_configuration_properties(qtbot, report_source):
     assert grid_widget.refresh_timer.interval() == MET_REFRESH_MS
 
 
-def test_featured_layout_initialization(qtbot: QtBot, report_source) -> None:
+def test_featured_layout_initialization(
+    qtbot: QtBot, report_source: Callable[[], HumanReadableWeatherReport]
+) -> None:
     """Verifies all 4 weather cards map correctly into their primary layout hierarchies."""
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
@@ -106,7 +117,7 @@ def test_featured_layout_initialization(qtbot: QtBot, report_source) -> None:
 
 
 def test_setup_grid_data_handles_report_source_exception(
-    qtbot, expected_human_report_snapshot
+    qtbot: QtBot, expected_human_report_snapshot: HumanReadableWeatherReport
 ) -> None:
     """If report_source raises an exception during setup, the widget should raise RuntimeError."""
 
@@ -118,7 +129,9 @@ def test_setup_grid_data_handles_report_source_exception(
 
 
 def test_update_grid_data_handles_report_source_exception(
-    qtbot, expected_human_report_snapshot, caplog
+    qtbot: QtBot,
+    expected_human_report_snapshot: HumanReadableWeatherReport,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """If report_source raises during a timer-triggered update, the error should be logged, not crash."""
     grid_widget = FourDayGridWidget(
@@ -138,7 +151,9 @@ def test_update_grid_data_handles_report_source_exception(
     assert "API failure" in caplog.text
 
 
-def test_location_label_shows_name(qtbot, expected_human_report_snapshot) -> None:
+def test_location_label_shows_name(
+    qtbot: QtBot, expected_human_report_snapshot: HumanReadableWeatherReport
+) -> None:
     """Widget should display the location name when it is present."""
     widget = LocationLabelWidget(location_name="Falmouth")
     qtbot.addWidget(widget)
@@ -148,7 +163,7 @@ def test_location_label_shows_name(qtbot, expected_human_report_snapshot) -> Non
     assert widget.label.isVisible() is True
 
 
-def test_location_label_hidden_when_none(qtbot) -> None:
+def test_location_label_hidden_when_none(qtbot: QtBot) -> None:
     """Widget should hide its label when location_name is None and no coordinates."""
     widget = LocationLabelWidget(location_name=None, coordinates=None)
     qtbot.addWidget(widget)
@@ -157,7 +172,7 @@ def test_location_label_hidden_when_none(qtbot) -> None:
     assert widget.label.isVisible() is False
 
 
-def test_location_label_hidden_when_empty(qtbot) -> None:
+def test_location_label_hidden_when_empty(qtbot: QtBot) -> None:
     """Widget should hide its label when location_name is empty and no coordinates."""
     widget = LocationLabelWidget(location_name="", coordinates=None)
     qtbot.addWidget(widget)
@@ -166,7 +181,7 @@ def test_location_label_hidden_when_empty(qtbot) -> None:
     assert widget.label.isVisible() is False
 
 
-def test_location_label_shows_coordinates_when_no_name(qtbot) -> None:
+def test_location_label_shows_coordinates_when_no_name(qtbot: QtBot) -> None:
     """Widget should display coordinates as fallback when location_name is blank."""
     from decimal import Decimal
 

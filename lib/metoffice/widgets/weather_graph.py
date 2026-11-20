@@ -3,12 +3,13 @@
 import math
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from decimal import Decimal
 from logging import Logger, getLogger
 from typing import Final
 from zoneinfo import ZoneInfo
 
 from PyQt6.QtCore import QRect, QRectF, Qt
-from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap
+from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPaintEvent, QPen, QPixmap
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
 from lib.metoffice.icons import load_stats_icons
@@ -79,7 +80,7 @@ class _LaneFrame(QFrame):
         self.setStyleSheet(f"QFrame {{ background-color: {bg_color}; border: 0px; }}")
         self.setMinimumHeight(80)
 
-    def paintEvent(self, event) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         self._paint_fn(painter, self.width(), self.height())
@@ -99,13 +100,15 @@ class WeatherGraphWidget(QWidget):
 
     def __init__(
         self,
-        report_source: Callable[[], HumanReadableWeatherReport],
+        report_source: Callable[[], HumanReadableWeatherReport | None],
         bg_color: str = "#000022",
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._bg_color = bg_color
-        self._report_source = report_source
+        self._report_source: Callable[[], HumanReadableWeatherReport | None] = (
+            report_source
+        )
         self._days: list[DailyForecastPoint] = []
         self._hourly: list[HourlyForecastPoint] = []
         self._three_hourly: list[ThreeHourlyForecastPoint] = []
@@ -343,7 +346,7 @@ class WeatherGraphWidget(QWidget):
                     5,
                 )
             )
-            grid_items = [(val, val == 0) for val in grid_vals]
+            grid_items = [(float(val), val == 0) for val in grid_vals]
         else:
             grid_items = [
                 (v_min, False),
@@ -352,7 +355,7 @@ class WeatherGraphWidget(QWidget):
             ]
         for val, is_zero in grid_items:
             if v_max == v_min:
-                y = plot_bottom
+                y: float = plot_bottom
             else:
                 ratio = (val - v_min) / (v_max - v_min)
                 y = plot_bottom - (plot_height * ratio)
@@ -494,8 +497,8 @@ class WeatherGraphWidget(QWidget):
         painter: QPainter,
         points: list[tuple[datetime, float | None]],
         color: str,
-        x_pos,
-        y_pos,
+        x_pos: Callable[[datetime], float],
+        y_pos: Callable[[float], float],
     ) -> None:
         pts: list[tuple[float, float]] = []
         for t, val in points:
@@ -836,7 +839,7 @@ class WeatherGraphWidget(QWidget):
     @staticmethod
     def _daily_series(
         days: list[DailyForecastPoint],
-        getter: Callable[[DailyForecastPoint], float | None],
+        getter: Callable[[DailyForecastPoint], Decimal | float | None],
     ) -> list[tuple[datetime, float | None]]:
         """Fallback series built from daily data (used only when no fine data exists)."""
         series: list[tuple[datetime, float | None]] = []
@@ -849,7 +852,7 @@ class WeatherGraphWidget(QWidget):
     # Date labels (painted at the bottom of the main widget)
     # ------------------------------------------------------------------
 
-    def paintEvent(self, event) -> None:  # noqa: N802
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 

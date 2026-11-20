@@ -20,7 +20,7 @@ class WeatherGroupWidget(QWidget):
 
     def __init__(
         self,
-        report_source: Callable[[], HumanReadableWeatherReport],
+        report_source: Callable[[], HumanReadableWeatherReport | None],
         location_name: str | None,
         coordinates: list[Decimal] | None = None,
         bg_color: str = "#000022",

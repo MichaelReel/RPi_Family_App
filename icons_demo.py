@@ -13,7 +13,7 @@ from lib.metoffice.icons import load_weather_icons
 
 
 class WeatherViewerWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Met Office Icon Gallery")
         self.resize(800, 600)

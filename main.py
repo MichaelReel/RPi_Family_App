@@ -8,7 +8,7 @@ from lib.widgets.swapping_container import SwappingContainerWidget
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Custom Full Screen App")
 
@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
         self.showFullScreen()
 
 
-def main():
+def main() -> None:
     app = QApplication([])
     MainWindow()
     app.exec()

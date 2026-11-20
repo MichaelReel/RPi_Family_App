@@ -58,7 +58,7 @@ class _IconCaches:
     canonical source — do not create additional instances.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._loaded_weather_icons: dict[int, QPixmap] = {}
         self._loaded_stats_icons: dict[str, QPixmap] = {}
 
@@ -109,7 +109,7 @@ class _IconCaches:
         # Cache unique images to avoid loading the same file multiple times (e.g., temp_high/feel)
         pixmap_cache: dict[str, QPixmap] = {}
 
-        code: int
+        code: str
         filename: str
         for code, filename in _MET_OFFICE_STATS_MAP.items():
             file_path: Path = icon_dir / filename

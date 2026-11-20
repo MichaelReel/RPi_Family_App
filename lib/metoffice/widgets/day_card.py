@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPainter, QPixmap
+from PyQt6.QtGui import QPainter, QPaintEvent, QPixmap
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -9,6 +10,7 @@ from PyQt6.QtWidgets import (
     QStyle,
     QStyleOption,
     QVBoxLayout,
+    QWidget,
 )
 
 from lib.metoffice.icons import load_stats_icons, load_weather_icons
@@ -72,15 +74,17 @@ class DayCardWidget(QFrame):
     _stats_cache: dict[str, QPixmap] = {}
 
     def __init__(
-        self, data: DailyForecastPoint, config: CardStyleConfig = None, parent=None
+        self,
+        data: DailyForecastPoint,
+        config: CardStyleConfig | None = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
 
         # Fallback if no specific style object is given
-        if config is None:
-            self.config = CardStyleConfig()
-        else:
-            self.config = config
+        self.config: CardStyleConfig = (
+            config if config is not None else CardStyleConfig()
+        )
 
         if not DayCardWidget._icon_cache:
             DayCardWidget._icon_cache = load_weather_icons()
@@ -153,7 +157,7 @@ class DayCardWidget(QFrame):
         layout.addWidget(self.lbl_cond)
         layout.addSpacing(4)
 
-        def create_metric_row(*args: list[QLabel]) -> QHBoxLayout:
+        def create_metric_row(*args: QLabel) -> QHBoxLayout:
             row = QHBoxLayout()
             row.setSpacing(self.config.row_spacing)
             row.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -184,12 +188,13 @@ class DayCardWidget(QFrame):
         # 4. Populate metrics, load images, and apply targeted styling
         self.update_data(data)
 
-    def paintEvent(self, event):
-
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         opt = QStyleOption()
         opt.initFrom(self)
         p = QPainter(self)
-        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, p, self)
+        style = self.style()
+        if style is not None:
+            style.drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, p, self)
 
     def _set_stats_icon(self, label: QLabel, stat_name: str, size: int) -> None:
         pixmap: QPixmap = self._stats_cache[stat_name]
@@ -225,7 +230,7 @@ class DayCardWidget(QFrame):
         self.lbl_rain.setStyleSheet(metrics_css)
         self.lbl_uv.setStyleSheet(metrics_css)
 
-        def fmt(val, suffix="") -> str:
+        def fmt(val: Decimal | int | None, suffix: str = "") -> str:
             return f"{val}{suffix}" if val is not None else "--"
 
         self.lbl_date.setText(data.date.strftime("%A, %b %d"))
@@ -248,7 +253,9 @@ class DayCardWidget(QFrame):
         self._set_stats_icon(self.ico_uv, "uv_index", size=metric_dim)
 
         weather_code = data.weather_code
-        pixmap = self._icon_cache.get(weather_code)
+        pixmap: QPixmap | None = (
+            self._icon_cache.get(weather_code) if weather_code is not None else None
+        )
 
         if pixmap and not pixmap.isNull():
             scaled_pixmap = pixmap.scaled(

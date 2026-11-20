@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPixmap
+from pytestqt.qtbot import QtBot
 
 from lib.metoffice.models import (
     DailyForecastPoint,
@@ -54,7 +55,7 @@ def _make_report(
     )
 
 
-def test_graph_widget_initialisation(qtbot) -> None:
+def test_graph_widget_initialisation(qtbot: QtBot) -> None:
     """Widget should initialise with data from the report source."""
     report = _make_report(_make_days(8))
     widget = WeatherGraphWidget(report_source=lambda: report)
@@ -66,7 +67,7 @@ def test_graph_widget_initialisation(qtbot) -> None:
     assert widget._days[0].max_temperature_c == Decimal(16)
 
 
-def test_graph_widget_handles_none_report(qtbot) -> None:
+def test_graph_widget_handles_none_report(qtbot: QtBot) -> None:
     """Widget should handle a report source that returns None."""
     widget = WeatherGraphWidget(report_source=lambda: None)
     qtbot.addWidget(widget)
@@ -75,7 +76,7 @@ def test_graph_widget_handles_none_report(qtbot) -> None:
     assert len(widget._days) == 0
 
 
-def test_graph_widget_handles_exception(qtbot) -> None:
+def test_graph_widget_handles_exception(qtbot: QtBot) -> None:
     """Widget should handle a report source that raises."""
 
     def bad_source() -> None:
@@ -88,7 +89,7 @@ def test_graph_widget_handles_exception(qtbot) -> None:
     assert len(widget._days) == 0
 
 
-def test_graph_widget_background_color(qtbot) -> None:
+def test_graph_widget_background_color(qtbot: QtBot) -> None:
     """Widget should apply the background colour from its stylesheet."""
     widget = WeatherGraphWidget(report_source=lambda: _make_report(_make_days(8)))
     qtbot.addWidget(widget)
@@ -98,7 +99,7 @@ def test_graph_widget_background_color(qtbot) -> None:
     assert "#000022" in style
 
 
-def test_graph_widget_takes_next_seven_days(qtbot) -> None:
+def test_graph_widget_takes_next_seven_days(qtbot: QtBot) -> None:
     """Widget should use forecast_days[1:8] — the next 7 days, skipping today."""
     days = _make_days(10)  # 10 days total
     report = _make_report(days)
@@ -111,7 +112,7 @@ def test_graph_widget_takes_next_seven_days(qtbot) -> None:
     assert widget._days[-1] == days[7]
 
 
-def test_eighth_day_label_derived_from_fine_data(qtbot) -> None:
+def test_eighth_day_label_derived_from_fine_data(qtbot: QtBot) -> None:
     """The 8th day's date label must be derived from the fine-data window.
 
     The daily API only returns today + 7 days, but the 3-hourly series runs ~8
@@ -310,14 +311,30 @@ def test_temp_min_max_lines_are_continuous_from_hourly() -> None:
     min_series = WeatherGraphWidget._continuous_series(
         hourly,
         three_hourly,
-        lambda h: float(h.min_screen_temperature_c),
-        lambda t: float(t.min_screen_temperature_c),
+        lambda h: (
+            float(h.min_screen_temperature_c)
+            if h.min_screen_temperature_c is not None
+            else None
+        ),
+        lambda t: (
+            float(t.min_screen_temperature_c)
+            if t.min_screen_temperature_c is not None
+            else None
+        ),
     )
     max_series = WeatherGraphWidget._continuous_series(
         hourly,
         three_hourly,
-        lambda h: float(h.max_screen_temperature_c),
-        lambda t: float(t.max_screen_temperature_c),
+        lambda h: (
+            float(h.max_screen_temperature_c)
+            if h.max_screen_temperature_c is not None
+            else None
+        ),
+        lambda t: (
+            float(t.max_screen_temperature_c)
+            if t.max_screen_temperature_c is not None
+            else None
+        ),
     )
 
     # The first 48h (the 3 hourly points) are populated from the hourly min/max,
@@ -342,15 +359,23 @@ def test_continuous_series_is_sorted_by_time() -> None:
     series = WeatherGraphWidget._continuous_series(
         hourly,
         three_hourly,
-        lambda h: float(h.screen_temperature_c),
-        lambda t: float(t.screen_temperature_c),
+        lambda h: (
+            float(h.screen_temperature_c)
+            if h.screen_temperature_c is not None
+            else None
+        ),
+        lambda t: (
+            float(t.screen_temperature_c)
+            if t.screen_temperature_c is not None
+            else None
+        ),
     )
     assert [t for t, _ in series] == sorted([t for t, _ in series])
     assert series[0][0] == base
     assert series[0][1] == 8.5  # 3-hourly screen temp ((5+12)/2) at the earliest time
 
 
-def test_widget_with_fine_data_populates_all_series_and_paints(qtbot) -> None:
+def test_widget_with_fine_data_populates_all_series_and_paints(qtbot: QtBot) -> None:
     """With hourly + three-hourly data the widget stores both and paints without error."""
     days = _make_days(8)
     hourly = _make_hourly([(0, 10, 6, 12, 8), (1, 11, 7, 13, 9), (2, 12, 8, 14, 10)])
@@ -371,7 +396,7 @@ def test_widget_with_fine_data_populates_all_series_and_paints(qtbot) -> None:
     widget.grab()
 
 
-def test_temp_lane_draws_midnight_gridlines(qtbot) -> None:
+def test_temp_lane_draws_midnight_gridlines(qtbot: QtBot) -> None:
     """The temp lane must paint faint vertical midnight gridlines.
 
     Renders the lane into a pixmap and checks the midnight guide colour
@@ -410,7 +435,7 @@ def test_temp_lane_draws_midnight_gridlines(qtbot) -> None:
     assert hit > 0, "expected midnight gridline colour to be painted in the temp lane"
 
 
-def test_temp_lane_zero_c_gridline_is_bold(qtbot) -> None:
+def test_temp_lane_zero_c_gridline_is_bold(qtbot: QtBot) -> None:
     """The temp lane must paint a slightly bolder 0°C gridline when the range crosses it.
 
     Renders the temperature lane into a pixmap and checks the bold grid colour
@@ -460,7 +485,7 @@ def test_temp_lane_zero_c_gridline_is_bold(qtbot) -> None:
     )
 
 
-def test_date_labels_are_centred_on_noon(qtbot) -> None:
+def test_date_labels_are_centred_on_noon(qtbot: QtBot) -> None:
     """Each on-screen date label must be centred on that day's noon on the time axis.
 
     Renders the parent widget and checks that every painted date-label cluster

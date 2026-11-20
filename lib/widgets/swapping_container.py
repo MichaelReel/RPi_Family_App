@@ -56,7 +56,7 @@ class SwappingContainerWidget(QWidget):
         self._swap_timer.timeout.connect(self._swap_page)
         self._swap_timer.start(swap_interval_ms)
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Click anywhere on the container to swap to the next page immediately."""
         self._swap_page()
 

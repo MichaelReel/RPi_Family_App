@@ -1,6 +1,6 @@
 from http import HTTPStatus
 from logging import Logger, getLogger
-from typing import Final
+from typing import Final, cast
 
 import requests
 from requests.exceptions import RequestException
@@ -44,7 +44,7 @@ def _fetch_endpoint(url: str) -> WeatherSchemaRoot | None:
         return None
 
     try:
-        return WeatherSchemaRootSchema().load(response.json())
+        return cast(WeatherSchemaRoot, WeatherSchemaRootSchema().load(response.json()))
     except requests.exceptions.JSONDecodeError as json_error:
         _LOGGER.error("Failed to parse JSON response: %s", json_error)
         return None

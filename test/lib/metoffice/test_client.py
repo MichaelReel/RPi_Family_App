@@ -7,7 +7,7 @@ from lib.metoffice.client import get_human_readable_weather
 
 
 @pytest.fixture(autouse=True)
-def set_api_key_env(monkeypatch):
+def set_api_key_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure METOFFICE_API_KEY is set for every test."""
     monkeypatch.setenv("METOFFICE_API_KEY", "test-key")
 
@@ -16,7 +16,7 @@ class TestNetworkErrorHandling:
     """Tests that network errors are caught and the function returns None."""
 
     @patch("lib.metoffice.client._fetch_endpoint")
-    def test_connection_error_returns_none(self, mock_fetch):
+    def test_connection_error_returns_none(self, mock_fetch: MagicMock) -> None:
         """A requests.exceptions.ConnectionError should be caught and return None."""
         mock_fetch.return_value = None
         result = get_human_readable_weather()
@@ -27,7 +27,7 @@ class TestHTTPTimeout:
     """Tests that the HTTP request uses a timeout to prevent the UI from freezing."""
 
     @patch("lib.metoffice.client.requests.get")
-    def test_timeout_argument_passed(self, mock_get):
+    def test_timeout_argument_passed(self, mock_get: MagicMock) -> None:
         """Verify that requests.get() is called with a timeout argument."""
         import requests.exceptions
 
@@ -43,7 +43,7 @@ class TestClientCoverage:
     """Additional tests for client.py coverage (action item #3)."""
 
     @patch("lib.metoffice.client.requests.get")
-    def test_json_decode_error_returns_none(self, mock_get):
+    def test_json_decode_error_returns_none(self, mock_get: MagicMock) -> None:
         """A response with invalid JSON should be caught and return None."""
         import requests.exceptions
 
@@ -59,7 +59,7 @@ class TestClientCoverage:
         )  # hourly fails but daily might work — adapter handles None
 
     @patch("lib.metoffice.client.requests.get")
-    def test_non_200_status_returns_none(self, mock_get):
+    def test_non_200_status_returns_none(self, mock_get: MagicMock) -> None:
         """A non-200 HTTP status code should return None."""
         mock_response = MagicMock()
         mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
@@ -69,7 +69,7 @@ class TestClientCoverage:
         assert result is not None  # adapter handles None hourly
 
     @patch("lib.metoffice.client.requests.get")
-    def test_401_unauthorized_returns_none(self, mock_get):
+    def test_401_unauthorized_returns_none(self, mock_get: MagicMock) -> None:
         """An empty or invalid API key should result in a 401, which returns None."""
         mock_response = MagicMock()
         mock_response.status_code = HTTPStatus.UNAUTHORIZED
@@ -82,8 +82,8 @@ class TestClientCoverage:
     @patch("lib.metoffice.client.WeatherSchemaRootSchema")
     @patch("lib.metoffice.client.requests.get")
     def test_successful_response_returns_report(
-        self, mock_get, mock_schema_cls, mock_adapter
-    ):
+        self, mock_get: MagicMock, mock_schema_cls: MagicMock, mock_adapter: MagicMock
+    ) -> None:
         """A successful 200 response with valid JSON should return a HumanReadableWeatherReport."""
         mock_report = MagicMock()
         mock_adapter.return_value = mock_report
