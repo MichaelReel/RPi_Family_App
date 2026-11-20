@@ -1,3 +1,5 @@
+from typing import Final
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication,
@@ -10,6 +12,8 @@ from PyQt6.QtWidgets import (
 )
 
 from lib.metoffice.icons import load_weather_icons
+
+ICON_GRID_COLUMNS: Final[int] = 4
 
 
 class WeatherViewerWindow(QMainWindow):
@@ -33,12 +37,9 @@ class WeatherViewerWindow(QMainWindow):
         # Load your specific icon dataset
         icons_dict = load_weather_icons()
 
-        # Build grid with exactly 4 columns
-        max_columns = 4
-
         for index, (code, pixmap) in enumerate(icons_dict.items()):
-            row = index // max_columns
-            col = index % max_columns
+            row = index // ICON_GRID_COLUMNS
+            col = index % ICON_GRID_COLUMNS
 
             # Cell item layout
             cell_widget = QWidget()

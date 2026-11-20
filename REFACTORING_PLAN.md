@@ -572,7 +572,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `main_layout`, `clock_widget`, `weather_group`, `weather_graph`, `weather_container` → `_`-prefixed (no external references).
 - **Verify:** `make test`, `uv run python -c "import main"`.
 
-### T9.12 — `icons_demo.py` (root before T5.2)
+### T9.12 — `icons_demo.py` (root before T5.2) — ✅ done
 - Loop local `max_columns` → module-level `ICON_GRID_COLUMNS: Final[int] = 4` (shared with T8.9).
 - **Verify:** import-check the demo.
 
