@@ -54,7 +54,7 @@ class _IconCaches:
     """Singleton cache for weather and stats icons.
 
     All icon pixmaps are loaded once and reused across DayCardWidget instances
-    to avoid repeated disk I/O. The module-level `caches` singleton is the
+    to avoid repeated disk I/O. The module-level `_caches` singleton is the
     canonical source — do not create additional instances.
     """
 
@@ -143,16 +143,16 @@ class _IconCaches:
         self._stats_icons_loaded = False
 
 
-caches: _IconCaches = _IconCaches()
+_caches: _IconCaches = _IconCaches()
 
 
 def load_weather_icons(
     directory_path: str | Path = "lib/metoffice/icons/weather/",
 ) -> dict[int, QPixmap]:
-    return caches.load_weather_icons(directory_path=directory_path)
+    return _caches.load_weather_icons(directory_path=directory_path)
 
 
 def load_stats_icons(
     directory_path: str | Path = "lib/metoffice/icons/stats/",
 ) -> dict[str, QPixmap]:
-    return caches.load_stats_icons(directory_path=directory_path)
+    return _caches.load_stats_icons(directory_path=directory_path)

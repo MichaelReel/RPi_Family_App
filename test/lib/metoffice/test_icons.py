@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import QApplication
 
 from lib.metoffice.icons import (
     _MET_OFFICE_WEATHER_MAP,
+    _caches,
     _IconCaches,
-    caches,
     load_stats_icons,
     load_weather_icons,
 )
@@ -91,7 +91,7 @@ def test_load_weather_icons_caching(
 
 def test_iconcaches_is_singleton_class(qapp: QApplication) -> None:
     """Verify _IconCaches is the class behind the module-level singleton."""
-    assert isinstance(caches, _IconCaches)
+    assert isinstance(_caches, _IconCaches)
 
 
 def test_load_weather_icons_returns_same_ref_on_repeated_call(

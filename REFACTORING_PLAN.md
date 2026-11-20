@@ -527,7 +527,7 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `WEATHER_CODE_MAP` → `_WEATHER_CODE_MAP`.
 - **Verify:** `uv run pytest test/lib/metoffice/test_adapter.py -q`.
 
-### T9.3 — `lib/metoffice/icons.py`
+### T9.3 — `lib/metoffice/icons.py` — ✅ done
 - `caches` → `_caches`. Update internal uses (3 sites) + `test/lib/metoffice/conftest.py` (1 site: `caches.weather_icons = {}`) + `test/lib/metoffice/test_icons.py` (4 sites).
 - **Verify:** `uv run pytest test/lib/metoffice/ -q`.
 
