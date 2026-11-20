@@ -5,7 +5,13 @@ from typing import Final
 import requests
 from requests.exceptions import RequestException
 
-from config import MET_DAILY_URL, MET_HEADERS, MET_PARAMS, MET_HOURLY_URL, MET_THREE_HOURLY_URL
+from config import (
+    MET_DAILY_URL,
+    MET_HEADERS,
+    MET_HOURLY_URL,
+    MET_PARAMS,
+    MET_THREE_HOURLY_URL,
+)
 from lib.metoffice.adapter import MetOfficeAdapter
 from lib.metoffice.domain.models import WeatherSchemaRoot
 from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
@@ -26,7 +32,9 @@ def get_human_readable_weather() -> HumanReadableWeatherReport | None:
 
 def _fetch_endpoint(url: str) -> WeatherSchemaRoot | None:
     try:
-        response = requests.get(url, headers=MET_HEADERS, params=MET_PARAMS, timeout=HTTP_TIMEOUT)
+        response = requests.get(
+            url, headers=MET_HEADERS, params=MET_PARAMS, timeout=HTTP_TIMEOUT
+        )
     except RequestException as req_error:
         _LOGGER.error("Exception occurred getting weather info: %s", req_error)
         return None

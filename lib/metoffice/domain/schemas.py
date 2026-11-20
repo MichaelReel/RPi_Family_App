@@ -21,6 +21,7 @@ class GeometrySchema(Schema):
     def make_geometry(self, data, **kwargs):
         return Geometry(**data)
 
+
 class LocationSchema(Schema):
     licence = fields.Str(allow_none=True)
     name = fields.Str(allow_none=True)
@@ -28,6 +29,7 @@ class LocationSchema(Schema):
     @post_load
     def make_location(self, data, **kwargs) -> Location:
         return Location(**data)
+
 
 class TimeSeriesSchema(Schema):
     class Meta:
@@ -39,6 +41,7 @@ class TimeSeriesSchema(Schema):
     def make_timeseries(self, data, **kwargs) -> TimeSeries:
         return TimeSeries(data=data)
 
+
 class PropertiesSchema(Schema):
     modelRunDate = fields.Str(required=True)
     requestPointDistance = fields.Decimal(required=True)
@@ -49,6 +52,7 @@ class PropertiesSchema(Schema):
     def make_properties(self, data, **kwargs) -> Properties:
         return Properties(**data)
 
+
 class FeatureSchema(Schema):
     geometry = fields.Nested(GeometrySchema, required=True)
     properties = fields.Nested(PropertiesSchema, required=True)
@@ -58,6 +62,7 @@ class FeatureSchema(Schema):
     def make_feature(self, data, **kwargs) -> Feature:
         return Feature(**data)
 
+
 class SymbolSchema(Schema):
     type = fields.Str(allow_none=True)
     value = fields.Str(allow_none=True)
@@ -66,6 +71,7 @@ class SymbolSchema(Schema):
     def make_symbol(self, data, **kwargs) -> Symbol:
         return Symbol(**data)
 
+
 class UnitSchema(Schema):
     label = fields.Str(required=True)
     symbol = fields.Nested(SymbolSchema, allow_none=True)
@@ -73,6 +79,7 @@ class UnitSchema(Schema):
     @post_load
     def make_unit(self, data, **kwargs) -> Unit:
         return Unit(**data)
+
 
 class ParameterDetailsSchema(Schema):
     description = fields.Str(allow_none=True)
@@ -83,12 +90,13 @@ class ParameterDetailsSchema(Schema):
     def make_parameter_details(self, data, **kwargs) -> ParameterDetails:
         return ParameterDetails(**data)
 
+
 class WeatherSchemaRootSchema(Schema):
     features = fields.List(fields.Nested(FeatureSchema), required=True)
     # Safely maps the "[any-key]: ParameterDetails" dynamic definition structure
     parameters = fields.List(
-        fields.Dict(keys=fields.Str(), values=fields.Nested(ParameterDetailsSchema)), 
-        required=True
+        fields.Dict(keys=fields.Str(), values=fields.Nested(ParameterDetailsSchema)),
+        required=True,
     )
     type = fields.Str(required=True)
 

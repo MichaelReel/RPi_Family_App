@@ -1,8 +1,8 @@
 """Tests for SwappingContainerWidget."""
-import pytest
 
+import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QWidget
+from PyQt6.QtWidgets import QLabel
 
 from lib.widgets.swapping_container import SwappingContainerWidget
 
@@ -91,7 +91,9 @@ def test_swapping_container_click_swaps_page(qtbot) -> None:
 
 def test_swapping_container_click_resets_timer(qtbot) -> None:
     """After a click-driven swap the timer should be restarted (still active, full interval)."""
-    container = SwappingContainerWidget(pages=[QLabel("a"), QLabel("b")], swap_interval_ms=3000)
+    container = SwappingContainerWidget(
+        pages=[QLabel("a"), QLabel("b")], swap_interval_ms=3000
+    )
     qtbot.addWidget(container)
     container.show()
 
@@ -107,7 +109,9 @@ def test_swapping_container_click_resets_timer(qtbot) -> None:
 
 def test_swapping_container_timer_swap_resets_timer(qtbot) -> None:
     """After a timer-driven swap the timer should be restarted (still active, full interval)."""
-    container = SwappingContainerWidget(pages=[QLabel("a"), QLabel("b")], swap_interval_ms=100)
+    container = SwappingContainerWidget(
+        pages=[QLabel("a"), QLabel("b")], swap_interval_ms=100
+    )
     qtbot.addWidget(container)
     container.show()
 

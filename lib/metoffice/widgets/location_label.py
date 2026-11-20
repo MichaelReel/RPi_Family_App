@@ -1,7 +1,8 @@
 """Small widget that displays the location name or coordinates from a weather report."""
+
+from decimal import Decimal
 from logging import Logger, getLogger
 from typing import Final
-from decimal import Decimal
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QWidget

@@ -54,6 +54,7 @@ class DailyForecastPoint:
     weather_code: int | None
     weather_condition: str
 
+
 @dataclass
 class HumanReadableWeatherReport:
     location_name: str | None

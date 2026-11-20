@@ -1,18 +1,20 @@
-import pytest
 from datetime import datetime
 from unittest.mock import patch  # Built-in standard library module
+
+import pytest
 from PyQt6.QtCore import Qt
 
-from lib.clock.widget.live_clock import LiveClockWidget 
+from lib.clock.widget.live_clock import LiveClockWidget
+
 
 def test_clock_initial_values(qtbot):
     """Test using only built-in Python mocking tools."""
-    
+
     # Freeze the time to a specific target point
-    fixed_time = datetime(2026, 6, 22, 14, 30, 45) 
+    fixed_time = datetime(2026, 6, 22, 14, 30, 45)
 
     # Use Python's built-in patch context manager to mock datetime
-    with patch('lib.clock.widget.live_clock.datetime') as mock_datetime:
+    with patch("lib.clock.widget.live_clock.datetime") as mock_datetime:
         mock_datetime.now.return_value = fixed_time
 
         # Initialize the widget inside the mocked context window

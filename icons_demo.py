@@ -1,18 +1,20 @@
 import sys
 from pathlib import Path
-from PyQt6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QGridLayout,
-    QLabel,
-    QScrollArea,
-    QVBoxLayout
-)
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import (
+    QApplication,
+    QGridLayout,
+    QLabel,
+    QMainWindow,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 
 from lib.metoffice.icons import load_weather_icons
+
 
 class WeatherViewerWindow(QMainWindow):
     def __init__(self):
@@ -37,7 +39,7 @@ class WeatherViewerWindow(QMainWindow):
 
         # Build grid with exactly 4 columns
         max_columns = 4
-        
+
         for index, (code, pixmap) in enumerate(icons_dict.items()):
             row = index // max_columns
             col = index % max_columns
@@ -52,9 +54,10 @@ class WeatherViewerWindow(QMainWindow):
             if not pixmap.isNull():
                 # Scale smoothly to 64x64 while preserving ratio
                 scaled_pixmap = pixmap.scaled(
-                    64, 64, 
-                    Qt.AspectRatioMode.KeepAspectRatio, 
-                    Qt.TransformationMode.SmoothTransformation
+                    64,
+                    64,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
                 )
                 image_label.setPixmap(scaled_pixmap)
             else:
@@ -67,8 +70,9 @@ class WeatherViewerWindow(QMainWindow):
 
             cell_layout.addWidget(image_label)
             cell_layout.addWidget(text_label)
-            
+
             grid_layout.addWidget(cell_widget, row, col)
+
 
 if __name__ == "__main__":
     app = QApplication([])

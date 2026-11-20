@@ -1,8 +1,9 @@
 from logging import Logger, getLogger
+from pathlib import Path
 from typing import Final
 
-from pathlib import Path
 from PyQt6.QtGui import QPixmap
+
 _LOGGER: Final[Logger] = getLogger(__name__)
 
 # 1. Define the dictionary mapping Met Office codes to the repo's file names
@@ -48,9 +49,10 @@ _MET_OFFICE_STATS_MAP: Final[dict[str, str]] = {
     "wind": "wind.png",
 }
 
+
 class _IconCaches:
     """Singleton cache for weather and stats icons.
-    
+
     All icon pixmaps are loaded once and reused across DayCardWidget instances
     to avoid repeated disk I/O. The module-level `caches` singleton is the
     canonical source — do not create additional instances.
@@ -63,10 +65,7 @@ class _IconCaches:
         self._weather_icons_loaded: bool = False
         self._stats_icons_loaded: bool = False
 
-
-    def load_weather_icons(
-        self, directory_path: str | Path
-    ) -> dict[int, QPixmap]:
+    def load_weather_icons(self, directory_path: str | Path) -> dict[int, QPixmap]:
         """Loads all weather icons into memory as QPixmaps indexed by Met Office code."""
         if self._weather_icons_loaded:
             return self._loaded_weather_icons
@@ -100,10 +99,7 @@ class _IconCaches:
         self._weather_icons_loaded = True
         return loaded_icons
 
-
-    def load_stats_icons(
-        self, directory_path: str | Path
-    ) -> dict[str, QPixmap]:
+    def load_stats_icons(self, directory_path: str | Path) -> dict[str, QPixmap]:
         """Loads all stats icons into memory as QPixmaps indexed by Met Office code."""
         if self._stats_icons_loaded:
             return self._loaded_stats_icons
@@ -137,7 +133,6 @@ class _IconCaches:
         self._stats_icons_loaded = True
         return loaded_icons
 
-
     def invalidate_caches(self) -> None:
         """Reset both weather and stats icon caches to their empty, unloaded state.
 
@@ -152,13 +147,14 @@ class _IconCaches:
 
 caches: _IconCaches = _IconCaches()
 
+
 def load_weather_icons(
-    directory_path: str | Path = "lib/metoffice/icons/weather/"
+    directory_path: str | Path = "lib/metoffice/icons/weather/",
 ) -> dict[int, QPixmap]:
     return caches.load_weather_icons(directory_path=directory_path)
 
 
 def load_stats_icons(
-    directory_path: str | Path = "lib/metoffice/icons/stats/"
+    directory_path: str | Path = "lib/metoffice/icons/stats/",
 ) -> dict[str, QPixmap]:
     return caches.load_stats_icons(directory_path=directory_path)

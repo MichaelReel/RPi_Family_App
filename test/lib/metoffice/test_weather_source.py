@@ -1,9 +1,8 @@
 """Tests for CachedWeatherSource (lib/metoffice/weather_source.py)."""
+
 from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest.mock import patch
-
-import pytest
 
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 from lib.metoffice.weather_source import CachedWeatherSource
@@ -35,7 +34,6 @@ def _make_report() -> HumanReadableWeatherReport:
 
 
 class TestCachedWeatherSource:
-
     @patch("lib.metoffice.weather_source.get_human_readable_weather")
     def test_first_call_fetches_and_caches(self, mock_fetch):
         """The first call should hit the API and cache the result."""
@@ -104,14 +102,15 @@ class TestCachedWeatherSource:
         mock_fetch.return_value = report
         source = CachedWeatherSource(ttl_ms=60_000)
 
-        source.get_report()       # populate cache
-        source.clear_cache()      # invalidate
-        source.get_report()       # should refetch
+        source.get_report()  # populate cache
+        source.clear_cache()  # invalidate
+        source.get_report()  # should refetch
 
         assert mock_fetch.call_count == 2
 
     def test_ttl_defaults_to_met_refresh_ms(self):
         """ttl_ms should default to MET_REFRESH_MS when not specified."""
         from config import MET_REFRESH_MS
+
         source = CachedWeatherSource()
         assert source._ttl_ms == MET_REFRESH_MS

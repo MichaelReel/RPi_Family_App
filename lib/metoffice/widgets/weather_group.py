@@ -1,4 +1,5 @@
 """Widget that groups the location label and four-day forecast grid together."""
+
 from collections.abc import Callable
 from decimal import Decimal
 

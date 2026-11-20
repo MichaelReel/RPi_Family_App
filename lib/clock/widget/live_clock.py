@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 class LiveClockWidget(QWidget):
     def __init__(
         self,
-        hour_minutes_color: str = "#000000", 
+        hour_minutes_color: str = "#000000",
         seconds_color: str = "#000000",
         day_color: str = "#000000",
         date_color: str = "#000000",
@@ -37,7 +37,7 @@ class LiveClockWidget(QWidget):
         # 1. Top Element: Time
         self.time_label = QLabel()
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         # 2. Middle Element: Day of the week
         self.day_label = QLabel()
         self.day_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -65,18 +65,20 @@ class LiveClockWidget(QWidget):
         self.timer.start(1000)
 
         self.update_clock()
-    
+
     def resizeEvent(self, event):
         """Automatically recalculates font sizes whenever the widget is resized."""
         super().resizeEvent(event)
-        
+
         # Determine base scale using window height (prevents text clipping)
         base_height = self.height()
 
         # Calculate proportional pixel sizes
-        time_font_size = max(16, int(base_height * 0.5))   # % of widget height
-        sub_font_size = max(10, int(base_height * 0.07))    # % of widget height
-        self.seconds_font_size = max(12, int(base_height * 0.11)) # Saved for HTML string
+        time_font_size = max(16, int(base_height * 0.5))  # % of widget height
+        sub_font_size = max(10, int(base_height * 0.07))  # % of widget height
+        self.seconds_font_size = max(
+            12, int(base_height * 0.11)
+        )  # Saved for HTML string
 
         # Update widget fonts and minimum heights dynamically
         time_font = QFont("Arial", time_font_size, QFont.Weight.Bold)
@@ -99,15 +101,19 @@ class LiveClockWidget(QWidget):
 
         hours_minutes = now.strftime("%H:%M")
         seconds = now.strftime("%S")
-        
+
         # Check if font size variable exists yet (handles startup sequence)
-        sec_size = getattr(self, 'seconds_font_size', 34)
-        
+        sec_size = getattr(self, "seconds_font_size", 34)
+
         # Inject dynamic pixel sizing (px) into the HTML instead of static points (pt)
-        hh_mm_html: str = f'<span style="color: {self._hour_minutes_color};">{hours_minutes}</span>'
+        hh_mm_html: str = (
+            f'<span style="color: {self._hour_minutes_color};">{hours_minutes}</span>'
+        )
         time_html: str = f'{hh_mm_html}<span style="color: {self._seconds_color}; font-size: {sec_size}px;">:{seconds}</span>'
-        
-        day_text: str = f"<span style='color: {self._day_color};'>{now.strftime('%A')}</span>"
+
+        day_text: str = (
+            f"<span style='color: {self._day_color};'>{now.strftime('%A')}</span>"
+        )
         date_text: str = f"<span style='color: {self._date_color};'>{now.strftime('%d/%m/%Y')}</span>"
 
         self.time_label.setText(time_html)

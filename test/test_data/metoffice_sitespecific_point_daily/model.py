@@ -1,8 +1,12 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
+
 import pytest
 
-from lib.metoffice.models import HumanReadableWeatherReport, DailyForecastPoint, HourlyForecastPoint
+from lib.metoffice.models import (
+    DailyForecastPoint,
+    HumanReadableWeatherReport,
+)
 
 
 @pytest.fixture
@@ -11,10 +15,10 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
     return HumanReadableWeatherReport(
         location_name=None,
         coordinates=[Decimal("-7.4058"), Decimal("54.3141"), Decimal("74.0")],
-        model_run_at=datetime(2026, 6, 20, 15, 0, tzinfo=timezone.utc),
+        model_run_at=datetime(2026, 6, 20, 15, 0, tzinfo=UTC),
         forecast_days=[
             DailyForecastPoint(
-                date=datetime(2026, 6, 19, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 19, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("18.34"),
                 min_temperature_c=Decimal("8.43"),
                 max_feels_like_c=None,
@@ -28,7 +32,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
-                date=datetime(2026, 6, 20, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 20, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("18.47"),
                 min_temperature_c=Decimal("5.34"),
                 max_feels_like_c=Decimal("18.16"),
@@ -42,7 +46,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
-                date=datetime(2026, 6, 21, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 21, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("20.7"),
                 min_temperature_c=Decimal("9.63"),
                 max_feels_like_c=Decimal("19.44"),
@@ -56,7 +60,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
-                date=datetime(2026, 6, 22, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 22, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("22.49"),
                 min_temperature_c=Decimal("13.03"),
                 max_feels_like_c=Decimal("22.16"),
@@ -70,7 +74,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
-                date=datetime(2026, 6, 23, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 23, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("22.9"),
                 min_temperature_c=Decimal("13.01"),
                 max_feels_like_c=Decimal("21.7"),
@@ -84,7 +88,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
-                date=datetime(2026, 6, 24, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 24, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("20.67"),
                 min_temperature_c=Decimal("12.11"),
                 max_feels_like_c=Decimal("19.99"),
@@ -98,7 +102,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Cloudy",
             ),
             DailyForecastPoint(
-                date=datetime(2026, 6, 25, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 25, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("21.6"),
                 min_temperature_c=Decimal("14.53"),
                 max_feels_like_c=Decimal("20.41"),
@@ -112,7 +116,7 @@ def expected_human_report_snapshot() -> HumanReadableWeatherReport:
                 weather_condition="Light rain",
             ),
             DailyForecastPoint(
-                date=datetime(2026, 6, 26, 0, 0, tzinfo=timezone.utc),
+                date=datetime(2026, 6, 26, 0, 0, tzinfo=UTC),
                 max_temperature_c=Decimal("23.49"),
                 min_temperature_c=Decimal("15.52"),
                 max_feels_like_c=Decimal("21.31"),

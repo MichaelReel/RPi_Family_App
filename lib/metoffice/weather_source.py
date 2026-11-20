@@ -4,6 +4,7 @@
 with a TTL cache.  Multiple widgets can share a single instance so the
 Met Office API is only hit once per refresh interval.
 """
+
 import time
 from logging import Logger, getLogger
 from typing import Final
@@ -32,7 +33,9 @@ class CachedWeatherSource:
     def __init__(self, ttl_ms: int = MET_REFRESH_MS) -> None:
         self._ttl_ms: int = ttl_ms
         self._report: HumanReadableWeatherReport | None = None
-        self._fetched_at: float | None = None  # time.monotonic() of last successful fetch
+        self._fetched_at: float | None = (
+            None  # time.monotonic() of last successful fetch
+        )
 
     def get_report(self) -> HumanReadableWeatherReport | None:
         """Return a cached report, or fetch a fresh one if the cache is stale.

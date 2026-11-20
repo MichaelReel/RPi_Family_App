@@ -1,19 +1,20 @@
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
+from unittest.mock import MagicMock
 
+import pytest
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QApplication
-from unittest.mock import MagicMock
 
 from config import MET_REFRESH_MS
 from lib.metoffice.models import DailyForecastPoint, HumanReadableWeatherReport
 from lib.metoffice.widgets.day_card import DayCardWidget
 from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
 from lib.metoffice.widgets.location_label import LocationLabelWidget
-
-from test.test_data.metoffice_sitespecific_point_daily.model import expected_human_report_snapshot
+from test.test_data.metoffice_sitespecific_point_daily.model import (
+    expected_human_report_snapshot,
+)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -27,9 +28,10 @@ def q_application():
 
 @pytest.fixture()
 def report_source(
-    expected_human_report_snapshot: HumanReadableWeatherReport
-) -> callable[[],HumanReadableWeatherReport]:
+    expected_human_report_snapshot: HumanReadableWeatherReport,
+) -> callable[[], HumanReadableWeatherReport]:
     """Provide a source of a test report"""
+
     def _report_source() -> HumanReadableWeatherReport:
         return expected_human_report_snapshot
 
@@ -39,8 +41,8 @@ def report_source(
 def test_widget_initialization_and_card_count(qtbot, report_source):
     """Verifies grid container instantiates exactly 8 interior card objects."""
     grid_widget = FourDayGridWidget(report_source=report_source)
-    qtbot.addWidget(grid_widget) # Registers the widget for auto-cleanup
-    
+    qtbot.addWidget(grid_widget)  # Registers the widget for auto-cleanup
+
     assert len(grid_widget.cards) == 4
 
 
@@ -48,9 +50,9 @@ def test_card_data_mapping_and_labels(qtbot, report_source):
     """Verifies data properties accurately map to visual text layouts."""
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
-    
+
     first_card = grid_widget.cards[0]
-    
+
     # First card uses forecast_days[1] (the widget skips index 0):
     # max_temp=18.47, min_temp=5.34, rain=5%, condition=Cloudy
     assert "18.47°C" in first_card.lbl_temp_high.text()
@@ -61,21 +63,21 @@ def test_card_data_mapping_and_labels(qtbot, report_source):
 
 def test_timer_updates_cards_automatically(qtbot, expected_human_report_snapshot):
     """Verifies that the grid automatically triggers updates when the timer fires."""
-    
+
     # 1. Create a mock function that we can track
     mock_source = MagicMock(return_value=expected_human_report_snapshot)
-    
+
     # 2. Instantiate the widget (this runs report_source once on startup)
     grid_widget = FourDayGridWidget(report_source=mock_source)
     qtbot.addWidget(grid_widget)
-    
+
     # Reset our tracking statistics to clear out the startup call
     mock_source.reset_mock()
-    
+
     # 3. Simulate an automatic background clock ticking event
     # This fires the .timeout signal instantly, bypassing the real delay
     grid_widget.refresh_timer.timeout.emit()
-    
+
     # 4. Verify that the update method requested data again
     mock_source.assert_called_once()
 
@@ -84,16 +86,16 @@ def test_timer_configuration_properties(qtbot, report_source):
     """Verifies the underlying timer structure runs continuously with correct ms."""
     grid_widget = FourDayGridWidget(report_source=report_source)
     qtbot.addWidget(grid_widget)
-    
+
     # Verify the background configuration is active
     assert grid_widget.refresh_timer.isActive() is True
-    
+
     # Verify it isn't restricted to a single shot execution loop
     assert grid_widget.refresh_timer.isSingleShot() is False
-    
+
     # Verify it matches your configuration file settings exactly
     assert grid_widget.refresh_timer.interval() == MET_REFRESH_MS
-    
+
 
 def test_featured_layout_initialization(qtbot: QtBot, report_source) -> None:
     """Verifies all 4 weather cards map correctly into their primary layout hierarchies."""
@@ -105,25 +107,36 @@ def test_featured_layout_initialization(qtbot: QtBot, report_source) -> None:
 
     # 2. Verify layout distributions structurally match expectations
     assert grid_widget.main_layout.count() == 2  # Feature card + secondary layout track
-    assert grid_widget.secondary_layout.count() == 3  # Contains remaining cards 2, 3, and 4
+    assert (
+        grid_widget.secondary_layout.count() == 3
+    )  # Contains remaining cards 2, 3, and 4
 
 
-def test_setup_grid_data_handles_report_source_exception(qtbot, expected_human_report_snapshot) -> None:
+def test_setup_grid_data_handles_report_source_exception(
+    qtbot, expected_human_report_snapshot
+) -> None:
     """If report_source raises an exception during setup, the widget should raise RuntimeError."""
+
     def failing_source() -> HumanReadableWeatherReport:
         raise RuntimeError("API failure")
 
     with pytest.raises(RuntimeError, match="met office API issues"):
-        grid_widget = FourDayGridWidget(report_source=failing_source)
+        FourDayGridWidget(report_source=failing_source)
 
 
-def test_update_grid_data_handles_report_source_exception(qtbot, expected_human_report_snapshot, caplog) -> None:
+def test_update_grid_data_handles_report_source_exception(
+    qtbot, expected_human_report_snapshot, caplog
+) -> None:
     """If report_source raises during a timer-triggered update, the error should be logged, not crash."""
-    grid_widget = FourDayGridWidget(report_source=lambda: expected_human_report_snapshot)
+    grid_widget = FourDayGridWidget(
+        report_source=lambda: expected_human_report_snapshot
+    )
     qtbot.addWidget(grid_widget)
 
     # Replace with a failing source after setup
-    grid_widget.report_source = lambda: (_ for _ in ()).throw(RuntimeError("API failure"))
+    grid_widget.report_source = lambda: (_ for _ in ()).throw(
+        RuntimeError("API failure")
+    )
 
     with caplog.at_level("ERROR"):
         grid_widget.update_grid_data()
@@ -163,9 +176,10 @@ def test_location_label_hidden_when_empty(qtbot) -> None:
 def test_location_label_shows_coordinates_when_no_name(qtbot) -> None:
     """Widget should display coordinates as fallback when location_name is blank."""
     from decimal import Decimal
+
     widget = LocationLabelWidget(
         location_name=None,
-        coordinates=[Decimal("-7.4058"), Decimal("54.3141"), Decimal("74.0")]
+        coordinates=[Decimal("-7.4058"), Decimal("54.3141"), Decimal("74.0")],
     )
     qtbot.addWidget(widget)
     widget.show()

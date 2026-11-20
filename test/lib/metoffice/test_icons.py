@@ -1,10 +1,17 @@
-import pytest
 from pathlib import Path
+
+import pytest
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication
 
 # Assuming your code is inside weather_loader.py
-from lib.metoffice.icons import load_weather_icons, _MET_OFFICE_WEATHER_MAP, _IconCaches, caches, load_stats_icons
+from lib.metoffice.icons import (
+    _MET_OFFICE_WEATHER_MAP,
+    _IconCaches,
+    caches,
+    load_stats_icons,
+    load_weather_icons,
+)
 
 
 @pytest.fixture(scope="session")
@@ -16,32 +23,31 @@ def qapp():
     return app
 
 
-
 @pytest.fixture
 def mock_icon_dir(tmp_path, qapp):  # Added qapp here so Qt is ready before saving
     """Creates a temporary directory filled with valid, test PNG assets using QImage."""
-    
+
     # Create a simple blank 10x10 image using native Qt structures
     blank_image = QImage(10, 10, QImage.Format.Format_ARGB32)
     blank_image.fill(0)  # Fill with transparent pixels
-    
+
     # Generate all expected files except for code 30 (to test missing file logic)
     for code, filename in _MET_OFFICE_WEATHER_MAP.items():
         if code == 30:
             continue  # Intentionally skip code 30
-        
+
         file_path = tmp_path / filename
-        
+
         # Save using Qt's internal engine to guarantee platform compatibility
         blank_image.save(str(file_path), "PNG")
-        
+
     return tmp_path
 
 
 def test_load_weather_icons_success(qapp, mock_icon_dir):
     """Verifies that valid icons are successfully loaded into QPixmaps."""
     icons = load_weather_icons(mock_icon_dir)
-    
+
     # Assert code 0 loaded correctly
     assert 0 in icons
     assert isinstance(icons[0], QPixmap)
@@ -51,10 +57,10 @@ def test_load_weather_icons_success(qapp, mock_icon_dir):
 def test_load_weather_icons_missing_file(qapp, mock_icon_dir, caplog):
     """Verifies that missing files are handled gracefully without crashing."""
     icons = load_weather_icons(mock_icon_dir)
-    
+
     # Code 30 was intentionally omitted from mock_icon_dir
     assert 30 not in icons
-    
+
     # Verify the warning was logged (not printed)
     with caplog.at_level("WARNING"):
         load_weather_icons(mock_icon_dir)
@@ -68,13 +74,15 @@ def test_load_weather_icons_caching(qapp, mock_icon_dir, monkeypatch):
     # Let's map code 5 and code 6 to the exact same file name to force a cache hit
     monkeypatch.setitem(_MET_OFFICE_WEATHER_MAP, 5, "06_fog.png")
     monkeypatch.setitem(_MET_OFFICE_WEATHER_MAP, 6, "06_fog.png")
-    
+
     icons = load_weather_icons(mock_icon_dir)
-    
+
     # If caching works, both keys must point to the exact same Python object memory address
     assert icons[5] is icons[6]
 
+
 # ── _IconCaches singleton tests ──────────────────────────────────
+
 
 def test_iconcaches_is_singleton_class(qapp):
     """Verify _IconCaches is the class behind the module-level singleton."""

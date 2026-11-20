@@ -1,15 +1,16 @@
 """Tests for the WeatherGraphWidget."""
+
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from PyQt6.QtGui import QColor, QPixmap
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QPixmap
 
 from lib.metoffice.models import (
     DailyForecastPoint,
     HourlyForecastPoint,
-    ThreeHourlyForecastPoint,
     HumanReadableWeatherReport,
+    ThreeHourlyForecastPoint,
 )
 from lib.metoffice.widgets.weather_graph import WeatherGraphWidget
 
@@ -76,6 +77,7 @@ def test_graph_widget_handles_none_report(qtbot) -> None:
 
 def test_graph_widget_handles_exception(qtbot) -> None:
     """Widget should handle a report source that raises."""
+
     def bad_source() -> None:
         raise RuntimeError("boom")
 
@@ -161,7 +163,9 @@ def test_eighth_day_label_derived_from_fine_data(qtbot) -> None:
 # ------------------------------------------------------------------
 
 
-def _make_hourly(points: list[tuple[int, float, float, float, float]]) -> list[HourlyForecastPoint]:
+def _make_hourly(
+    points: list[tuple[int, float, float, float, float]],
+) -> list[HourlyForecastPoint]:
     """Build hourly points. Each item is (hour_offset, screen, min, max, feels)."""
     base = datetime(2026, 11, 15)
     out: list[HourlyForecastPoint] = []
@@ -187,7 +191,9 @@ def _make_hourly(points: list[tuple[int, float, float, float, float]]) -> list[H
     return out
 
 
-def _make_three_hourly(points: list[tuple[int, float, float, float]]) -> list[ThreeHourlyForecastPoint]:
+def _make_three_hourly(
+    points: list[tuple[int, float, float, float]],
+) -> list[ThreeHourlyForecastPoint]:
     """Build 3-hourly points. Each item is (hour_offset, min_temp, max_temp, feels)."""
     base = datetime(2026, 11, 15)
     out: list[ThreeHourlyForecastPoint] = []
@@ -223,10 +229,15 @@ def test_continuous_series_dedupes_shared_timestamps_hourly_wins() -> None:
             min_screen_temperature_c=Decimal(4),
             max_screen_temperature_c=Decimal(12),
             feels_like_temperature_c=Decimal(8),
-            wind_speed_10m_mph=Decimal(5), wind_gust_10m_mph=Decimal(10),
-            wind_direction_10m_deg=180, relative_humidity_pct=Decimal(80),
-            precipitation_rate_mmh=Decimal(0), total_precip_amount_mm=Decimal(0),
-            prob_of_precipitation_pct=20, uv_index=1, significant_weather_code=3,
+            wind_speed_10m_mph=Decimal(5),
+            wind_gust_10m_mph=Decimal(10),
+            wind_direction_10m_deg=180,
+            relative_humidity_pct=Decimal(80),
+            precipitation_rate_mmh=Decimal(0),
+            total_precip_amount_mm=Decimal(0),
+            prob_of_precipitation_pct=20,
+            uv_index=1,
+            significant_weather_code=3,
         )
     ]
     three_hourly = [
@@ -236,10 +247,15 @@ def test_continuous_series_dedupes_shared_timestamps_hourly_wins() -> None:
             min_screen_temperature_c=Decimal(1),
             max_screen_temperature_c=Decimal(99),
             feels_like_temperature_c=Decimal(99),
-            wind_speed_10m_mph=Decimal(6), wind_gust_10m_mph=Decimal(12),
-            wind_direction_10m_deg=200, relative_humidity_pct=Decimal(85),
-            precipitation_rate_mmh=Decimal(0), total_precip_amount_mm=Decimal(0),
-            prob_of_precipitation_pct=30, uv_index=0, significant_weather_code=7,
+            wind_speed_10m_mph=Decimal(6),
+            wind_gust_10m_mph=Decimal(12),
+            wind_direction_10m_deg=200,
+            relative_humidity_pct=Decimal(85),
+            precipitation_rate_mmh=Decimal(0),
+            total_precip_amount_mm=Decimal(0),
+            prob_of_precipitation_pct=30,
+            uv_index=0,
+            significant_weather_code=7,
         ),
         ThreeHourlyForecastPoint(
             time=base + timedelta(hours=3),  # distinct timestamp -> kept
@@ -247,17 +263,31 @@ def test_continuous_series_dedupes_shared_timestamps_hourly_wins() -> None:
             min_screen_temperature_c=Decimal(5),
             max_screen_temperature_c=Decimal(12),
             feels_like_temperature_c=Decimal(6),
-            wind_speed_10m_mph=Decimal(6), wind_gust_10m_mph=Decimal(12),
-            wind_direction_10m_deg=200, relative_humidity_pct=Decimal(85),
-            precipitation_rate_mmh=Decimal(0), total_precip_amount_mm=Decimal(0),
-            prob_of_precipitation_pct=30, uv_index=0, significant_weather_code=7,
+            wind_speed_10m_mph=Decimal(6),
+            wind_gust_10m_mph=Decimal(12),
+            wind_direction_10m_deg=200,
+            relative_humidity_pct=Decimal(85),
+            precipitation_rate_mmh=Decimal(0),
+            total_precip_amount_mm=Decimal(0),
+            prob_of_precipitation_pct=30,
+            uv_index=0,
+            significant_weather_code=7,
         ),
     ]
 
     series = WeatherGraphWidget._continuous_series(
-        hourly, three_hourly,
-        lambda h: float(h.screen_temperature_c) if h.screen_temperature_c is not None else None,
-        lambda t: float(t.max_screen_temperature_c) if t.max_screen_temperature_c is not None else None,
+        hourly,
+        three_hourly,
+        lambda h: (
+            float(h.screen_temperature_c)
+            if h.screen_temperature_c is not None
+            else None
+        ),
+        lambda t: (
+            float(t.max_screen_temperature_c)
+            if t.max_screen_temperature_c is not None
+            else None
+        ),
     )
 
     by_time = dict(series)
@@ -278,19 +308,23 @@ def test_temp_min_max_lines_are_continuous_from_hourly() -> None:
     three_hourly = _make_three_hourly([(3, 5, 12, 6), (6, 4, 13, 5)])
 
     min_series = WeatherGraphWidget._continuous_series(
-        hourly, three_hourly,
+        hourly,
+        three_hourly,
         lambda h: float(h.min_screen_temperature_c),
         lambda t: float(t.min_screen_temperature_c),
     )
     max_series = WeatherGraphWidget._continuous_series(
-        hourly, three_hourly,
+        hourly,
+        three_hourly,
         lambda h: float(h.max_screen_temperature_c),
         lambda t: float(t.max_screen_temperature_c),
     )
 
     # The first 48h (the 3 hourly points) are populated from the hourly min/max,
     # not dropped as None — this is what removed the old flat/blank stretch.
-    assert [t for t, _ in min_series[:3]] == [base + timedelta(hours=i) for i in range(3)]
+    assert [t for t, _ in min_series[:3]] == [
+        base + timedelta(hours=i) for i in range(3)
+    ]
     assert [v for _, v in min_series[:3]] == [6.0, 5.0, 4.0]
     assert [v for _, v in max_series[:3]] == [11.0, 10.0, 9.0]
 
@@ -306,7 +340,8 @@ def test_continuous_series_is_sorted_by_time() -> None:
     three_hourly = _make_three_hourly([(0, 5, 12, 6)])
 
     series = WeatherGraphWidget._continuous_series(
-        hourly, three_hourly,
+        hourly,
+        three_hourly,
         lambda h: float(h.screen_temperature_c),
         lambda t: float(t.screen_temperature_c),
     )
@@ -366,9 +401,11 @@ def test_temp_lane_draws_midnight_gridlines(qtbot) -> None:
     for y in range(image.height()):
         for x in range(image.width()):
             c = image.pixelColor(x, y)
-            if (abs(c.red() - target.red()) <= tol
-                    and abs(c.green() - target.green()) <= tol
-                    and abs(c.blue() - target.blue()) <= tol):
+            if (
+                abs(c.red() - target.red()) <= tol
+                and abs(c.green() - target.green()) <= tol
+                and abs(c.blue() - target.blue()) <= tol
+            ):
                 hit += 1
     assert hit > 0, "expected midnight gridline colour to be painted in the temp lane"
 
@@ -407,9 +444,11 @@ def test_temp_lane_zero_c_gridline_is_bold(qtbot) -> None:
         for y in range(image.height()):
             for x in range(image.width()):
                 c = image.pixelColor(x, y)
-                if (abs(c.red() - target.red()) <= tol
-                        and abs(c.green() - target.green()) <= tol
-                        and abs(c.blue() - target.blue()) <= tol):
+                if (
+                    abs(c.red() - target.red()) <= tol
+                    and abs(c.green() - target.green()) <= tol
+                    and abs(c.blue() - target.blue()) <= tol
+                ):
                     n += 1
         return n
 
@@ -458,9 +497,11 @@ def test_date_labels_are_centred_on_noon(qtbot) -> None:
     for y in range(y_lo, y_hi):
         for x in range(image.width()):
             c = image.pixelColor(x, y)
-            if (abs(c.red() - target.red()) <= tol
-                    and abs(c.green() - target.green()) <= tol
-                    and abs(c.blue() - target.blue()) <= tol):
+            if (
+                abs(c.red() - target.red()) <= tol
+                and abs(c.green() - target.green()) <= tol
+                and abs(c.blue() - target.blue()) <= tol
+            ):
                 xs.append(x)
     assert xs, "expected date label text to be painted in the bottom strip"
 
@@ -476,8 +517,12 @@ def test_date_labels_are_centred_on_noon(qtbot) -> None:
     window_start, window_end = widget._time_window()
     # Expected x for every daily label that falls inside the window.
     expected = [
-        (day.date, widget._x_for_time(day.date.replace(hour=12),
-                                      window_start, window_end, widget.width()))
+        (
+            day.date,
+            widget._x_for_time(
+                day.date.replace(hour=12), window_start, window_end, widget.width()
+            ),
+        )
         for day in widget._days
         if window_start <= day.date.replace(hour=12) <= window_end
     ]
@@ -486,6 +531,7 @@ def test_date_labels_are_centred_on_noon(qtbot) -> None:
     for label_centre_x, (_, exp_x) in zip(
         (sum(cl) / len(cl) for cl in clusters),
         sorted(expected, key=lambda e: e[1]),
+        strict=True,
     ):
         assert abs(label_centre_x - exp_x) < 15, (
             f"date label centred at x={label_centre_x:.1f} does not sit on its "

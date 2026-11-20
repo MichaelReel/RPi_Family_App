@@ -1,5 +1,4 @@
 """Test configuration for lib/metoffice."""
-import pytest
 
 from lib.metoffice.icons import caches
 

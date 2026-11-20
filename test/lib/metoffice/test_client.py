@@ -1,14 +1,16 @@
 from http import HTTPStatus
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import patch, MagicMock
 
 from lib.metoffice.client import get_human_readable_weather
+
 
 @pytest.fixture(autouse=True)
 def set_api_key_env(monkeypatch):
     """Ensure METOFFICE_API_KEY is set for every test."""
     monkeypatch.setenv("METOFFICE_API_KEY", "test-key")
+
 
 class TestNetworkErrorHandling:
     """Tests that network errors are caught and the function returns None."""
@@ -28,6 +30,7 @@ class TestHTTPTimeout:
     def test_timeout_argument_passed(self, mock_get):
         """Verify that requests.get() is called with a timeout argument."""
         import requests.exceptions
+
         mock_get.side_effect = requests.exceptions.Timeout("Request timed out")
         get_human_readable_weather()
         # Assert that timeout was passed as a keyword argument
@@ -43,6 +46,7 @@ class TestClientCoverage:
     def test_json_decode_error_returns_none(self, mock_get):
         """A response with invalid JSON should be caught and return None."""
         import requests.exceptions
+
         mock_response = MagicMock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.side_effect = requests.exceptions.JSONDecodeError(
@@ -50,7 +54,9 @@ class TestClientCoverage:
         )
         mock_get.return_value = mock_response
         result = get_human_readable_weather()
-        assert result is not None  # hourly fails but daily might work — adapter handles None
+        assert (
+            result is not None
+        )  # hourly fails but daily might work — adapter handles None
 
     @patch("lib.metoffice.client.requests.get")
     def test_non_200_status_returns_none(self, mock_get):
