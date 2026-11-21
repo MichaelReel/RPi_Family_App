@@ -13,7 +13,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | **T0 — Tooling & enforcement** | ✅ **DONE** (T0.1–T0.4) | ruff + mypy config in `pyproject.toml`; `Makefile` present; `ruff check .` and `ruff format --check .` clean. T0.5 (pre-commit) ⬜ skipped (optional). |
 | **§7 — Remove superfluous code** | ✅ **DONE** (T7.2–T7.17) | unused imports/vars + stale comments removed, `_advance_page` shim gone, `temp/` deleted; `ruff check .` clean. ⚠️ T7.1 corrected — see below. |
 | **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
-| §2 — Short functions | 🟨 in progress (T2.1–T2.5) | `live_clock`, `icons`, `day_card`, `four_day_grid`, **`weather_graph`** (all 5 steps of T2.5) done; `adapter`/`main` remaining |
+| §2 — Short functions | 🟨 in progress (T2.1–T2.6) | `live_clock`, `icons`, `day_card`, `four_day_grid`, **`weather_graph`** (all 5 steps of T2.5), **`adapter`** (T2.6) done; `main` remaining |
 | §3 — Blank-line separation | ⬜ not started | — |
 | §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
 | §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
@@ -185,7 +185,7 @@ Every function parameter, return type, local variable and instance attribute get
 
 **Gate after §1:** `make typecheck` clean, `make test` 71/71.
 
-## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.5 done)
+## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.6 done)
 
 Extract cohesive private `_` methods; the public API of widgets/modules stays unchanged unless a task says otherwise. Target: no function over ~40 lines. **Gate:** `make test` green + import-check `uv run python -c "import main"`.
 
@@ -226,12 +226,11 @@ Extract cohesive private `_` methods; the public API of widgets/modules stays un
 
 **Verify (all steps):** `uv run pytest test/lib/metoffice/test_weather_graph.py -q`. ✅ 13 passed; `ruff check` clean; `mypy` clean (also fixed `_window_from_fine_data` tuple-unpack `attr-defined` errors and the optional-list argument mismatch at the `_continuous_series` call sites via `hourly or []` / `three_hourly or []`).
 
-### T2.6 — `lib/metoffice/adapter.py`
-- Extract `def _parse_model_run_date(root: WeatherSchemaRoot) -> datetime | None:` (the `root.parameters[0]["modelRunDate"]` parse is duplicated 3× with inconsistent None-guards — unify: the daily path guards, hourly/three-hourly don't).
-- `_to_daily_report` → loop over `_daily_point_from_raw(raw: RawParameter, model_run_at: datetime) -> DailyForecastPoint`.
-- `_to_hourly_report` → loop over `_hourly_point_from_raw(raw: RawParameter, fallback_time: datetime) -> HourlyForecastPoint`.
-- `_to_three_hourly_report` → loop over `_three_hourly_point_from_raw(raw: RawParameter, fallback_time: datetime) -> ThreeHourlyForecastPoint`.
-- **Verify:** `uv run pytest test/lib/metoffice/test_adapter.py -q`.
+### T2.6 — `lib/metoffice/adapter.py` — ✅ DONE
+- ✅ Extracted the three duplicated per-entry mapping loops into focused `@staticmethod` helpers: `_map_daily_entry(entry, model_run_at) -> DailyForecastPoint`, `_map_hourly_entry(entry, model_run_at) -> HourlyForecastPoint`, `_map_three_hourly_entry(entry, model_run_at) -> ThreeHourlyForecastPoint`. Each `_to_*_report` is now a thin loop (list comprehension) over `feature.properties.time_series`.
+- ✅ Added a shared module-level `_parse_time(raw_time, model_run_at) -> datetime` helper to unify the `fromisoformat(...replace("Z", "+00:00"))` + fallback logic that was duplicated 3× (daily/hourly/three-hourly).
+- Note: the plan's `_parse_model_run_date(root)` step was superseded — the model-run-date parse is already a single shared expression in each `_to_*_report` (no `root.parameters[0]` access exists in the current code), so the real duplication was the per-entry mapping + time-parse, which is now unified.
+- **Verify:** `uv run pytest test/lib/metoffice/test_adapter.py -q`. ✅ 8 passed; full suite 71/71; `ruff check` clean; `mypy` clean.
 
 ### T2.7 — `main.py`
 - `MainWindow.__init__` (~65) → `self._build_clock_section() -> LiveClockWidget`, `self._build_weather_section() -> QWidget`, `self._add_exit_button() -> QPushButton`.

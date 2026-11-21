@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from lib.metoffice.domain.models import WeatherSchemaRoot
+from lib.metoffice.domain.models import TimeSeries, WeatherSchemaRoot
 from lib.metoffice.models import (
     DailyForecastPoint,
     HourlyForecastPoint,
@@ -24,6 +24,16 @@ def _to_int(val: int | str | Decimal | None) -> int | None:
 def _to_str(val: int | str | Decimal | None) -> str | None:
     """Convert a value to str, returning None if the input is None."""
     return str(val) if val is not None else None
+
+
+def _parse_time(raw_time: str | None, model_run_at: datetime) -> datetime:
+    """Parse an ISO-8601 time string (with trailing Z) into a datetime.
+
+    Falls back to ``model_run_at`` when no time string is present.
+    """
+    if raw_time is None:
+        return model_run_at
+    return datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
 
 
 # Weather definition lookup maps
@@ -111,52 +121,52 @@ class MetOfficeAdapter:
         model_run_at = datetime.fromisoformat(
             feature.properties.model_run_date.replace("Z", "+00:00")
         )
-        human_days: list[DailyForecastPoint] = []
+        return [
+            MetOfficeAdapter._map_daily_entry(entry, model_run_at)
+            for entry in feature.properties.time_series
+        ]
 
-        for entry in feature.properties.time_series:
-            raw: dict[str, int | str | Decimal] = entry.data
+    @staticmethod
+    def _map_daily_entry(
+        entry: TimeSeries, model_run_at: datetime
+    ) -> DailyForecastPoint:
+        """Map a single daily TimeSeries entry to a DailyForecastPoint."""
+        raw: dict[str, int | str | Decimal] = entry.data
 
-            raw_time: str | None = _to_str(raw.get("time"))
-            forecast_date: datetime = (
-                datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
-                if raw_time
-                else model_run_at
-            )
+        raw_time: str | None = _to_str(raw.get("time"))
+        forecast_date: datetime = _parse_time(raw_time, model_run_at)
 
-            w_code: int | None = _to_int(
-                raw.get("daySignificantWeatherCode")
-                or raw.get("nightSignificantWeatherCode")
-            )
-            condition: str = "Unknown"
-            if w_code is not None:
-                condition = _WEATHER_CODE_MAP.get(w_code, f"Unknown Code ({w_code})")
+        w_code: int | None = _to_int(
+            raw.get("daySignificantWeatherCode")
+            or raw.get("nightSignificantWeatherCode")
+        )
+        condition: str = "Unknown"
+        if w_code is not None:
+            condition = _WEATHER_CODE_MAP.get(w_code, f"Unknown Code ({w_code})")
 
-            raw_vis = raw.get("middayVisibility") or raw.get("midnightVisibility")
-            visibility_metres: int | None = (
-                int(raw_vis) if raw_vis is not None else None
-            )
+        raw_vis = raw.get("middayVisibility") or raw.get("midnightVisibility")
+        visibility_metres: int | None = (
+            int(raw_vis) if raw_vis is not None else None
+        )
 
-            day_point: DailyForecastPoint = DailyForecastPoint(
-                date=forecast_date,
-                max_temperature_c=_to_decimal(raw.get("dayMaxScreenTemperature")),
-                min_temperature_c=_to_decimal(raw.get("nightMinScreenTemperature")),
-                max_feels_like_c=_to_decimal(raw.get("dayMaxFeelsLikeTemp")),
-                rain_probability_pct=_to_int(
-                    raw.get("dayProbabilityOfRain") or raw.get("nightProbabilityOfRain")
-                ),
-                snow_probability_pct=_to_int(
-                    raw.get("dayProbabilityOfSnow") or raw.get("nightProbabilityOfSnow")
-                ),
-                wind_speed_midday_mph=_to_decimal(raw.get("midday10MWindSpeed")),
-                wind_direction_midday_deg=_to_int(raw.get("midday10MWindDirection")),
-                visibility_midday_metres=visibility_metres,
-                uv_index_max=_to_int(raw.get("maxUvIndex")),
-                weather_code=w_code,
-                weather_condition=condition,
-            )
-            human_days.append(day_point)
-
-        return human_days
+        return DailyForecastPoint(
+            date=forecast_date,
+            max_temperature_c=_to_decimal(raw.get("dayMaxScreenTemperature")),
+            min_temperature_c=_to_decimal(raw.get("nightMinScreenTemperature")),
+            max_feels_like_c=_to_decimal(raw.get("dayMaxFeelsLikeTemp")),
+            rain_probability_pct=_to_int(
+                raw.get("dayProbabilityOfRain") or raw.get("nightProbabilityOfRain")
+            ),
+            snow_probability_pct=_to_int(
+                raw.get("dayProbabilityOfSnow") or raw.get("nightProbabilityOfSnow")
+            ),
+            wind_speed_midday_mph=_to_decimal(raw.get("midday10MWindSpeed")),
+            wind_direction_midday_deg=_to_int(raw.get("midday10MWindDirection")),
+            visibility_midday_metres=visibility_metres,
+            uv_index_max=_to_int(raw.get("maxUvIndex")),
+            weather_code=w_code,
+            weather_condition=condition,
+        )
 
     @staticmethod
     def _to_hourly_report(
@@ -170,37 +180,37 @@ class MetOfficeAdapter:
         model_run_at = datetime.fromisoformat(
             feature.properties.model_run_date.replace("Z", "+00:00")
         )
-        hourly_points: list[HourlyForecastPoint] = []
+        return [
+            MetOfficeAdapter._map_hourly_entry(entry, model_run_at)
+            for entry in feature.properties.time_series
+        ]
 
-        for entry in feature.properties.time_series:
-            raw: dict[str, int | str | Decimal] = entry.data
+    @staticmethod
+    def _map_hourly_entry(
+        entry: TimeSeries, model_run_at: datetime
+    ) -> HourlyForecastPoint:
+        """Map a single hourly TimeSeries entry to an HourlyForecastPoint."""
+        raw: dict[str, int | str | Decimal] = entry.data
 
-            raw_time: str | None = _to_str(raw.get("time"))
-            point_time: datetime = (
-                datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
-                if raw_time
-                else model_run_at
-            )
+        raw_time: str | None = _to_str(raw.get("time"))
+        point_time: datetime = _parse_time(raw_time, model_run_at)
 
-            point = HourlyForecastPoint(
-                time=point_time,
-                screen_temperature_c=_to_decimal(raw.get("screenTemperature")),
-                min_screen_temperature_c=_to_decimal(raw.get("minScreenAirTemp")),
-                max_screen_temperature_c=_to_decimal(raw.get("maxScreenAirTemp")),
-                feels_like_temperature_c=_to_decimal(raw.get("feelsLikeTemperature")),
-                wind_speed_10m_mph=_to_decimal(raw.get("windSpeed10m")),
-                wind_gust_10m_mph=_to_decimal(raw.get("windGustSpeed10m")),
-                wind_direction_10m_deg=_to_int(raw.get("windDirectionFrom10m")),
-                relative_humidity_pct=_to_decimal(raw.get("screenRelativeHumidity")),
-                precipitation_rate_mmh=_to_decimal(raw.get("precipitationRate")),
-                total_precip_amount_mm=_to_decimal(raw.get("totalPrecipAmount")),
-                prob_of_precipitation_pct=_to_int(raw.get("probOfPrecipitation")),
-                uv_index=_to_int(raw.get("uvIndex")),
-                significant_weather_code=_to_int(raw.get("significantWeatherCode")),
-            )
-            hourly_points.append(point)
-
-        return hourly_points
+        return HourlyForecastPoint(
+            time=point_time,
+            screen_temperature_c=_to_decimal(raw.get("screenTemperature")),
+            min_screen_temperature_c=_to_decimal(raw.get("minScreenAirTemp")),
+            max_screen_temperature_c=_to_decimal(raw.get("maxScreenAirTemp")),
+            feels_like_temperature_c=_to_decimal(raw.get("feelsLikeTemperature")),
+            wind_speed_10m_mph=_to_decimal(raw.get("windSpeed10m")),
+            wind_gust_10m_mph=_to_decimal(raw.get("windGustSpeed10m")),
+            wind_direction_10m_deg=_to_int(raw.get("windDirectionFrom10m")),
+            relative_humidity_pct=_to_decimal(raw.get("screenRelativeHumidity")),
+            precipitation_rate_mmh=_to_decimal(raw.get("precipitationRate")),
+            total_precip_amount_mm=_to_decimal(raw.get("totalPrecipAmount")),
+            prob_of_precipitation_pct=_to_int(raw.get("probOfPrecipitation")),
+            uv_index=_to_int(raw.get("uvIndex")),
+            significant_weather_code=_to_int(raw.get("significantWeatherCode")),
+        )
 
     @staticmethod
     def _to_three_hourly_report(
@@ -214,34 +224,34 @@ class MetOfficeAdapter:
         model_run_at = datetime.fromisoformat(
             feature.properties.model_run_date.replace("Z", "+00:00")
         )
-        three_hourly_points: list[ThreeHourlyForecastPoint] = []
+        return [
+            MetOfficeAdapter._map_three_hourly_entry(entry, model_run_at)
+            for entry in feature.properties.time_series
+        ]
 
-        for entry in feature.properties.time_series:
-            raw: dict[str, int | str | Decimal] = entry.data
+    @staticmethod
+    def _map_three_hourly_entry(
+        entry: TimeSeries, model_run_at: datetime
+    ) -> ThreeHourlyForecastPoint:
+        """Map a single 3-hourly TimeSeries entry to a ThreeHourlyForecastPoint."""
+        raw: dict[str, int | str | Decimal] = entry.data
 
-            raw_time: str | None = _to_str(raw.get("time"))
-            point_time: datetime = (
-                datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
-                if raw_time
-                else model_run_at
-            )
+        raw_time: str | None = _to_str(raw.get("time"))
+        point_time: datetime = _parse_time(raw_time, model_run_at)
 
-            point = ThreeHourlyForecastPoint(
-                time=point_time,
-                screen_temperature_c=_to_decimal(raw.get("screenTemperature")),
-                min_screen_temperature_c=_to_decimal(raw.get("minScreenAirTemp")),
-                max_screen_temperature_c=_to_decimal(raw.get("maxScreenAirTemp")),
-                feels_like_temperature_c=_to_decimal(raw.get("feelsLikeTemp")),
-                wind_speed_10m_mph=_to_decimal(raw.get("windSpeed10m")),
-                wind_gust_10m_mph=_to_decimal(raw.get("windGustSpeed10m")),
-                wind_direction_10m_deg=_to_int(raw.get("windDirectionFrom10m")),
-                relative_humidity_pct=_to_decimal(raw.get("screenRelativeHumidity")),
-                precipitation_rate_mmh=_to_decimal(raw.get("precipitationRate")),
-                total_precip_amount_mm=_to_decimal(raw.get("totalPrecipAmount")),
-                prob_of_precipitation_pct=_to_int(raw.get("probOfPrecipitation")),
-                uv_index=_to_int(raw.get("uvIndex")),
-                significant_weather_code=_to_int(raw.get("significantWeatherCode")),
-            )
-            three_hourly_points.append(point)
-
-        return three_hourly_points
+        return ThreeHourlyForecastPoint(
+            time=point_time,
+            screen_temperature_c=_to_decimal(raw.get("screenTemperature")),
+            min_screen_temperature_c=_to_decimal(raw.get("minScreenAirTemp")),
+            max_screen_temperature_c=_to_decimal(raw.get("maxScreenAirTemp")),
+            feels_like_temperature_c=_to_decimal(raw.get("feelsLikeTemp")),
+            wind_speed_10m_mph=_to_decimal(raw.get("windSpeed10m")),
+            wind_gust_10m_mph=_to_decimal(raw.get("windGustSpeed10m")),
+            wind_direction_10m_deg=_to_int(raw.get("windDirectionFrom10m")),
+            relative_humidity_pct=_to_decimal(raw.get("screenRelativeHumidity")),
+            precipitation_rate_mmh=_to_decimal(raw.get("precipitationRate")),
+            total_precip_amount_mm=_to_decimal(raw.get("totalPrecipAmount")),
+            prob_of_precipitation_pct=_to_int(raw.get("probOfPrecipitation")),
+            uv_index=_to_int(raw.get("uvIndex")),
+            significant_weather_code=_to_int(raw.get("significantWeatherCode")),
+        )
