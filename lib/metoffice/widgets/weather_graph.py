@@ -124,26 +124,32 @@ class WeatherGraphWidget(QWidget):
         layout.setSpacing(6)
         self.setLayout(layout)
 
-        # Title
-        self._title = QLabel("7-Day Forecast")
-        self._title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._title.setStyleSheet(
-            f"QLabel {{ background-color: transparent; color: {_TEXT_COLOR}; "
-            f"font-size: 22px; font-weight: bold; font-family: Arial, sans-serif; }}"
-        )
-        layout.addWidget(self._title)
+        layout.addWidget(self._build_title())
 
-        # Lane frames
-        self._temp_frame = _LaneFrame(self._paint_temp_lane, bg_color)
-        self._rain_uv_frame = _LaneFrame(self._paint_rain_uv_lane, bg_color)
-        self._wind_frame = _LaneFrame(self._paint_wind_lane, bg_color)
-
-        self._frames = [self._temp_frame, self._rain_uv_frame, self._wind_frame]
-        for frame in self._frames:
+        for frame in self._build_lanes():
             layout.addWidget(frame, 1)
 
         self.setMinimumSize(400, 400)
         self._refresh()
+
+    def _build_title(self) -> QLabel:
+        """Builds the centred "7-Day Forecast" title label for the chart."""
+        title = QLabel("7-Day Forecast")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet(
+            f"QLabel {{ background-color: transparent; color: {_TEXT_COLOR}; "
+            f"font-size: 22px; font-weight: bold; font-family: Arial, sans-serif; }}"
+        )
+        return title
+
+    def _build_lanes(self) -> list[_LaneFrame]:
+        """Builds the temperature, rain/UV and wind lane frames (top to bottom)."""
+        temp_frame = _LaneFrame(self._paint_temp_lane, self._bg_color)
+        rain_uv_frame = _LaneFrame(self._paint_rain_uv_lane, self._bg_color)
+        wind_frame = _LaneFrame(self._paint_wind_lane, self._bg_color)
+
+        self._frames = [temp_frame, rain_uv_frame, wind_frame]
+        return self._frames
 
     # ------------------------------------------------------------------
     # Data refresh
@@ -254,32 +260,41 @@ class WeatherGraphWidget(QWidget):
     def _time_window(self) -> tuple[datetime, datetime]:
         """Return the (start, end) of the full plotting window.
 
-        The window is the span covered by the fine-grained forecast (hourly +
-        three-hourly). When that is unavailable (e.g. tests using daily data
-        only) it falls back to the daily-day window.
+        Prefers the span covered by the fine-grained forecast (hourly +
+        three-hourly), then the daily-day window, then a one-day window
+        starting at "now" (e.g. tests using daily data only, or none).
         """
+        return (
+            self._window_from_fine_data()
+            or self._window_from_days()
+            or self._fallback_window()
+        )
+
+    def _window_from_fine_data(self) -> tuple[datetime, datetime] | None:
+        """The window spanned by the hourly + three-hourly points, or None."""
         start: datetime | None = None
         end: datetime | None = None
-        for hp in self._hourly:
-            if start is None or hp.time < start:
-                start = hp.time
-            if end is None or hp.time > end:
-                end = hp.time
-        for thp in self._three_hourly:
-            if start is None or thp.time < start:
-                start = thp.time
-            if end is None or thp.time > end:
-                end = thp.time
-
+        for point in (*self._hourly, *self._three_hourly):
+            if start is None or point.time < start:
+                start = point.time
+            if end is None or point.time > end:
+                end = point.time
         if start is not None and end is not None and end > start:
             return start, end
+        return None
 
-        if self._days:
-            first = self._days[0].date
-            last = self._days[-1].date
-            if last > first:
-                return first, last
+    def _window_from_days(self) -> tuple[datetime, datetime] | None:
+        """The window spanned by the first-to-last daily points, or None."""
+        if not self._days:
+            return None
+        first = self._days[0].date
+        last = self._days[-1].date
+        if last > first:
+            return first, last
+        return None
 
+    def _fallback_window(self) -> tuple[datetime, datetime]:
+        """A one-day window starting now (used when no forecast data exists)."""
         now = datetime.now()
         return now, now + timedelta(days=1)
 
@@ -326,21 +341,62 @@ class WeatherGraphWidget(QWidget):
             return
 
         window_start, window_end = self._time_window()
+        self._draw_lane_frame(painter, width, height, v_min, v_max, unit, icons)
+        self._draw_lane_series(
+            painter, width, height, v_min, v_max, unit, window_start, window_end, series
+        )
 
-        self._draw_lane_icons(painter, width, height, icons)
-
-        # --- Chart geometry ---
-        chart_left = _LEFT_MARGIN
-        chart_right = width - _RIGHT_MARGIN
+    def _draw_lane_frame(
+        self,
+        painter: QPainter,
+        width: int,
+        height: int,
+        v_min: float,
+        v_max: float,
+        unit: str,
+        icons: list[tuple[str, str]] | None,
+    ) -> None:
+        """Paint the lane's static chrome: icons, grid lines, Y labels, guides, axis."""
+        window_start, window_end = self._time_window()
         plot_top = _TOP_PADDING
         plot_bottom = height - _BOTTOM_PADDING
         plot_height = plot_bottom - plot_top
 
-        # Grid lines + Y-axis labels.
-        # Temperature lane (Celsius): a horizontal line at every 5°C within
-        # the data range, with the 0°C line drawn slightly bolder as a reference.
-        # Other lanes: the existing 3 lines at min / mid / max of the range.
+        self._draw_lane_icons(painter, width, height, icons)
+
         painter.setFont(QFont("Arial", 9))
+        for val, is_zero in self._lane_grid_items(v_min, v_max, unit):
+            if v_max == v_min:
+                y: float = plot_bottom
+            else:
+                ratio = (val - v_min) / (v_max - v_min)
+                y = plot_bottom - (plot_height * ratio)
+            painter.setPen(
+                QPen(QColor(_GRID_COLOR_STRONG), 2)
+                if is_zero
+                else QPen(QColor(_GRID_COLOR), 1)
+            )
+            painter.drawLine(int(_LEFT_MARGIN), int(y), int(width - _RIGHT_MARGIN), int(y))
+            self._draw_lane_axis_label(painter, val, unit, y)
+
+        # Vertical reference lines (midnights + now), under the data series.
+        self._draw_vertical_guides(
+            painter, window_start, window_end, width, plot_top, plot_bottom
+        )
+
+        # Bottom axis.
+        painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
+        painter.drawLine(int(_LEFT_MARGIN), int(plot_bottom), int(width - _RIGHT_MARGIN), int(plot_bottom))
+
+    def _lane_grid_items(
+        self, v_min: float, v_max: float, unit: str
+    ) -> list[tuple[float, bool]]:
+        """The (value, is_zero) grid-line positions for a lane's Y range.
+
+        Temperature lanes (Celsius): one line at every 5°C within the range,
+        with the 0°C line flagged so it can be drawn bolder as a reference.
+        Other lanes: three lines at min / mid / max of the range.
+        """
         if unit == _TEMP_UNIT:
             grid_vals = list(
                 range(
@@ -349,52 +405,43 @@ class WeatherGraphWidget(QWidget):
                     5,
                 )
             )
-            grid_items = [(float(val), val == 0) for val in grid_vals]
+            return [(float(val), val == 0) for val in grid_vals]
+        return [(v_min, False), (v_min + (v_max - v_min) / 2, False), (v_max, False)]
+
+    def _draw_lane_axis_label(
+        self, painter: QPainter, val: float, unit: str, y: float
+    ) -> None:
+        """Paint a single Y-axis value label (right-aligned in the left margin)."""
+        if unit == _TEMP_UNIT:
+            label = f"{val:.0f}\u00b0C"
+        elif unit == "%":
+            label = f"{val:.0f}%"
         else:
-            grid_items = [
-                (v_min, False),
-                (v_min + (v_max - v_min) / 2, False),
-                (v_max, False),
-            ]
-        for val, is_zero in grid_items:
-            if v_max == v_min:
-                y: float = plot_bottom
-            else:
-                ratio = (val - v_min) / (v_max - v_min)
-                y = plot_bottom - (plot_height * ratio)
-            if is_zero:
-                painter.setPen(QPen(QColor(_GRID_COLOR_STRONG), 2))
-            else:
-                painter.setPen(QPen(QColor(_GRID_COLOR), 1))
-            painter.drawLine(int(chart_left), int(y), int(chart_right), int(y))
-
-            if unit == _TEMP_UNIT:
-                label = f"{val:.0f}\u00b0C"
-            elif unit == "%":
-                label = f"{val:.0f}%"
-            else:
-                label = f"{val:.0f}"
-
-            painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
-            label_rect = QRectF(4, y - 8, _LEFT_MARGIN - 8, 16)
-            painter.drawText(
-                label_rect,
-                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
-                label,
-            )
-
-        # Vertical reference lines (midnights + now), under the data series
-        self._draw_vertical_guides(
-            painter, window_start, window_end, width, plot_top, plot_bottom
+            label = f"{val:.0f}"
+        painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
+        painter.drawText(
+            QRectF(4, y - 8, _LEFT_MARGIN - 8, 16),
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+            label,
         )
 
-        # Bottom axis
-        painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
-        painter.drawLine(
-            int(chart_left), int(plot_bottom), int(chart_right), int(plot_bottom)
-        )
+    def _draw_lane_series(
+        self,
+        painter: QPainter,
+        width: int,
+        height: int,
+        v_min: float,
+        v_max: float,
+        unit: str,
+        window_start: datetime,
+        window_end: datetime,
+        series: list[tuple[list[tuple[datetime, float | None]], str]],
+    ) -> None:
+        """Paint each series as a continuous line over the shared time window."""
+        plot_top = _TOP_PADDING
+        plot_bottom = height - _BOTTOM_PADDING
+        plot_height = plot_bottom - plot_top
 
-        # X/Y position helpers (time based)
         def x_pos(t: datetime) -> float:
             return self._x_for_time(t, window_start, window_end, width)
 
@@ -404,7 +451,6 @@ class WeatherGraphWidget(QWidget):
             ratio = (value - v_min) / (v_max - v_min)
             return plot_bottom - (plot_height * ratio)
 
-        # Draw each series as a continuous line
         for points, color in series:
             self._draw_line(painter, points, color, x_pos, y_pos)
 
@@ -535,9 +581,26 @@ class WeatherGraphWidget(QWidget):
 
     def _paint_temp_lane(self, painter: QPainter, width: int, height: int) -> None:
         if self._hourly or self._three_hourly:
+            self._paint_temp_lane_data(
+                painter, width, height, self._hourly, self._three_hourly
+            )
+        else:
+            self._paint_temp_lane_data(
+                painter, width, height, None, None
+            )
+
+    def _paint_temp_lane_data(
+        self, 
+        painter: QPainter, 
+        width: int, 
+        height: int,
+        hourly: list[Hourly] | None,
+        three_hourly: list[ThreeHourly] | None
+    ) -> None:
+        if hourly or three_hourly:
             min_series = self._continuous_series(
-                self._hourly,
-                self._three_hourly,
+                hourly,
+                three_hourly,
                 lambda h: (
                     float(h.min_screen_temperature_c)
                     if h.min_screen_temperature_c is not None
@@ -550,8 +613,8 @@ class WeatherGraphWidget(QWidget):
                 ),
             )
             max_series = self._continuous_series(
-                self._hourly,
-                self._three_hourly,
+                hourly,
+                three_hourly,
                 lambda h: (
                     float(h.max_screen_temperature_c)
                     if h.max_screen_temperature_c is not None
@@ -564,8 +627,8 @@ class WeatherGraphWidget(QWidget):
                 ),
             )
             feels_series = self._continuous_series(
-                self._hourly,
-                self._three_hourly,
+                hourly,
+                three_hourly,
                 lambda h: (
                     float(h.feels_like_temperature_c)
                     if h.feels_like_temperature_c is not None
@@ -627,9 +690,26 @@ class WeatherGraphWidget(QWidget):
 
     def _paint_wind_lane(self, painter: QPainter, width: int, height: int) -> None:
         if self._hourly or self._three_hourly:
+            self._paint_wind_lane_data(
+                painter, width, height, self._hourly, self._three_hourly
+            )
+        else:
+            self._paint_wind_lane_data(
+                painter, width, height, None, None
+            )
+
+    def _paint_wind_lane_data(
+        self, 
+        painter: QPainter, 
+        width: int, 
+        height: int,
+        hourly: list[Hourly] | None,
+        three_hourly: list[ThreeHourly] | None
+    ) -> None:
+        if hourly or three_hourly:
             avg_series = self._continuous_series(
-                self._hourly,
-                self._three_hourly,
+                hourly,
+                three_hourly,
                 lambda h: (
                     float(h.wind_speed_10m_mph)
                     if h.wind_speed_10m_mph is not None
@@ -642,8 +722,8 @@ class WeatherGraphWidget(QWidget):
                 ),
             )
             gust_series = self._continuous_series(
-                self._hourly,
-                self._three_hourly,
+                hourly,
+                three_hourly,
                 lambda h: (
                     float(h.wind_gust_10m_mph)
                     if h.wind_gust_10m_mph is not None
@@ -684,9 +764,26 @@ class WeatherGraphWidget(QWidget):
 
     def _paint_rain_uv_lane(self, painter: QPainter, width: int, height: int) -> None:
         if self._hourly or self._three_hourly:
+            self._paint_rain_uv_lane_data(
+                painter, width, height, self._hourly, self._three_hourly
+            )
+        else:
+            self._paint_rain_uv_lane_data(
+                painter, width, height, None, None
+            )
+
+    def _paint_rain_uv_lane_data(
+        self, 
+        painter: QPainter, 
+        width: int, 
+        height: int,
+        hourly: list[Hourly] | None,
+        three_hourly: list[ThreeHourly] | None
+    ) -> None:
+        if hourly or three_hourly:
             rain_series = self._continuous_series(
-                self._hourly,
-                self._three_hourly,
+                hourly,
+                three_hourly,
                 lambda h: (
                     float(h.prob_of_precipitation_pct)
                     if h.prob_of_precipitation_pct is not None
@@ -699,8 +796,8 @@ class WeatherGraphWidget(QWidget):
                 ),
             )
             uv_series = self._continuous_series(
-                self._hourly,
-                self._three_hourly,
+                hourly,
+                three_hourly,
                 lambda h: float(h.uv_index) if h.uv_index is not None else None,
                 lambda t: float(t.uv_index) if t.uv_index is not None else None,
             )

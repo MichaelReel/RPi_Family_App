@@ -13,7 +13,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | **T0 — Tooling & enforcement** | ✅ **DONE** (T0.1–T0.4) | ruff + mypy config in `pyproject.toml`; `Makefile` present; `ruff check .` and `ruff format --check .` clean. T0.5 (pre-commit) ⬜ skipped (optional). |
 | **§7 — Remove superfluous code** | ✅ **DONE** (T7.2–T7.17) | unused imports/vars + stale comments removed, `_advance_page` shim gone, `temp/` deleted; `ruff check .` clean. ⚠️ T7.1 corrected — see below. |
 | **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
-| §2 — Short functions | 🟨 in progress (T2.1–T2.4) | `live_clock`, `icons`, `day_card`, `four_day_grid` split into `_` methods; `weather_graph`/`adapter`/`main` remaining |
+| §2 — Short functions | 🟨 in progress (T2.1–T2.5) | `live_clock`, `icons`, `day_card`, `four_day_grid` done; `weather_graph` Steps 1–4 of 5 done (Step 5 `_draw_line` pending); `adapter`/`main` remaining |
 | §3 — Blank-line separation | ⬜ not started | — |
 | §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
 | §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
@@ -185,7 +185,7 @@ Every function parameter, return type, local variable and instance attribute get
 
 **Gate after §1:** `make typecheck` clean, `make test` 71/71.
 
-## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.4 done)
+## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.5 done)
 
 Extract cohesive private `_` methods; the public API of widgets/modules stays unchanged unless a task says otherwise. Target: no function over ~40 lines. **Gate:** `make test` green + import-check `uv run python -c "import main"`.
 
@@ -211,12 +211,26 @@ Extract cohesive private `_` methods; the public API of widgets/modules stays un
 - Public API unchanged: `setup_grid_data` / `update_grid_data` still callable (T4.8 rename not yet applied).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`. ✅ 11 passed; ruff check + format + mypy clean.
 
-### T2.5 — `lib/metoffice/widgets/weather_graph.py`
-- `__init__` (~40) → `self._build_title() -> QLabel`, `self._build_lanes() -> list[_LaneFrame]`.
-- `_draw_lane` (~90) → `self._draw_lane_frame(p: QPainter, width: int, height: int, min_v: float, max_v: float, unit: str)` (grid + labels + clip) + `self._draw_lane_series(p: QPainter, chart_left: int, chart_right: int, chart_bottom: int, width: int, height: int, min_v: float, max_v: float, unit: str, series: list[_Series])` (series lines).
-- `_draw_temp_lane` / `_draw_wind_lane` / `_draw_rain_uv_lane`: extract the shared "fine data, else daily" logic into `self._fine_series(getter: Callable[[object], float]) -> list[_Series] | None` and `self._daily_fallback(days: list[DailyForecastPoint], getters: tuple[Callable[[DailyForecastPoint], float], ...]) -> list[_Series]`.
-- `_time_window` (~30) → `self._window_from_fine_data()`, `self._window_from_days()`, `self._fallback_window()`, with a one-line dispatcher.
+### T2.5 — `lib/metoffice/widgets/weather_graph.py` — 🟨 in progress (Steps 1–4 of 5 done)
+
+**Completed (21/11/2026):**
+- ✅ **Step 1** — `__init__` (~40) → `self._build_title() -> QLabel` (line 135) + `self._build_lanes() -> list[_LaneFrame]` (line 145).
+- ✅ **Step 2** — `_time_window` (~30, line 260) → one-line dispatcher + `_window_from_fine_data()` (line 273) / `_window_from_days()` (line 286) / `_fallback_window()` (line 296).
+- ✅ **Step 3** — `_draw_lane` (~90, line 320) → `_draw_lane_frame()` (line 349) + `_draw_lane_axis_label()` (line 411) + `_draw_lane_series()` (line 428) + `_draw_lane_icons()` (line 457).
+- ✅ **Step 4** — Lane painting split into dispatcher + data helpers:
+  - `_paint_temp_lane` (line 582) → `_paint_temp_lane_data` (line 592)
+  - `_paint_wind_lane` (line 691) → `_paint_wind_lane_data` (line 701)
+  - `_paint_rain_uv_lane` (line 765) → `_paint_rain_uv_lane_data` (line 775)
+
+**Remaining (Step 5 — pending):**
+- [ ] Split `_draw_line` (line 545) into a dispatcher + helper methods (see below).
+
+**Step 5 detail — `_draw_line` split (pending):**
+- `_draw_line` (~40) → dispatcher + `_draw_line_segments(painter, points, color, width)` and `_draw_line_dots(painter, points, dot_radius, color)`.
+- Update `_draw_lane_series` (line 428) and `_draw_dual_axis_lane` (line 818) to call the new helpers.
 - **Verify:** `uv run pytest test/lib/metoffice/test_weather_graph.py -q`.
+
+**Verify (Steps 1–4):** `uv run pytest test/lib/metoffice/test_weather_graph.py -q`. ✅ 13 passed.
 
 ### T2.6 — `lib/metoffice/adapter.py`
 - Extract `def _parse_model_run_date(root: WeatherSchemaRoot) -> datetime | None:` (the `root.parameters[0]["modelRunDate"]` parse is duplicated 3× with inconsistent None-guards — unify: the daily path guards, hourly/three-hourly don't).
