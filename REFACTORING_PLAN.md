@@ -13,7 +13,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | **T0 — Tooling & enforcement** | ✅ **DONE** (T0.1–T0.4) | ruff + mypy config in `pyproject.toml`; `Makefile` present; `ruff check .` and `ruff format --check .` clean. T0.5 (pre-commit) ⬜ skipped (optional). |
 | **§7 — Remove superfluous code** | ✅ **DONE** (T7.2–T7.17) | unused imports/vars + stale comments removed, `_advance_page` shim gone, `temp/` deleted; `ruff check .` clean. ⚠️ T7.1 corrected — see below. |
 | **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
-| §2 — Short functions | 🟨 in progress (T2.1–T2.3) | `live_clock`, `icons`, `day_card` split into `_` methods; `four_day_grid`/`weather_graph`/`adapter`/`main` remaining |
+| §2 — Short functions | 🟨 in progress (T2.1–T2.4) | `live_clock`, `icons`, `day_card`, `four_day_grid` split into `_` methods; `weather_graph`/`adapter`/`main` remaining |
 | §3 — Blank-line separation | ⬜ not started | — |
 | §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
 | §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
@@ -185,7 +185,7 @@ Every function parameter, return type, local variable and instance attribute get
 
 **Gate after §1:** `make typecheck` clean, `make test` 71/71.
 
-## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.3 done)
+## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.4 done)
 
 Extract cohesive private `_` methods; the public API of widgets/modules stays unchanged unless a task says otherwise. Target: no function over ~40 lines. **Gate:** `make test` green + import-check `uv run python -c "import main"`.
 
@@ -205,11 +205,11 @@ Extract cohesive private `_` methods; the public API of widgets/modules stays un
 - Interacts with T9.6 (private renames) — T9.6 already DONE, so this pass is clean.
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`. ✅ 11 passed; ruff check + format + mypy clean; no method over 28 lines.
 
-### T2.4 — `lib/metoffice/widgets/four_day_grid.py`
-- `__init__` (~50) → `self._build_featured_config() -> CardStyleConfig`, `self._build_secondary_config() -> CardStyleConfig`, `self._build_layouts()`, `self._start_refresh_timer()`.
-- `setup_grid_data()` (~30) → `self._fetch_report_for_setup() -> HumanReadableWeatherReport | None`, `self._create_cards(report: HumanReadableWeatherReport)`, `self._attach_cards_to_layouts()`.
-- Interacts with T4.8 (rename `setup_grid_data`/`update_grid_data`) and T8.5 (style configs move to `config/ui.py`).
-- **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
+### T2.4 — `lib/metoffice/widgets/four_day_grid.py` — ✅ DONE
+- `__init__` (~50) → `self._build_featured_config()`, `self._build_secondary_config()`, `self._build_layouts()`, `self._start_refresh_timer()`.
+- `setup_grid_data()` (~30) → `self._fetch_report_for_setup()` (keeps the `RuntimeError` the tests assert), `self._create_cards()`, `self._attach_cards_to_layouts()`.
+- Public API unchanged: `setup_grid_data` / `update_grid_data` still callable (T4.8 rename not yet applied).
+- **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`. ✅ 11 passed; ruff check + format + mypy clean.
 
 ### T2.5 — `lib/metoffice/widgets/weather_graph.py`
 - `__init__` (~40) → `self._build_title() -> QLabel`, `self._build_lanes() -> list[_LaneFrame]`.
