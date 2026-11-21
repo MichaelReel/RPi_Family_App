@@ -274,11 +274,12 @@ class WeatherGraphWidget(QWidget):
         """The window spanned by the hourly + three-hourly points, or None."""
         start: datetime | None = None
         end: datetime | None = None
-        for point in (*self._hourly, *self._three_hourly):
-            if start is None or point.time < start:
-                start = point.time
-            if end is None or point.time > end:
-                end = point.time
+        for points in (self._hourly, self._three_hourly):
+            for point in points:
+                if start is None or point.time < start:
+                    start = point.time
+                if end is None or point.time > end:
+                    end = point.time
         if start is not None and end is not None and end > start:
             return start, end
         return None
@@ -549,6 +550,7 @@ class WeatherGraphWidget(QWidget):
         x_pos: Callable[[datetime], float],
         y_pos: Callable[[float], float],
     ) -> None:
+        """Draws a series line (segments + optional sparse dots) for `points`."""
         pts: list[tuple[float, float]] = []
         for t, val in points:
             if val is not None:
@@ -557,23 +559,38 @@ class WeatherGraphWidget(QWidget):
         if not pts:
             return
 
-        if len(pts) >= 2:
-            painter.setPen(QPen(QColor(color), 2))
-            for i in range(len(pts) - 1):
-                painter.drawLine(
-                    int(pts[i][0]),
-                    int(pts[i][1]),
-                    int(pts[i + 1][0]),
-                    int(pts[i + 1][1]),
-                )
+        WeatherGraphWidget._draw_line_segments(painter, pts, color)
 
         # With many points (dense hourly data) the per-point dots get crowded,
         # so only draw them when the series is sparse enough.
         if len(pts) <= 24:
-            painter.setBrush(QBrush(QColor(color)))
-            painter.setPen(QPen(QColor(color), 1))
-            for px, py in pts:
-                painter.drawEllipse(int(px) - 3, int(py) - 3, 6, 6)
+            WeatherGraphWidget._draw_line_dots(painter, pts, color)
+
+    @staticmethod
+    def _draw_line_segments(
+        painter: QPainter, pts: list[tuple[float, float]], color: str
+    ) -> None:
+        """Draws connecting line segments between consecutive plotted points."""
+        if len(pts) < 2:
+            return
+        painter.setPen(QPen(QColor(color), 2))
+        for i in range(len(pts) - 1):
+            painter.drawLine(
+                int(pts[i][0]),
+                int(pts[i][1]),
+                int(pts[i + 1][0]),
+                int(pts[i + 1][1]),
+            )
+
+    @staticmethod
+    def _draw_line_dots(
+        painter: QPainter, pts: list[tuple[float, float]], color: str
+    ) -> None:
+        """Draws a small dot at each plotted point (used for sparse series)."""
+        painter.setBrush(QBrush(QColor(color)))
+        painter.setPen(QPen(QColor(color), 1))
+        for px, py in pts:
+            painter.drawEllipse(int(px) - 3, int(py) - 3, 6, 6)
 
     # ------------------------------------------------------------------
     # Per-lane paint callbacks (called by _LaneFrame.paintEvent)
@@ -590,14 +607,16 @@ class WeatherGraphWidget(QWidget):
             )
 
     def _paint_temp_lane_data(
-        self, 
-        painter: QPainter, 
-        width: int, 
+        self,
+        painter: QPainter,
+        width: int,
         height: int,
-        hourly: list[Hourly] | None,
-        three_hourly: list[ThreeHourly] | None
+        hourly: list[HourlyForecastPoint] | None,
+        three_hourly: list[ThreeHourlyForecastPoint] | None,
     ) -> None:
         if hourly or three_hourly:
+            hourly = hourly or []
+            three_hourly = three_hourly or []
             min_series = self._continuous_series(
                 hourly,
                 three_hourly,
@@ -699,14 +718,16 @@ class WeatherGraphWidget(QWidget):
             )
 
     def _paint_wind_lane_data(
-        self, 
-        painter: QPainter, 
-        width: int, 
+        self,
+        painter: QPainter,
+        width: int,
         height: int,
-        hourly: list[Hourly] | None,
-        three_hourly: list[ThreeHourly] | None
+        hourly: list[HourlyForecastPoint] | None,
+        three_hourly: list[ThreeHourlyForecastPoint] | None,
     ) -> None:
         if hourly or three_hourly:
+            hourly = hourly or []
+            three_hourly = three_hourly or []
             avg_series = self._continuous_series(
                 hourly,
                 three_hourly,
@@ -773,14 +794,16 @@ class WeatherGraphWidget(QWidget):
             )
 
     def _paint_rain_uv_lane_data(
-        self, 
-        painter: QPainter, 
-        width: int, 
+        self,
+        painter: QPainter,
+        width: int,
         height: int,
-        hourly: list[Hourly] | None,
-        three_hourly: list[ThreeHourly] | None
+        hourly: list[HourlyForecastPoint] | None,
+        three_hourly: list[ThreeHourlyForecastPoint] | None,
     ) -> None:
         if hourly or three_hourly:
+            hourly = hourly or []
+            three_hourly = three_hourly or []
             rain_series = self._continuous_series(
                 hourly,
                 three_hourly,
