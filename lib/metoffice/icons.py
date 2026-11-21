@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from logging import Logger, getLogger
 from pathlib import Path
 from typing import Final
@@ -50,6 +51,34 @@ _MET_OFFICE_STATS_MAP: Final[dict[str, str]] = {
 }
 
 
+def _load_icons[T](
+    code_to_filename: Mapping[T, str], icon_dir: Path
+) -> dict[T, QPixmap]:
+    """Load a mapping of codes/keys to icon file names into a cache of QPixmaps.
+
+    Reused file names are loaded from disk only once (e.g. fog/mist, temp_high/feel),
+    with the resulting QPixmap shared across every key that references it. Missing
+    files are logged and skipped.
+    """
+    loaded_icons: dict[T, QPixmap] = {}
+    pixmap_cache: dict[str, QPixmap] = {}
+
+    for code, filename in code_to_filename.items():
+        if filename in pixmap_cache:
+            loaded_icons[code] = pixmap_cache[filename]
+            continue
+
+        file_path = icon_dir / filename
+        if file_path.exists():
+            pixmap = QPixmap(str(file_path))
+            pixmap_cache[filename] = pixmap
+            loaded_icons[code] = pixmap
+        else:
+            _LOGGER.warning("Missing icon file: %s", file_path)
+
+    return loaded_icons
+
+
 class _IconCaches:
     """Singleton cache for weather and stats icons.
 
@@ -70,66 +99,22 @@ class _IconCaches:
         if self._weather_icons_loaded:
             return self._loaded_weather_icons
 
-        icon_dir: Path = Path(directory_path)
-        loaded_icons: dict[int, QPixmap] = {}
-
-        # Cache unique images to avoid loading the same file multiple times (e.g., fog/mist)
-        pixmap_cache: dict[str, QPixmap] = {}
-
-        code: int
-        filename: str
-        for code, filename in _MET_OFFICE_WEATHER_MAP.items():
-            file_path: Path = icon_dir / filename
-
-            # Check cache first for reused icons
-            if filename in pixmap_cache:
-                loaded_icons[code] = pixmap_cache[filename]
-                continue
-
-            # Load from disk if it's the first time seeing this file
-            if file_path.exists():
-                pixmap: QPixmap = QPixmap(str(file_path))
-                pixmap_cache[filename] = pixmap
-                loaded_icons[code] = pixmap
-            else:
-                _LOGGER.warning("Missing icon file: %s", file_path)
-
-        self._loaded_weather_icons = loaded_icons
+        self._loaded_weather_icons = _load_icons(
+            _MET_OFFICE_WEATHER_MAP, Path(directory_path)
+        )
         self._weather_icons_loaded = True
-        return loaded_icons
+        return self._loaded_weather_icons
 
     def load_stats_icons(self, directory_path: str | Path) -> dict[str, QPixmap]:
         """Loads all stats icons into memory as QPixmaps indexed by Met Office code."""
         if self._stats_icons_loaded:
             return self._loaded_stats_icons
 
-        icon_dir: Path = Path(directory_path)
-        loaded_icons: dict[str, QPixmap] = {}
-
-        # Cache unique images to avoid loading the same file multiple times (e.g., temp_high/feel)
-        pixmap_cache: dict[str, QPixmap] = {}
-
-        code: str
-        filename: str
-        for code, filename in _MET_OFFICE_STATS_MAP.items():
-            file_path: Path = icon_dir / filename
-
-            # Check cache first for reused icons
-            if filename in pixmap_cache:
-                loaded_icons[code] = pixmap_cache[filename]
-                continue
-
-            # Load from disk if it's the first time seeing this file
-            if file_path.exists():
-                pixmap: QPixmap = QPixmap(str(file_path))
-                pixmap_cache[filename] = pixmap
-                loaded_icons[code] = pixmap
-            else:
-                _LOGGER.warning("Missing icon file: %s", file_path)
-
-        self._loaded_stats_icons = loaded_icons
+        self._loaded_stats_icons = _load_icons(
+            _MET_OFFICE_STATS_MAP, Path(directory_path)
+        )
         self._stats_icons_loaded = True
-        return loaded_icons
+        return self._loaded_stats_icons
 
     def invalidate_caches(self) -> None:
         """Reset both weather and stats icon caches to their empty, unloaded state.
