@@ -13,7 +13,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | **T0 — Tooling & enforcement** | ✅ **DONE** (T0.1–T0.4) | ruff + mypy config in `pyproject.toml`; `Makefile` present; `ruff check .` and `ruff format --check .` clean. T0.5 (pre-commit) ⬜ skipped (optional). |
 | **§7 — Remove superfluous code** | ✅ **DONE** (T7.2–T7.17) | unused imports/vars + stale comments removed, `_advance_page` shim gone, `temp/` deleted; `ruff check .` clean. ⚠️ T7.1 corrected — see below. |
 | **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
-| §2 — Short functions | ⬜ not started | `init_ui` / `update_clock` still monolithic |
+| §2 — Short functions | 🟨 in progress (T2.1–T2.3) | `live_clock`, `icons`, `day_card` split into `_` methods; `four_day_grid`/`weather_graph`/`adapter`/`main` remaining |
 | §3 — Blank-line separation | ⬜ not started | — |
 | §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
 | §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
@@ -185,27 +185,25 @@ Every function parameter, return type, local variable and instance attribute get
 
 **Gate after §1:** `make typecheck` clean, `make test` 71/71.
 
-## 2. Short functions, single responsibility — ⬜ not started
+## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.3 done)
 
 Extract cohesive private `_` methods; the public API of widgets/modules stays unchanged unless a task says otherwise. Target: no function over ~40 lines. **Gate:** `make test` green + import-check `uv run python -c "import main"`.
 
-### T2.1 — `lib/clock/widget/live_clock.py`
+### T2.1 — `lib/clock/widget/live_clock.py` — ✅ DONE
 - `init_ui()` (~40 lines) → `self._build_labels()`, `self._build_layout()`, `self._start_timer()`.
 - `resizeEvent()` (~28) → `self._compute_font_sizes(base_height: int) -> tuple[int, int, int]` + apply the fonts in `resizeEvent`.
-- **Verify:** `uv run pytest test/lib/clock/ -q`.
+- **Verify:** `uv run pytest test/lib/clock/ -q`. ✅ test green, ruff/format/mypy clean.
 
-### T2.2 — `lib/metoffice/icons.py`
-- `load_weather_icons` / `load_stats_icons` (~35 lines each, near-duplicates) → shared `self._load_icon_range(codes: Iterable[int], shared_cache: dict[int, QPixmap], shared_loaded: bool, cache_name: str) -> dict[int, QPixmap] | None`.
-- Public methods become thin wrappers:
-  - `load_weather_icons()` → `_load_icon_range(range(40), caches.weather_icons, caches.weather_icons_loaded, "weather")`
-  - `load_stats_icons()` → `_load_icon_range(range(40, 80), caches.stats_icons, caches.stats_icons_loaded, "stats")`
-- **Verify:** `uv run pytest test/lib/metoffice/test_icons.py -q`, `make test`.
+### T2.2 — `lib/metoffice/icons.py` — ✅ DONE
+- Extracted the duplicated load loop into a module-level `_load_icons[T](code_to_filename: Mapping[T, str], icon_dir: Path) -> dict[T, QPixmap]` (PEP 695 type param; handles filename dedup + missing-file logging).
+- `load_weather_icons` / `load_stats_icons` are now thin wrappers that delegate to `_load_icons` (preserves the `_IconCaches` singleton + `invalidate_caches` contract the tests use — so the plan's `_load_icon_range(range(40), …)` shape was rejected as it would have broken `test_icons.py`).
+- **Verify:** `uv run pytest test/lib/metoffice/ -q`. ✅ 54 passed, ruff check + format clean, mypy clean.
 
-### T2.3 — `lib/metoffice/widgets/day_card.py`
-- `__init__` (~85) → `self._build_main_labels(style: CardStyleConfig)`, `self._build_metrics_row(style: CardStyleConfig)`, `self._build_layout()`, `self._initialise_icon_caches()`.
-- `update_data` (~50) → `self._apply_style(style: CardStyleConfig)`, `self._apply_texts(data: DailyForecastPoint)`, `self._apply_icons(data: DailyForecastPoint)`.
-- Interacts with T9.6 (private renames) — do T9.6 first or in the same pass.
-- **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`.
+### T2.3 — `lib/metoffice/widgets/day_card.py` — ✅ DONE
+- `__init__` (~85) → `self._initialise_icon_caches()`, `self._build_main_labels()`, `self._build_metric_labels()`, `self._apply_metric_alignments()`, `self._build_layout()` (the nested `create_metric_row` became `self._build_metric_row`).
+- `update_data` (~50) → `self._apply_style()`, `self._apply_texts(data)`, `self._apply_icons(data)`; the nested `fmt` helper became `self._fmt` and the inline weather-icon block became `self._set_weather_icon`.
+- Interacts with T9.6 (private renames) — T9.6 already DONE, so this pass is clean.
+- **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`. ✅ 11 passed; ruff check + format + mypy clean; no method over 28 lines.
 
 ### T2.4 — `lib/metoffice/widgets/four_day_grid.py`
 - `__init__` (~50) → `self._build_featured_config() -> CardStyleConfig`, `self._build_secondary_config() -> CardStyleConfig`, `self._build_layouts()`, `self._start_refresh_timer()`.

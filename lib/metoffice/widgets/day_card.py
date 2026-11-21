@@ -86,15 +86,28 @@ class DayCardWidget(QFrame):
             config if config is not None else CardStyleConfig()
         )
 
+        self._initialise_icon_caches()
+
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+
+        self._build_main_labels()
+        self._build_metric_labels()
+        self._apply_metric_alignments()
+        self._build_layout()
+
+        # 4. Populate metrics, load images, and apply targeted styling
+        self.update_data(data)
+
+    def _initialise_icon_caches(self) -> None:
+        """Populates the shared class-level icon caches on first use."""
         if not DayCardWidget._icon_cache:
             DayCardWidget._icon_cache = load_weather_icons()
 
         if not DayCardWidget._stats_cache:
             DayCardWidget._stats_cache = load_stats_icons()
 
-        self.setFrameShape(QFrame.Shape.StyledPanel)
-
-        # 1. Initialize main weather elements
+    def _build_main_labels(self) -> None:
+        """Creates the main date, weather-icon and condition labels."""
         self._label_date: QLabel = QLabel()
         self._label_date.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -104,7 +117,8 @@ class DayCardWidget(QFrame):
         self._label_cond: QLabel = QLabel()
         self._label_cond.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # 2. Initialize metrics row elements
+    def _build_metric_labels(self) -> None:
+        """Creates the icon and text label pairs for each metric in the rows."""
         self._icon_temp_high: QLabel = QLabel()
         self._label_temp_high: QLabel = QLabel()
 
@@ -123,6 +137,8 @@ class DayCardWidget(QFrame):
         self._icon_uv: QLabel = QLabel()
         self._label_uv: QLabel = QLabel()
 
+    def _apply_metric_alignments(self) -> None:
+        """Aligns the metric icons to centre and the metric text to the left."""
         self._icon_temp_high.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._icon_temp_low.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._icon_wind.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -149,7 +165,8 @@ class DayCardWidget(QFrame):
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
 
-        # 3. Build the visual layout skeleton
+    def _build_layout(self) -> None:
+        """Assembles the main labels and metric rows into the card layout."""
         layout: QVBoxLayout = QVBoxLayout()
         layout.setSpacing(self._style_config.layout_spacing)
         layout.addWidget(self._label_date)
@@ -157,17 +174,8 @@ class DayCardWidget(QFrame):
         layout.addWidget(self._label_cond)
         layout.addSpacing(4)
 
-        def create_metric_row(*args: QLabel) -> QHBoxLayout:
-            row = QHBoxLayout()
-            row.setSpacing(self._style_config.row_spacing)
-            row.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            label: QLabel
-            for label in args:
-                row.addWidget(label)
-            return row
-
         layout.addLayout(
-            create_metric_row(
+            self._build_metric_row(
                 self._icon_temp_high,
                 self._label_temp_high,
                 self._icon_temp_low,
@@ -175,18 +183,27 @@ class DayCardWidget(QFrame):
             )
         )
         layout.addLayout(
-            create_metric_row(
+            self._build_metric_row(
                 self._icon_wind, self._label_wind, self._icon_feels, self._label_feels
             )
         )
         layout.addLayout(
-            create_metric_row(self._icon_rain, self._label_rain, self._icon_uv, self._label_uv)
+            self._build_metric_row(
+                self._icon_rain, self._label_rain, self._icon_uv, self._label_uv
+            )
         )
 
         self.setLayout(layout)
 
-        # 4. Populate metrics, load images, and apply targeted styling
-        self.update_data(data)
+    def _build_metric_row(self, *args: QLabel) -> QHBoxLayout:
+        """Builds a centred horizontal row from the given labels."""
+        row = QHBoxLayout()
+        row.setSpacing(self._style_config.row_spacing)
+        row.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label: QLabel
+        for label in args:
+            row.addWidget(label)
+        return row
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         opt = QStyleOption()
@@ -211,16 +228,25 @@ class DayCardWidget(QFrame):
 
     def update_data(self, data: DailyForecastPoint) -> None:
         """Applies configuration data structures directly to UI layouts and controls."""
+        self._apply_style()
+        self._apply_texts(data)
+        self._apply_icons(data)
 
-        # Apply configurations from the instance data structure
+    def _fmt(self, val: Decimal | int | None, suffix: str = "") -> str:
+        """Formats a metric value, returning a dash when the value is absent."""
+        return f"{val}{suffix}" if val is not None else "--"
+
+    def _apply_style(self) -> None:
+        """Applies the stylesheet and icon sizing from the style configuration."""
         self.setStyleSheet(self._style_config.widget_stylesheet)
         self._label_icon.setMinimumSize(
             self._style_config.weather_icon_dim, self._style_config.weather_icon_dim
         )
 
-        # Assign dynamically converted stylesheets
         self._label_date.setStyleSheet(self._style_config.date_style.to_stylesheet())
-        self._label_cond.setStyleSheet(self._style_config.condition_style.to_stylesheet())
+        self._label_cond.setStyleSheet(
+            self._style_config.condition_style.to_stylesheet()
+        )
 
         metrics_css = self._style_config.metrics_style.to_stylesheet()
         self._label_temp_high.setStyleSheet(metrics_css)
@@ -230,20 +256,20 @@ class DayCardWidget(QFrame):
         self._label_rain.setStyleSheet(metrics_css)
         self._label_uv.setStyleSheet(metrics_css)
 
-        def fmt(val: Decimal | int | None, suffix: str = "") -> str:
-            return f"{val}{suffix}" if val is not None else "--"
-
+    def _apply_texts(self, data: DailyForecastPoint) -> None:
+        """Populates the date, condition and metric labels from the data point."""
         self._label_date.setText(data.date.strftime("%A, %b %d"))
         self._label_cond.setText(data.weather_condition)
 
-        self._label_temp_high.setText(f"{fmt(data.max_temperature_c, '°C')}")
-        self._label_temp_low.setText(f"{fmt(data.min_temperature_c, '°C')}")
-        self._label_wind.setText(f"{fmt(data.wind_speed_midday_mph, 'mph')}")
-        self._label_feels.setText(fmt(data.max_feels_like_c, "°C"))
-        self._label_rain.setText(fmt(data.rain_probability_pct, "%"))
-        self._label_uv.setText(fmt(data.uv_index_max))
+        self._label_temp_high.setText(f"{self._fmt(data.max_temperature_c, '°C')}")
+        self._label_temp_low.setText(f"{self._fmt(data.min_temperature_c, '°C')}")
+        self._label_wind.setText(f"{self._fmt(data.wind_speed_midday_mph, 'mph')}")
+        self._label_feels.setText(self._fmt(data.max_feels_like_c, "°C"))
+        self._label_rain.setText(self._fmt(data.rain_probability_pct, "%"))
+        self._label_uv.setText(self._fmt(data.uv_index_max))
 
-        # Size mapping via configuration properties
+    def _apply_icons(self, data: DailyForecastPoint) -> None:
+        """Loads the weather and stats icons for the given data point."""
         metric_dim = self._style_config.metric_icon_dim
         self._set_stats_icon(self._icon_temp_high, "temp_high", size=metric_dim)
         self._set_stats_icon(self._icon_temp_low, "temp_low", size=metric_dim)
@@ -252,7 +278,10 @@ class DayCardWidget(QFrame):
         self._set_stats_icon(self._icon_rain, "rain_pct", size=metric_dim)
         self._set_stats_icon(self._icon_uv, "uv_index", size=metric_dim)
 
-        weather_code = data.weather_code
+        self._set_weather_icon(data.weather_code)
+
+    def _set_weather_icon(self, weather_code: int | None) -> None:
+        """Loads the weather icon for a code, falling back to a placeholder."""
         pixmap: QPixmap | None = (
             self._icon_cache.get(weather_code) if weather_code is not None else None
         )
