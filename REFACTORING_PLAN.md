@@ -13,7 +13,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | **T0 — Tooling & enforcement** | ✅ **DONE** (T0.1–T0.4) | ruff + mypy config in `pyproject.toml`; `Makefile` present; `ruff check .` and `ruff format --check .` clean. T0.5 (pre-commit) ⬜ skipped (optional). |
 | **§7 — Remove superfluous code** | ✅ **DONE** (T7.2–T7.17) | unused imports/vars + stale comments removed, `_advance_page` shim gone, `temp/` deleted; `ruff check .` clean. ⚠️ T7.1 corrected — see below. |
 | **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
-| §2 — Short functions | 🟨 in progress (T2.1–T2.6) | `live_clock`, `icons`, `day_card`, `four_day_grid`, **`weather_graph`** (all 5 steps of T2.5), **`adapter`** (T2.6) done; `main` remaining |
+| §2 — Short functions | ✅ **DONE** (T2.1–T2.7) | `live_clock`, `icons`, `day_card`, `four_day_grid`, **`weather_graph`** (all 5 steps of T2.5), **`adapter`** (T2.6), **`main`** (T2.7) all done |
 | §3 — Blank-line separation | ⬜ not started | — |
 | §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
 | §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
@@ -185,7 +185,7 @@ Every function parameter, return type, local variable and instance attribute get
 
 **Gate after §1:** `make typecheck` clean, `make test` 71/71.
 
-## 2. Short functions, single responsibility — 🟨 in progress (T2.1–T2.6 done)
+## 2. Short functions, single responsibility — ✅ DONE (T2.1–T2.7)
 
 Extract cohesive private `_` methods; the public API of widgets/modules stays unchanged unless a task says otherwise. Target: no function over ~40 lines. **Gate:** `make test` green + import-check `uv run python -c "import main"`.
 
@@ -232,10 +232,12 @@ Extract cohesive private `_` methods; the public API of widgets/modules stays un
 - Note: the plan's `_parse_model_run_date(root)` step was superseded — the model-run-date parse is already a single shared expression in each `_to_*_report` (no `root.parameters[0]` access exists in the current code), so the real duplication was the per-entry mapping + time-parse, which is now unified.
 - **Verify:** `uv run pytest test/lib/metoffice/test_adapter.py -q`. ✅ 8 passed; full suite 71/71; `ruff check` clean; `mypy` clean.
 
-### T2.7 — `main.py`
-- `MainWindow.__init__` (~65) → `self._build_clock_section() -> LiveClockWidget`, `self._build_weather_section() -> QWidget`, `self._add_exit_button() -> QPushButton`.
-- Interacts with T8.2 (colours move to `config/ui.py`) — annotate first, extract second.
-- **Verify:** `make test`, `uv run python -c "import main"`.
+### T2.7 — `main.py` — ✅ DONE
+- ✅ `MainWindow.__init__` (~65) → `self._build_clock_section(hour_minutes_color, seconds_color, day_color, date_color) -> LiveClockWidget`, `self._build_weather_section(bg_color) -> SwappingContainerWidget`, `self._add_exit_button() -> QPushButton`. `__init__` is now a thin ~35-line orchestrator (window title, central widget, layout, colours, stylesheet, addWidget calls, showFullScreen).
+- ✅ Moved the `from config import WEATHER_SWAP_MS` import from inside `__init__` to the top of the module (it was a local import; now a module-level import used by `_build_weather_section`).
+- ✅ The `self._weather_group` / `self._weather_graph` instance attributes were dropped — they were only used to build the `SwappingContainerWidget` page list, so the two widgets are now local to `_build_weather_section` (the container holds them). `self._weather_container` is retained.
+- T8.2 interaction: the 5 colour strings are kept local (passed into the build methods) — they will move to `config/ui.py` in T8.2, so no colour extraction was done here (annotate first, extract second).
+- **Verify:** `make check` green (ruff + mypy + 71/71 tests); `uv run python -c "import main"` OK.
 
 ### T2.8 — `icons_demo.py` (root before T5.2, `demos/` after)
 - `__init__` (~55) → `self._build_scroll_area() -> QScrollArea`, `self._build_icon_cell(code: int, pixmap: QPixmap) -> QWidget`.
