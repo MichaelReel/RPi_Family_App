@@ -350,7 +350,7 @@ New structure:
 7. **Raspberry Pi without uv** — install uv, then `uv pip install -r pyproject.toml`, `python3 main.py`.
 - **Verify:** run every command in the new README once.
 
-### T6.2 — Refresh `REPOSITORY_GUIDE.md`
+### T6.2 — Refresh `REPOSITORY_GUIDE.md` — ✅ DONE
 Specific fixes:
 - Directory tree: add missing files — `lib/metoffice/weather_source.py`, `widgets/weather_graph.py`, `widgets/weather_group.py`, `widgets/location_label.py`, `lib/widgets/swapping_container.py`, `test/lib/metoffice/test_client.py`, `test_weather_graph.py`, `test_weather_source.py`, `test/lib/widgets/test_swapping_container.py`, `test/test_data/metoffice_sitespecific_point_threehourly/`.
 - **Wrong claim:** "client.py (missing) — No tests" → `test_client.py` exists (3 tests).

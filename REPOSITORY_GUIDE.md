@@ -7,8 +7,8 @@
 ## Project Overview
 
 A full-screen PyQt6 application designed for Raspberry Pi + Touch Screen displays. The app shows:
-1. A **live clock** widget (hours, minutes, seconds, day, date)
-2. A **4-day weather forecast** widget sourced from the UK Met Office DataHub API
+1. A **live clock** widget (hours, minutes, seconds)
+2. A **weather area** sourced from the UK Met Office DataHub API that auto-swaps every 5 minutes (`WEATHER_SWAP_MS`) between a **4-day forecast card grid** and an **8-day stats graph** (temperature, rain, UV, wind). Clicking the weather area swaps immediately.
 
 ### Entry Points
 
@@ -22,15 +22,18 @@ A full-screen PyQt6 application designed for Raspberry Pi + Touch Screen display
 ### Configuration
 
 **`config.py`** defines global constants:
-- `MET_DAILY_URL` — Met Office DataHub API endpoint
+- `MET_DAILY_URL` — Met Office DataHub API endpoint (daily forecast)
+- `MET_HOURLY_URL` — Met Office DataHub API endpoint (1-hourly forecast, used by the graph)
+- `MET_THREE_HOURLY_URL` — Met Office DataHub API endpoint (3-hourly forecast, used by the graph)
 - `MET_HEADERS` — HTTP headers (includes API key from `METOFFICE_API_KEY` env var)
 - `MET_PARAMS` — Query parameters (latitude/longitude from env vars)
-- `MET_REFRESH_MS` — Millisecond interval for weather data refresh timer
+- `MET_REFRESH_MS` — Millisecond interval for weather data refresh timer (1 hour)
+- `WEATHER_SWAP_MS` — Millisecond interval for auto-swapping between the weather grid and graph (5 minutes)
 
-**Required environment variables:**
-- `METOFFICE_API_KEY`
-- `METOFFICE_LATITUDE`
-- `METOFFICE_LONGITUDE`
+**Environment variables:**
+- `METOFFICE_API_KEY` — **required** (Met Office DataHub API key)
+- `METOFFICE_LATITUDE` — optional, default `54.3`
+- `METOFFICE_LONGITUDE` — optional, default `-7.3`
 
 ---
 
@@ -48,28 +51,40 @@ RPi_Family_App/
 │   └── icons_demo.py                # Icon loading demo
 ├── lib/
 │   ├── clock/widgets/live_clock.py  # Live clock PyQt6 widget
+│   ├── widgets/swapping_container.py  # Generic auto-swapping page container
 │   └── metoffice/
 │       ├── client.py                # HTTP client for Met Office API
 │       ├── adapter.py               # Domain adapter: raw schema → human-readable models
 │       ├── models.py                # Human-readable weather dataclasses
 │       ├── icons.py                 # Icon loading (weather + stats PNG icons)
+│       ├── weather_source.py        # TTL-cached weather source (shared by widgets)
 │       ├── api/
 │       │   ├── models.py            # Strongly-typed API models (Marshmallow dataclasses)
 │       │   └── schemas.py           # Marshmallow schemas for JSON deserialization
 │       └── widgets/
 │           ├── day_card.py          # Individual day card widget
-│           └── four_day_grid.py     # 4-day grid layout widget
+│           ├── four_day_grid.py     # 4-day grid layout widget
+│           ├── location_label.py    # Location name + coordinates label
+│           ├── weather_group.py     # Groups location label + 4-day grid
+│           └── weather_graph.py     # 8-day multi-lane stats graph
 └── test/
     ├── lib/clock/test_widget.py     # Clock widget tests
     ├── lib/metoffice/
     │   ├── api/test_schemas.py      # Marshmallow schema tests
     │   ├── test_adapter.py          # Adapter transformation tests
+    │   ├── test_client.py           # HTTP client tests (mocked)
     │   ├── test_icons.py            # Icon loading tests
+    │   ├── test_weather_graph.py    # Weather graph widget tests
+    │   ├── test_weather_source.py   # Cached weather source tests
     │   └── test_widget.py           # Weather widget tests
+    ├── lib/widgets/test_swapping_container.py  # Swapping container tests
+    ├── lib/test_packages.py         # Package import tests
     └── test_data/
-        └── metoffice_sitespecific_point_daily/
-            ├── domain.json          # Sample Met Office API JSON response
-            └── model.py             # Expected snapshot fixture
+        ├── metoffice_sitespecific_point_daily/
+        │   ├── domain.json          # Sample Met Office API JSON response
+        │   └── model.py             # Expected snapshot fixture
+        └── metoffice_sitespecific_point_threehourly/
+            └── domain.json          # Sample 3-hourly API JSON response
 ```
 ---
 
@@ -105,14 +120,19 @@ Met Office API (HTTP JSON)
        │
        ▼
 ┌──────────────────────┐
-│ four_day_grid.py     │  FourDayGridWidget — receives HumanReadableWeatherReport
-│                      │  Creates DayCardWidget instances, manages refresh timer
+│ weather_source.py    │  CachedWeatherSource — TTL cache so the API is hit once per refresh
 └──────┬───────────────┘
        │
        ▼
-┌──────────────────┐
-│   day_card.py    │  DayCardWidget — renders date, weather icon, temps, wind, rain, UV
-└──────────────────┘
+┌──────────────────────┐
+│ weather_group.py     │  WeatherGroupWidget — location label + FourDayGridWidget
+│ weather_graph.py     │  WeatherGraphWidget — 8-day multi-lane stats chart
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ swapping_container.py│  SwappingContainerWidget — auto-swaps the two pages (WEATHER_SWAP_MS)
+└──────────────────────┘
 ```
 
 ---
@@ -169,6 +189,27 @@ Met Office API (HTTP JSON)
 - Background `QTimer` refreshes data every `MET_REFRESH_MS` milliseconds
 - **Note:** Skips forecast day 0 (today), displays days 1-4
 
+### `lib/metoffice/widgets/location_label.py`
+- `LocationLabelWidget` — displays the location name and coordinates (from the report)
+
+### `lib/metoffice/widgets/weather_group.py`
+- `WeatherGroupWidget` — groups the location label and the 4-day grid into a single widget
+- Used as one page of the `SwappingContainerWidget`
+
+### `lib/metoffice/widgets/weather_graph.py`
+- `WeatherGraphWidget` — renders an 8-day multi-lane stats chart
+- Lanes (top to bottom): temperature (min/max/feels-like), rain probability + UV index, wind (avg + gust)
+- Built from the dense 1-hourly and 3-hourly forecast points
+
+### `lib/metoffice/weather_source.py`
+- `CachedWeatherSource` — TTL-cached wrapper around `get_human_readable_weather()`
+- Shared by both weather widgets so the Met Office API is hit at most once per `MET_REFRESH_MS`
+
+### `lib/widgets/swapping_container.py`
+- `SwappingContainerWidget` — generic container that periodically cycles through a list of widgets
+- Uses a `QStackedWidget` + `QTimer`; clicking anywhere swaps to the next page immediately
+- Every page change (timer or click) restarts the swap timer
+
 ### `lib/clock/widgets/live_clock.py`
 - `LiveClockWidget` — live clock with configurable colors and optional day/date display
 - `update_clock()` method updates time labels with HTML-formatted seconds in smaller font
@@ -188,14 +229,20 @@ Met Office API (HTTP JSON)
 - `test/test_data/metoffice_sitespecific_point_daily/model.py` — `expected_human_report_snapshot` pytest fixture
 
 ### Current Test Coverage
-| Module | Test File | Coverage |
-|--------|-----------|----------|
-| `clock/widgets/live_clock.py` | `test/lib/clock/test_widget.py` | Basic init with mocked datetime |
-| `metoffice/api/schemas.py` | `test/lib/metoffice/api/test_schemas.py` | Valid JSON, deep attributes, missing fields |
-| `metoffice/adapter.py` | `test/lib/metoffice/test_adapter.py` | Metadata, timeseries, visibility, snapshot comparison |
-| `metoffice/icons.py` | `test/lib/metoffice/test_icons.py` | Load success, missing file, caching |
-| `metoffice/widgets/` | `test/lib/metoffice/test_widget.py` | Card count, data mapping, timer, layout |
-| `metoffice/client.py` | **(missing)** | **No tests** |
+71 tests across 10 test modules:
+
+| Module | Test File | Tests |
+|--------|-----------|-------|
+| `clock/widgets/live_clock.py` | `test/lib/clock/test_widget.py` | 1 |
+| `metoffice/api/schemas.py` | `test/lib/metoffice/api/test_schemas.py` | 3 |
+| `metoffice/adapter.py` | `test/lib/metoffice/test_adapter.py` | 8 |
+| `metoffice/client.py` | `test/lib/metoffice/test_client.py` | 6 |
+| `metoffice/icons.py` | `test/lib/metoffice/test_icons.py` | 6 |
+| `metoffice/weather_source.py` | `test/lib/metoffice/test_weather_source.py` | 7 |
+| `metoffice/widgets/` | `test/lib/metoffice/test_widget.py` | 11 |
+| `metoffice/widgets/weather_graph.py` | `test/lib/metoffice/test_weather_graph.py` | 13 |
+| `widgets/swapping_container.py` | `test/lib/widgets/test_swapping_container.py` | 9 |
+| package imports | `test/lib/test_packages.py` | 7 |
 
 ### Running Tests
 ```bash
@@ -232,10 +279,7 @@ uv run pytest test/ -v
 
 ```bash
 # Setup
-python -m venv .venv
-source .venv/bin/activate
 uv sync
-uv pip install pyqt6
 
 # Set environment variables
 export METOFFICE_API_KEY="your_key"
@@ -244,10 +288,33 @@ export METOFFICE_LONGITUDE="-7.4058"
 
 # Run
 uv run main.py               # Full app
-uv run demos/met_demo.py     # Weather only
-uv run demos/clock_demo.py   # Clock only
+uv run python demos/met_demo.py     # Weather only
+uv run python demos/clock_demo.py   # Clock only
+uv run python demos/icons_demo.py   # Icons only
 
 # Test
 uv run pytest test/ -v
 ```
+
+### Makefile targets
+
+| Target | Command | Purpose |
+|--------|---------|---------|
+| `make setup` | `uv sync` | Install dependencies |
+| `make run` | `uv run main.py` | Run the full app |
+| `make demo-clock` | `uv run python demos/clock_demo.py` | Clock widget demo |
+| `make demo-met` | `uv run python demos/met_demo.py` | Weather widget demo |
+| `make demo-icons` | `uv run python demos/icons_demo.py` | Icon loading demo |
+| `make lint` | `uv run ruff check .` | Lint with Ruff |
+| `make format` | `uv run ruff format .` | Format with Ruff |
+| `make typecheck` | `uv run mypy lib main.py config.py demos/... test` | Type-check with mypy |
+| `make test` | `QT_QPA_PLATFORM=offscreen uv run pytest test/` | Run the test suite |
+| `make check` | `lint` + `typecheck` + `test` | Full CI-style check |
+| `make clean` | removes caches | Clean build/test caches |
+
+### Tooling
+
+- **Ruff** — linting and formatting (configured in `pyproject.toml`)
+- **mypy** — static type checking (strict mode, configured in `pyproject.toml`)
+- **pytest** + **pytest-qt** — test framework with Qt widget support
 
