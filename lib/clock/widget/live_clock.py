@@ -23,9 +23,9 @@ class LiveClockWidget(QWidget):
         self._include_day: bool = include_day
         self._include_date: bool = include_date
         self._seconds_font_size: int = 34
-        self.init_ui()
+        self._build_ui()
 
-    def init_ui(self) -> None:
+    def _build_ui(self) -> None:
         """Assemble the window, labels, layout and live-update timer."""
         self.setWindowTitle("Live Clock")
         self.resize(450, 320)

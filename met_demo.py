@@ -6,13 +6,13 @@ from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
 
 def main() -> None:
     app: QApplication = QApplication([])
-    widget_window: FourDayGridWidget = FourDayGridWidget(
+    grid_widget: FourDayGridWidget = FourDayGridWidget(
         report_source=get_human_readable_weather
     )
-    widget_window.setWindowTitle("8-Day Reflow Weather Grid Tracker")
+    grid_widget.setWindowTitle("4-Day Weather Grid (demo)")
 
-    widget_window.resize(850, 450)
-    widget_window.show()
+    grid_widget.resize(850, 450)
+    grid_widget.show()
 
     app.exec()
 

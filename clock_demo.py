@@ -13,8 +13,8 @@ def main() -> None:
     app: QApplication = QApplication(sys.argv)
     app.setStyleSheet(f"background-color: {bg_color};color: {text_color};")
 
-    widget_window: LiveClockWidget = LiveClockWidget()
-    widget_window.show()
+    clock_widget: LiveClockWidget = LiveClockWidget()
+    clock_widget.show()
 
     app.exec()
 

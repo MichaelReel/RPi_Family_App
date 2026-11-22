@@ -136,17 +136,19 @@ class MetOfficeAdapter:
         raw_time: str | None = _to_str(raw.get("time"))
         forecast_date: datetime = _parse_time(raw_time, model_run_at)
 
-        w_code: int | None = _to_int(
+        raw_weather_code: int | None = _to_int(
             raw.get("daySignificantWeatherCode")
             or raw.get("nightSignificantWeatherCode")
         )
         condition: str = "Unknown"
-        if w_code is not None:
-            condition = _WEATHER_CODE_MAP.get(w_code, f"Unknown Code ({w_code})")
+        if raw_weather_code is not None:
+            condition = _WEATHER_CODE_MAP.get(
+                raw_weather_code, f"Unknown Code ({raw_weather_code})"
+            )
 
-        raw_vis = raw.get("middayVisibility") or raw.get("midnightVisibility")
+        raw_visibility = raw.get("middayVisibility") or raw.get("midnightVisibility")
         visibility_metres: int | None = (
-            int(raw_vis) if raw_vis is not None else None
+            int(raw_visibility) if raw_visibility is not None else None
         )
 
         return DailyForecastPoint(
@@ -164,7 +166,7 @@ class MetOfficeAdapter:
             wind_direction_midday_deg=_to_int(raw.get("midday10MWindDirection")),
             visibility_midday_metres=visibility_metres,
             uv_index_max=_to_int(raw.get("maxUvIndex")),
-            weather_code=w_code,
+            weather_code=raw_weather_code,
             weather_condition=condition,
         )
 

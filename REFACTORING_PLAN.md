@@ -271,43 +271,43 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 - ✅ `resizeEvent`: scale-compute → font-build → apply.
 - **Verify (all §3):** `make test` green (71/71).
 
-## 4. Names that correctly represent purpose — ⬜ not started
+## 4. Names that correctly represent purpose — ✅ DONE (T4.1–T4.8)
 
-### T4.1 — `clock_demo.py` (root before T5.2)
-- `widget_window` → `clock_widget` (it's a `LiveClockWidget`, not a window).
-- **Verify:** import-check the demo.
+### T4.1 — `clock_demo.py` (root before T5.2) — ✅ done
+- ✅ `widget_window` → `clock_widget` (it's a `LiveClockWidget`, not a window).
+- **Verify:** import-check the demo. ✅
 
-### T4.2 — `met_demo.py` (root before T5.2)
-- `widget_window` → `grid_widget`.
-- Window title `"8-Day Reflow Weather Grid Tracker"` → `"4-Day Weather Grid (demo)"` (it builds a 4-day grid).
-- **Verify:** import-check the demo.
+### T4.2 — `met_demo.py` (root before T5.2) — ✅ done
+- ✅ `widget_window` → `grid_widget`.
+- ✅ Window title `"8-Day Reflow Weather Grid Tracker"` → `"4-Day Weather Grid (demo)"` (it builds a 4-day grid).
+- **Verify:** import-check the demo. ✅
 
-### T4.3 — `lib/metoffice/widgets/weather_graph.py`
-- `self.setTitle("7-Day Forecast")` → `"8-Day Forecast"` (the graph draws days 1–7 **plus** an 8th-day label; tests build 8-day reports).
-- Module docstring line 3: "7-day forecast" → "8-day forecast".
-- **Verify:** `uv run pytest test/lib/metoffice/test_weather_graph.py -q`.
+### T4.3 — `lib/metoffice/widgets/weather_graph.py` — ✅ done
+- ✅ `self.setTitle("7-Day Forecast")` → `"8-Day Forecast"` (the graph draws days 1–7 **plus** an 8th-day label; tests build 8-day reports).
+- ✅ Module docstring line 3: "7-day forecast" → "8-day forecast".
+- **Verify:** `uv run pytest test/lib/metoffice/test_weather_graph.py -q`. ✅ (13 passed)
 
-### T4.4 — `lib/metoffice/adapter.py`
-- Loop local `w_code` → `raw_weather_code`; `raw_vis` → `raw_visibility`.
-- **Verify:** `uv run pytest test/lib/metoffice/test_adapter.py -q`.
+### T4.4 — `lib/metoffice/adapter.py` — ✅ done
+- ✅ Loop local `w_code` → `raw_weather_code`; `raw_vis` → `raw_visibility`.
+- **Verify:** `uv run pytest test/lib/metoffice/test_adapter.py -q`. ✅ (8 passed)
 
-### T4.5 — `lib/metoffice/icons.py`
-- Per-call local `pixmap_cache` → `code_to_pixmap` (the shared cache `loaded_icons` keeps its name — it's accurate).
-- **Verify:** `uv run pytest test/lib/metoffice/test_icons.py -q`.
+### T4.5 — `lib/metoffice/icons.py` — ✅ done
+- ✅ Per-call local `pixmap_cache` → `code_to_pixmap` (the shared cache `loaded_icons` keeps its name — it's accurate).
+- **Verify:** `uv run pytest test/lib/metoffice/test_icons.py -q`. ✅ (6 passed)
 
-### T4.6 — `test/lib/metoffice/test_client.py`
-- Docstrings: `"should return None"` → `"should return an empty report"` on both error tests (they assert `is not None` — the code is right, the docstrings are wrong).
-- **Verify:** `uv run pytest test/lib/metoffice/test_client.py -q`.
+### T4.6 — `test/lib/metoffice/test_client.py` — ✅ done
+- ✅ Docstrings: `"should return None"` → `"should return an empty report"` on both error tests (they assert `is not None` — the code is right, the docstrings are wrong).
+- **Verify:** `uv run pytest test/lib/metoffice/test_client.py -q`. ✅ (6 passed)
 
-### T4.7 — `lib/clock/widget/live_clock.py`
-- `init_ui()` (public, but only called internally) → `_build_ui()`.
-- **Verify:** `uv run pytest test/lib/clock/ -q`.
+### T4.7 — `lib/clock/widget/live_clock.py` — ✅ done
+- ✅ `init_ui()` (public, but only called internally) → `_build_ui()`.
+- **Verify:** `uv run pytest test/lib/clock/ -q`. ✅ (1 passed)
 
-### T4.8 — `lib/metoffice/widgets/four_day_grid.py`
-- `setup_grid_data()` → `_initialise_cards()`; `update_grid_data()` → `_refresh_cards()`.
-- Update the call site in `met_demo.py` (`grid.setup_grid_data()` → `grid._initialise_cards()`).
-- `report_source` stays **public** — it's the DI seam tests and demos assign to (note it in the class docstring).
-- **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q`, import-check the demo.
+### T4.8 — `lib/metoffice/widgets/four_day_grid.py` — ✅ done
+- ✅ `setup_grid_data()` → `_initialise_cards()`; `update_grid_data()` → `_refresh_cards()`.
+- ✅ Updated the call site in `met_demo.py` (none — `met_demo` only constructs the widget; the test call site `test_widget.py` updated instead).
+- ✅ `report_source` stays **public** — it's the DI seam tests and demos assign to (noted in the class docstring).
+- **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q` ✅ (11 passed), import-check the demo ✅.
 
 ## 5. Logical structure; paths that show purpose — ⬜ not started
 

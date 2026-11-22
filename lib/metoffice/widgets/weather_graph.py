@@ -1,4 +1,4 @@
-"""Widget that renders a multi-lane weather stats chart of the next 7 days."""
+"""Widget that renders a multi-lane weather stats chart of the next 8 days."""
 
 import math
 from collections.abc import Callable
@@ -133,8 +133,8 @@ class WeatherGraphWidget(QWidget):
         self._refresh()
 
     def _build_title(self) -> QLabel:
-        """Builds the centred "7-Day Forecast" title label for the chart."""
-        title = QLabel("7-Day Forecast")
+        """Builds the centred "8-Day Forecast" title label for the chart."""
+        title = QLabel("8-Day Forecast")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(
             f"QLabel {{ background-color: transparent; color: {_TEXT_COLOR}; "

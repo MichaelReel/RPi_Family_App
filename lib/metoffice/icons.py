@@ -61,17 +61,17 @@ def _load_icons[T](
     files are logged and skipped.
     """
     loaded_icons: dict[T, QPixmap] = {}
-    pixmap_cache: dict[str, QPixmap] = {}
+    code_to_pixmap: dict[str, QPixmap] = {}
 
     for code, filename in code_to_filename.items():
-        if filename in pixmap_cache:
-            loaded_icons[code] = pixmap_cache[filename]
+        if filename in code_to_pixmap:
+            loaded_icons[code] = code_to_pixmap[filename]
             continue
 
         file_path = icon_dir / filename
         if file_path.exists():
             pixmap = QPixmap(str(file_path))
-            pixmap_cache[filename] = pixmap
+            code_to_pixmap[filename] = pixmap
             loaded_icons[code] = pixmap
         else:
             _LOGGER.warning("Missing icon file: %s", file_path)

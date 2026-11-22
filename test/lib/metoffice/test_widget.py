@@ -145,7 +145,7 @@ def test_update_grid_data_handles_report_source_exception(
     )
 
     with caplog.at_level("ERROR"):
-        grid_widget.update_grid_data()
+        grid_widget._refresh_cards()
 
     assert "Error calling report_source" in caplog.text
     assert "API failure" in caplog.text

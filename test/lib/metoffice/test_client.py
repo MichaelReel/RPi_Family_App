@@ -60,7 +60,7 @@ class TestClientCoverage:
 
     @patch("lib.metoffice.client.requests.get")
     def test_non_200_status_returns_none(self, mock_get: MagicMock) -> None:
-        """A non-200 HTTP status code should return None."""
+        """A non-200 HTTP status code should return an empty report."""
         mock_response = MagicMock()
         mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         mock_response.text = "Internal Server Error"
@@ -70,7 +70,7 @@ class TestClientCoverage:
 
     @patch("lib.metoffice.client.requests.get")
     def test_401_unauthorized_returns_none(self, mock_get: MagicMock) -> None:
-        """An empty or invalid API key should result in a 401, which returns None."""
+        """An empty or invalid API key should result in a 401, which returns an empty report."""
         mock_response = MagicMock()
         mock_response.status_code = HTTPStatus.UNAUTHORIZED
         mock_response.text = "Unauthorized"

@@ -37,7 +37,7 @@ class FourDayGridWidget(QWidget):
         self._build_secondary_config()
 
         self._build_layouts()
-        self.setup_grid_data()
+        self._initialise_cards()
         self._start_refresh_timer()
 
     def _build_featured_config(self) -> None:
@@ -87,10 +87,10 @@ class FourDayGridWidget(QWidget):
     def _start_refresh_timer(self) -> None:
         """Starts the periodic timer that refreshes the grid data in place."""
         self._refresh_timer: QTimer = QTimer(self)
-        self._refresh_timer.timeout.connect(self.update_grid_data)
+        self._refresh_timer.timeout.connect(self._refresh_cards)
         self._refresh_timer.start(MET_REFRESH_MS)
 
-    def setup_grid_data(self) -> None:
+    def _initialise_cards(self) -> None:
         """Fetches the report, builds the four cards, and attaches them to layouts."""
         self._fetch_report_for_setup()
         self._create_cards()
@@ -101,7 +101,7 @@ class FourDayGridWidget(QWidget):
         try:
             self._report = self.report_source()
         except Exception:
-            _LOGGER.exception("Error calling report_source during setup_grid_data")
+            _LOGGER.exception("Error calling report_source during _initialise_cards")
             self._report = None
 
         if self._report is None:
@@ -129,11 +129,11 @@ class FourDayGridWidget(QWidget):
 
         self._main_layout.addLayout(self._secondary_layout, stretch=1)
 
-    def update_grid_data(self) -> None:
+    def _refresh_cards(self) -> None:
         try:
             report: HumanReadableWeatherReport | None = self.report_source()
         except Exception:
-            _LOGGER.exception("Error calling report_source during update_grid_data")
+            _LOGGER.exception("Error calling report_source during _refresh_cards")
             return
 
         if not report:
