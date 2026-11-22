@@ -2,7 +2,7 @@ from typing import Any
 
 from marshmallow import INCLUDE, Schema, fields, post_load
 
-from lib.metoffice.domain.models import (
+from lib.metoffice.api.models import (
     Feature,
     Geometry,
     Location,

@@ -13,8 +13,8 @@ from config import (
     MET_THREE_HOURLY_URL,
 )
 from lib.metoffice.adapter import MetOfficeAdapter
-from lib.metoffice.domain.models import WeatherSchemaRoot
-from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
+from lib.metoffice.api.models import WeatherSchemaRoot
+from lib.metoffice.api.schemas import WeatherSchemaRootSchema
 from lib.metoffice.models import HumanReadableWeatherReport
 
 _LOGGER: Final[Logger] = getLogger(__name__)

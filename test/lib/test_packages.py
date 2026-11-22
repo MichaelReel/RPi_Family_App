@@ -13,9 +13,9 @@ def test_metoffice_package_importable() -> None:
     importlib.import_module("lib.metoffice")
 
 
-def test_metoffice_domain_package_importable() -> None:
-    """lib/metoffice/domain/__init__.py should be importable."""
-    importlib.import_module("lib.metoffice.domain")
+def test_metoffice_api_package_importable() -> None:
+    """lib/metoffice/api/__init__.py should be importable."""
+    importlib.import_module("lib.metoffice.api")
 
 
 def test_metoffice_widgets_package_importable() -> None:
@@ -28,9 +28,9 @@ def test_clock_package_importable() -> None:
     importlib.import_module("lib.clock")
 
 
-def test_clock_widget_package_importable() -> None:
-    """lib/clock/widget/__init__.py should be importable."""
-    importlib.import_module("lib.clock.widget")
+def test_clock_widgets_package_importable() -> None:
+    """lib/clock/widgets/__init__.py should be importable."""
+    importlib.import_module("lib.clock.widgets")
 
 
 def test_widgets_package_importable() -> None:

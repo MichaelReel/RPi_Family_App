@@ -309,33 +309,30 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 - ✅ `report_source` stays **public** — it's the DI seam tests and demos assign to (noted in the class docstring).
 - **Verify:** `uv run pytest test/lib/metoffice/test_widget.py -q` ✅ (11 passed), import-check the demo ✅.
 
-## 5. Logical structure; paths that show purpose — ⬜ not started
+## 5. Logical structure; paths that show purpose — ✅ DONE (T5.1–T5.4)
 
-### T5.1 — Rename `lib/metoffice/domain/` → `lib/metoffice/api/`
-- **Why:** it holds the **wire-format contract** (marshmallow schemas + raw API models), and the name `domain` collides with `lib/metoffice/models.py` (the app-facing models) — two `models.py` in one tree.
-- **Change:**
-  - `git mv lib/metoffice/domain lib/metoffice/api` (create the target dir first if needed)
-  - `git mv test/lib/metoffice/domain test/lib/metoffice/api`
-  - Update imports: `lib/metoffice/adapter.py` (`lib.metoffice.domain.models` → `lib.metoffice.api.models`), `test/lib/metoffice/api/test_schemas.py` (`domain.schemas` → `api.schemas`), `test/lib/metoffice/test_adapter.py` (`domain.models` → `api.models`)
-  - Update docstrings that say "domain models" → "API models" (`adapter.py`, `api/schemas.py`, `api/models.py`)
-- **Alternative (if rejected):** keep `domain/` and rename `lib/metoffice/models.py` → `lib/metoffice/report.py` instead.
-- **Verify:** `uv run pytest test/ -q` (71/71), `uv run mypy lib test`.
+### T5.1 — Rename `lib/metoffice/domain/` → `lib/metoffice/api/` — ✅ done
+- ✅ `git mv lib/metoffice/domain lib/metoffice/api` and `git mv test/lib/metoffice/domain test/lib/metoffice/api`.
+- ✅ Updated imports: `adapter.py`, `client.py`, `api/schemas.py`, `api/test_schemas.py`, `test_adapter.py` (`domain.*` → `api.*`).
+- ✅ `test_packages.py`: `test_metoffice_domain_package_importable` → `test_metoffice_api_package_importable`.
+- ✅ `REPOSITORY_GUIDE.md`: `domain/` package refs → `api/` (left the `domain.json` data-file refs and generic "domain models" prose — those are accurate).
+- **Verify:** `uv run pytest test/ -q` ✅ (71/71), `make check` ✅.
 
-### T5.2 — Move root demos into a `demos/` package
-- `mkdir demos && git mv clock_demo.py met_demo.py icons_demo.py demos/ && touch demos/__init__.py`.
-- Run as modules from the root so `lib…` imports resolve: `uv run python -m demos.clock_demo` (Makefile targets already use this form).
-- Update READMEs that reference the old paths (T6.1).
-- **Verify:** `uv run python -c "import demos.clock_demo, demos.met_demo, demos.icons_demo"` from the root; `make test`.
+### T5.2 — Move root demos into a `demos/` package — ✅ done
+- ✅ `mkdir demos && git mv clock_demo.py met_demo.py icons_demo.py demos/`.
+- ✅ `Makefile`: `typecheck` line + `demo-clock`/`demo-met`/`demo-icons` targets → `demos/…`.
+- ✅ `REPOSITORY_GUIDE.md`: file table, directory tree, and run examples → `demos/…`.
+- **Verify:** all 3 demos import-check OK from the root ✅, `make check` ✅.
 
-### T5.3 — Unify `lib/clock/widget/` → `lib/clock/widgets/`
-- `git mv lib/clock/widget lib/clock/widgets`.
-- Update imports: `demos/clock_demo.py`, `test/lib/clock/test_widget.py`.
-- (Convention: shared widgets live in `lib/widgets/`, feature widgets in `lib/<feature>/widgets/`.)
-- **Verify:** `uv run pytest test/lib/clock/ -q`, import-check the demo.
+### T5.3 — Unify `lib/clock/widget/` → `lib/clock/widgets/` — ✅ done
+- ✅ `git mv lib/clock/widget lib/clock/widgets`.
+- ✅ Updated imports: `demos/clock_demo.py`, `main.py`, `test/lib/clock/test_widget.py` (import + `patch` target), `test_packages.py`.
+- ✅ `REPOSITORY_GUIDE.md`: `clock/widget/` refs → `clock/widgets/`.
+- **Verify:** `uv run pytest test/lib/clock/ -q` ✅, `make check` ✅.
 
-### T5.4 — `lib/metoffice/icons/weather/spares/` — **keep**
-- **Decision:** this is an unused-but-intentional local asset folder (manual icon-swap workflow, git-ignored). Document it in the icons README (T6.4) rather than deleting.
-- **Verify:** none (no code change); `git status` stays clean.
+### T5.4 — `lib/metoffice/icons/weather/spares/` — **keep** — ✅ done
+- ✅ Added `lib/metoffice/icons/weather/spares/` to `.gitignore` (unused-but-intentional local asset folder; now ignored so it stays on disk untracked).
+- **Verify:** `git check-ignore lib/metoffice/icons/weather/spares/rain.png` ✅.
 
 ## 6. Accurate READMEs with complete steps — ⬜ not started
 

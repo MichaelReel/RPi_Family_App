@@ -2,7 +2,7 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-from lib.clock.widget.live_clock import LiveClockWidget
+from lib.clock.widgets.live_clock import LiveClockWidget
 
 
 def main() -> None:

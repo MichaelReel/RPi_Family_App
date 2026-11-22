@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, QWidget
 
 from config import WEATHER_SWAP_MS
-from lib.clock.widget.live_clock import LiveClockWidget
+from lib.clock.widgets.live_clock import LiveClockWidget
 from lib.metoffice.weather_source import CachedWeatherSource
 from lib.metoffice.widgets.weather_graph import WeatherGraphWidget
 from lib.metoffice.widgets.weather_group import WeatherGroupWidget

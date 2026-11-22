@@ -7,8 +7,8 @@ from typing import Any, cast
 import pytest
 
 from lib.metoffice.adapter import MetOfficeAdapter
-from lib.metoffice.domain.models import WeatherSchemaRoot
-from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
+from lib.metoffice.api.models import WeatherSchemaRoot
+from lib.metoffice.api.schemas import WeatherSchemaRootSchema
 from lib.metoffice.models import (
     DailyForecastPoint,
     HumanReadableWeatherReport,

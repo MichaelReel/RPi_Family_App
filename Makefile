@@ -10,7 +10,7 @@ format:
 	uv run ruff format .
 
 typecheck:
-	uv run mypy lib main.py config.py clock_demo.py met_demo.py icons_demo.py test
+	uv run mypy lib main.py config.py demos/clock_demo.py demos/met_demo.py demos/icons_demo.py test
 
 test:
 	QT_QPA_PLATFORM=offscreen uv run pytest test/
@@ -19,13 +19,13 @@ run:
 	uv run main.py
 
 demo-clock:
-	uv run python clock_demo.py
+	uv run python demos/clock_demo.py
 
 demo-met:
-	uv run python met_demo.py
+	uv run python demos/met_demo.py
 
 demo-icons:
-	uv run python icons_demo.py
+	uv run python demos/icons_demo.py
 
 check: lint typecheck test
 

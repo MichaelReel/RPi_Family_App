@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from lib.metoffice.domain.models import TimeSeries, WeatherSchemaRoot
+from lib.metoffice.api.models import TimeSeries, WeatherSchemaRoot
 from lib.metoffice.models import (
     DailyForecastPoint,
     HourlyForecastPoint,

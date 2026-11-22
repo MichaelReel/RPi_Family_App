@@ -65,3 +65,6 @@ secret_settings.py
 # Operating System files
 .DS_Store
 Thumbs.db
+
+# Unused Met Office weather icon variants (kept on disk, not tracked)
+lib/metoffice/icons/weather/spares/

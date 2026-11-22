@@ -5,8 +5,8 @@ from typing import Any, cast
 import pytest
 from marshmallow import ValidationError
 
-from lib.metoffice.domain.models import WeatherSchemaRoot
-from lib.metoffice.domain.schemas import WeatherSchemaRootSchema
+from lib.metoffice.api.models import WeatherSchemaRoot
+from lib.metoffice.api.schemas import WeatherSchemaRootSchema
 
 
 # A pytest fixture to find and load your sample JSON file safely
