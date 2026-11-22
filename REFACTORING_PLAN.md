@@ -14,7 +14,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | **§7 — Remove superfluous code** | ✅ **DONE** (T7.2–T7.17) | unused imports/vars + stale comments removed, `_advance_page` shim gone, `temp/` deleted; `ruff check .` clean. ⚠️ T7.1 corrected — see below. |
 | **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
 | §2 — Short functions | ✅ **DONE** (T2.1–T2.8) | `live_clock`, `icons`, `day_card`, `four_day_grid`, **`weather_graph`** (all 5 steps of T2.5), **`adapter`** (T2.6), **`main`** (T2.7), **`icons_demo`** (T2.8) all done |
-| §3 — Blank-line separation | ⬜ not started | — |
+| §3 — Blank-line separation | ✅ **DONE** (verified) | All T3.1–T3.6 targets already satisfied as a side effect of §2; verified against disk, no code changes needed |
 | §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
 | §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
 | §6 — Accurate READMEs | ⬜ not started | READMEs last edited in the pre-plan "ACTION_ITEMS" era |
@@ -246,28 +246,30 @@ Extract cohesive private `_` methods; the public API of widgets/modules stays un
 
 **Gate after §2:** `make check` green; public surface of all widgets unchanged (tests prove it).
 
-## 3. Blank lines between logical sections in long functions — ⬜ not started
+## 3. Blank lines between logical sections in long functions — ✅ DONE (verified)
 
 Apply **after §2**, to the functions that legitimately stay long. Rule: one blank line between logical blocks (setup → compute → apply / fetch → map → return). **Gate:** `make test` green (purely formatting).
 
-### T3.1 — `lib/metoffice/adapter.py`
-- In `_to_daily_report`'s loop body: blank between (time parse) / (weather code + condition) / (visibility) / (point construction).
+> **Note:** every §3 target was already satisfied as a side effect of the §2 refactoring — extracting the long `__init__`/mapping bodies into focused methods (T2.1–T2.8) left the remaining functions with clean one-blank-line logical blocks. Verified each against disk; no code changes were required.
 
-### T3.2 — `lib/metoffice/widgets/weather_graph.py`
-- `_draw_lane`: grid → labels → clip → series. `_refresh`: error path → success path. The `_paint_*`/`_draw_*_lane` methods: fine data → daily fallback.
+### T3.1 — `lib/metoffice/adapter.py` — ✅ verified
+- ✅ `_map_daily_entry` (the §2-extracted loop body): blank between (time parse) / (weather code + condition) / (visibility) / (point construction).
 
-### T3.3 — `lib/metoffice/widgets/day_card.py`
-- `update_data` (or its §2-split parts): style → text → icons.
+### T3.2 — `lib/metoffice/widgets/weather_graph.py` — ✅ verified
+- ✅ `_draw_lane`: no-data path → frame (grid + labels) → series. `_refresh`: error path → success path. The `_paint_*_lane` methods: fine data → daily fallback.
 
-### T3.4 — `lib/metoffice/icons.py`
-- In `_load_icon_range`: iterate → file-exists check → cache-store.
+### T3.3 — `lib/metoffice/widgets/day_card.py` — ✅ verified
+- ✅ `update_data`: style → text → icons (thin 3-line orchestrator; each step is its own method).
 
-### T3.5 — `main.py`
-- `MainWindow.__init__`: window → layout → colours → clock → weather → button → show.
+### T3.4 — `lib/metoffice/icons.py` — ✅ verified
+- ✅ In `_load_icons` (renamed from the plan's `_load_icon_range` in T2.2): iterate → file-exists check → cache-store.
 
-### T3.6 — `lib/clock/widget/live_clock.py`
-- `resizeEvent`: scale-compute → font-build → apply.
-- **Verify (all §3):** `make test` green.
+### T3.5 — `main.py` — ✅ verified
+- ✅ `MainWindow.__init__`: window → layout → colours → clock → weather → button → show.
+
+### T3.6 — `lib/clock/widget/live_clock.py` — ✅ verified
+- ✅ `resizeEvent`: scale-compute → font-build → apply.
+- **Verify (all §3):** `make test` green (71/71).
 
 ## 4. Names that correctly represent purpose — ⬜ not started
 
