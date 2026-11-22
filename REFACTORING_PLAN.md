@@ -338,7 +338,7 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 
 Do this **last** — after T0.3/T5.2 — so the documented commands match reality.
 
-### T6.1 — Rewrite root `README.md`
+### T6.1 — Rewrite root `README.md` — ✅ DONE
 Current problems: "weekly Weather panel" (wrong — it's a 4-day card grid **and** an 8-day stats graph that auto-swap), missing demo/test/dev commands, typos ("depencies", "can be retrieve", "an new terminal").
 New structure:
 1. **What it is** — full-screen Raspberry Pi display: live clock + weather area that auto-swaps every 5 min (`WEATHER_SWAP_MS`) between the 4-day card grid and the 8-day temperature/wind/rain/UV graph; click to swap immediately.

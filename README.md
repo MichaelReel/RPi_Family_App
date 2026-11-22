@@ -1,85 +1,87 @@
-# RPi Full Screen Portal Application
+# RPi Family App
 
-Just want to have a full screen app for a RPi + Touch Screen.
+A full-screen PyQt6 application for a Raspberry Pi + touch-screen display. It shows:
 
-Current version is a Clock and a weekly Weather panel.
+1. A **live clock** (hours, minutes, seconds).
+2. A **weather area** sourced from the UK Met Office DataHub API that **auto-swaps every 5 minutes** (`WEATHER_SWAP_MS`) between:
+   - a **4-day forecast card grid** (location label + featured day + 3 secondary days), and
+   - an **8-day stats graph** (temperature, rain probability, UV index, and wind).
+
+   **Click anywhere** on the weather area to swap to the other view immediately.
 
 ## Documentation
 
-- **[REPOSITORY_GUIDE.md](REPOSITORY_GUIDE.md)** — Repository overview, architecture, data flow, module responsibilities, testing conventions (useful for LLM agents and new developers)
+- **[REPOSITORY_GUIDE.md](REPOSITORY_GUIDE.md)** — Repository overview, architecture, data flow, module responsibilities, and testing conventions (useful for LLM agents and new developers).
 
-## Install from repo
+## Requirements
 
-Clone this repository and cd into it:
+- Raspberry Pi 4/5 (or any Linux desktop)
+- 64-bit Raspberry Pi OS (or any Linux distribution with Python 3.10+)
+- [uv](https://docs.astral.sh/uv/) for dependency management
+
+## Setup & run
 
 ```sh
 git clone https://github.com/MichaelReel/RPi_Family_App.git
 cd RPi_Family_App
-```
-
-# Metoffice Widget
-
-Setup for the met office requires setting 3 environment variables:
-
-- METOFFICE_API_KEY
-- METOFFICE_LATITUDE
-- METOFFICE_LONGITUDE
-
-The API_KEY can be retrieve using the getting started step on the [metoffice web site](https://datahub.metoffice.gov.uk/docs/getting-started).
-
-LATITUDE and LONGITUDE can be determined using an online mapping tool.
-
-### Setup on Linux (non-Raspbian)
-
-Create a python environment and install uv
-
-```sh
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install uv
-```
-
-> You will need to use `source .venv/bin/activate` to activate the python environment each time you open this folder in a new shell, or if you source another python environment.
-> If you ever see "command not found" it can mean the environment hasn't been activated.
-
-The App will need dependencies installed. Run `uv sync` to install all dependencies:
-
-```
 uv sync
-```
-
-To run the app, `source .venv/bin/activate` if necessary, then:
-
-```
 uv run main.py
 ```
 
-### Setup on Raspbian
+Or, using the Makefile:
 
-On Raspbian the depencies are a little more involved. Install these system packages and set the pipx path:
-
+```sh
+make setup   # uv sync
+make run     # uv run main.py
 ```
+
+## Configuration
+
+The app reads its settings from environment variables (defined in [`config.py`](config.py)):
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `METOFFICE_API_KEY` | **Yes** | — | Met Office DataHub API key. Get one via the [Met Office getting-started guide](https://datahub.metoffice.gov.uk/docs/getting-started). |
+| `METOFFICE_LATITUDE` | No | `54.3` | Forecast latitude (e.g. `54.3141`). |
+| `METOFFICE_LONGITUDE` | No | `-7.3` | Forecast longitude (e.g. `-7.4058`). |
+
+Set them before running, e.g.:
+
+```sh
+export METOFFICE_API_KEY="your_key"
+export METOFFICE_LATITUDE="54.3141"
+export METOFFICE_LONGITUDE="-7.4058"
+```
+
+## Demos
+
+Standalone, resizable demos of each widget (the clock and icons demos need no API key):
+
+```sh
+make demo-clock   # uv run python demos/clock_demo.py
+make demo-met     # uv run python demos/met_demo.py
+make demo-icons   # uv run python demos/icons_demo.py
+```
+
+## Development
+
+```sh
+make lint        # uv run ruff check .
+make format      # uv run ruff format .
+make typecheck   # uv run mypy lib main.py config.py demos/... test
+make test        # QT_QPA_PLATFORM=offscreen uv run pytest test/
+make check       # lint + typecheck + test
+```
+
+## Raspberry Pi without uv
+
+If you can't use `uv` on the Pi, install the dependencies with pip instead:
+
+```sh
 sudo apt update
-sudo apt install -y python3-pyqt6 pipx
-pipx ensurepath
-```
-
-Open an new terminal (or `source ~/.bashrc`) to ensure that ~/.local/bin is on the path. Then install uv:
-
-```
-pipx install uv
-```
-
-Create a virtual env, activate it and install the rest of the dependencies:
-
-```
+sudo apt install -y python3-pyqt6
 python3 -m venv .venv --system-site-packages
 source .venv/bin/activate
-uv pip install -r pyproject.toml
-```
-
-Cross your fingers and try to run the script:
-
-```
+pip install -r pyproject.toml
 python3 main.py
 ```
