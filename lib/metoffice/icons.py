@@ -1,9 +1,11 @@
 from collections.abc import Mapping
 from logging import Logger, getLogger
 from pathlib import Path
-from typing import Final
+from typing import Final, TypeVar
 
 from PyQt6.QtGui import QPixmap
+
+T = TypeVar("T")
 
 _LOGGER: Final[Logger] = getLogger(__name__)
 
@@ -51,9 +53,7 @@ _MET_OFFICE_STATS_MAP: Final[dict[str, str]] = {
 }
 
 
-def _load_icons[T](
-    code_to_filename: Mapping[T, str], icon_dir: Path
-) -> dict[T, QPixmap]:
+def _load_icons(code_to_filename: Mapping[T, str], icon_dir: Path) -> dict[T, QPixmap]:
     """Load a mapping of codes/keys to icon file names into a cache of QPixmaps.
 
     Reused file names are loaded from disk only once (e.g. fog/mist, temp_high/feel),

@@ -16,7 +16,7 @@ A full-screen PyQt6 application for a Raspberry Pi + touch-screen display. It sh
 ## Requirements
 
 - Raspberry Pi 4/5 (or any Linux desktop)
-- 64-bit Raspberry Pi OS (or any Linux distribution with Python 3.10+)
+- 64-bit Raspberry Pi OS (or any Linux distribution) with **Python 3.11+**
 - [uv](https://docs.astral.sh/uv/) for dependency management
 
 ## Setup & run
@@ -74,6 +74,8 @@ make check       # lint + typecheck + test
 ```
 
 ## Raspberry Pi without uv
+
+> **Python version:** this app requires **Python 3.11+**. If `python3 --version` on your Pi is below 3.11, install a newer Python first.
 
 If you can't use `uv` on the Pi, install the dependencies with pip instead:
 

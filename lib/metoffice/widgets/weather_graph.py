@@ -377,7 +377,9 @@ class WeatherGraphWidget(QWidget):
                 if is_zero
                 else QPen(QColor(_GRID_COLOR), 1)
             )
-            painter.drawLine(int(_LEFT_MARGIN), int(y), int(width - _RIGHT_MARGIN), int(y))
+            painter.drawLine(
+                int(_LEFT_MARGIN), int(y), int(width - _RIGHT_MARGIN), int(y)
+            )
             self._draw_lane_axis_label(painter, val, unit, y)
 
         # Vertical reference lines (midnights + now), under the data series.
@@ -387,7 +389,12 @@ class WeatherGraphWidget(QWidget):
 
         # Bottom axis.
         painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
-        painter.drawLine(int(_LEFT_MARGIN), int(plot_bottom), int(width - _RIGHT_MARGIN), int(plot_bottom))
+        painter.drawLine(
+            int(_LEFT_MARGIN),
+            int(plot_bottom),
+            int(width - _RIGHT_MARGIN),
+            int(plot_bottom),
+        )
 
     def _lane_grid_items(
         self, v_min: float, v_max: float, unit: str
@@ -602,9 +609,7 @@ class WeatherGraphWidget(QWidget):
                 painter, width, height, self._hourly, self._three_hourly
             )
         else:
-            self._paint_temp_lane_data(
-                painter, width, height, None, None
-            )
+            self._paint_temp_lane_data(painter, width, height, None, None)
 
     def _paint_temp_lane_data(
         self,
@@ -704,7 +709,14 @@ class WeatherGraphWidget(QWidget):
                 ("temp_low", _TEMP_MIN_COLOR),
             ]
             self._draw_lane(
-                painter, width, height, series, v_min, v_max, unit=_TEMP_UNIT, icons=icons
+                painter,
+                width,
+                height,
+                series,
+                v_min,
+                v_max,
+                unit=_TEMP_UNIT,
+                icons=icons,
             )
 
     def _paint_wind_lane(self, painter: QPainter, width: int, height: int) -> None:
@@ -713,9 +725,7 @@ class WeatherGraphWidget(QWidget):
                 painter, width, height, self._hourly, self._three_hourly
             )
         else:
-            self._paint_wind_lane_data(
-                painter, width, height, None, None
-            )
+            self._paint_wind_lane_data(painter, width, height, None, None)
 
     def _paint_wind_lane_data(
         self,
@@ -789,9 +799,7 @@ class WeatherGraphWidget(QWidget):
                 painter, width, height, self._hourly, self._three_hourly
             )
         else:
-            self._paint_rain_uv_lane_data(
-                painter, width, height, None, None
-            )
+            self._paint_rain_uv_lane_data(painter, width, height, None, None)
 
     def _paint_rain_uv_lane_data(
         self,

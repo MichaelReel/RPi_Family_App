@@ -46,8 +46,12 @@ class TimeSeriesSchema(Schema):
 
 class PropertiesSchema(Schema):
     model_run_date = fields.Str(required=True, data_key="modelRunDate")
-    request_point_distance = fields.Decimal(required=True, data_key="requestPointDistance")
-    time_series = fields.List(fields.Nested(TimeSeriesSchema), required=True, data_key="timeSeries")
+    request_point_distance = fields.Decimal(
+        required=True, data_key="requestPointDistance"
+    )
+    time_series = fields.List(
+        fields.Nested(TimeSeriesSchema), required=True, data_key="timeSeries"
+    )
     location = fields.Nested(LocationSchema, allow_none=True)
 
     @post_load

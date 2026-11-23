@@ -110,7 +110,9 @@ def test_featured_layout_initialization(
     assert len(grid_widget._cards) == 4
 
     # 2. Verify layout distributions structurally match expectations
-    assert grid_widget._main_layout.count() == 2  # Feature card + secondary layout track
+    assert (
+        grid_widget._main_layout.count() == 2
+    )  # Feature card + secondary layout track
     assert (
         grid_widget._secondary_layout.count() == 3
     )  # Contains remaining cards 2, 3, and 4

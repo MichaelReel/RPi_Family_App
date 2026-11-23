@@ -35,7 +35,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 - **Change:** add
   - `[tool.ruff]` — `line-length = 88` (black-compatible), `target-version = "py314"`, `src = ["."]`
   - `[tool.ruff.lint]` — `select = ["F", "I", "UP", "B", "SIM", "C4"]`; leave `E501` off (the formatter owns line length)
-  - `[tool.mypy]` — `python_version = "3.14"`, `mypy_path = "."`, `disallow_untyped_defs = true`, `disallow_incomplete_defs = true`, `no_implicit_optional = true`, `warn_return_any = true`, `check_untyped_defs = true`; add an override for `pytestqt.*` (`ignore_missing_imports = true`) only if mypy reports missing stubs
+  - `[tool.mypy]` — `python_version = "3.11"`, `mypy_path = "."`, `disallow_untyped_defs = true`, `disallow_incomplete_defs = true`, `no_implicit_optional = true`, `warn_return_any = true`, `check_untyped_defs = true`; add an override for `pytestqt.*` (`ignore_missing_imports = true`) only if mypy reports missing stubs
 - **Verify:** `uv run ruff check . && uv run mypy --version`
 
 ### T0.3 — Add a Makefile
@@ -195,7 +195,7 @@ Extract cohesive private `_` methods; the public API of widgets/modules stays un
 - **Verify:** `uv run pytest test/lib/clock/ -q`. ✅ test green, ruff/format/mypy clean.
 
 ### T2.2 — `lib/metoffice/icons.py` — ✅ DONE
-- Extracted the duplicated load loop into a module-level `_load_icons[T](code_to_filename: Mapping[T, str], icon_dir: Path) -> dict[T, QPixmap]` (PEP 695 type param; handles filename dedup + missing-file logging).
+- Extracted the duplicated load loop into a module-level `_load_icons(code_to_filename: Mapping[T, str], icon_dir: Path) -> dict[T, QPixmap]` (module-level `TypeVar`; handles filename dedup + missing-file logging).
 - `load_weather_icons` / `load_stats_icons` are now thin wrappers that delegate to `_load_icons` (preserves the `_IconCaches` singleton + `invalidate_caches` contract the tests use — so the plan's `_load_icon_range(range(40), …)` shape was rejected as it would have broken `test_icons.py`).
 - **Verify:** `uv run pytest test/lib/metoffice/ -q`. ✅ 54 passed, ruff check + format clean, mypy clean.
 

@@ -24,7 +24,9 @@ def test_clock_initial_values(qtbot: QtBot) -> None:
 
     # Assert standard text outputs (widget sets HTML with <span> tags for colouring)
     assert widget._day_label.text() == "<span style='color: #000000;'>Monday</span>"
-    assert widget._date_label.text() == "<span style='color: #000000;'>22/06/2026</span>"
+    assert (
+        widget._date_label.text() == "<span style='color: #000000;'>22/06/2026</span>"
+    )
 
     # Assert hours, minutes, and the dim smaller seconds tag
     expected_time_html = '<span style="color: #000000;">14:30</span><span style="color: #000000; font-size: 34px;">:45</span>'
