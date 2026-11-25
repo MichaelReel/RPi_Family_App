@@ -334,7 +334,7 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 - ✅ Added `lib/metoffice/icons/weather/spares/` to `.gitignore` (unused-but-intentional local asset folder; now ignored so it stays on disk untracked).
 - **Verify:** `git check-ignore lib/metoffice/icons/weather/spares/rain.png` ✅.
 
-## 6. Accurate READMEs with complete steps — ⬜ in progress (T6.1–T6.3 done)
+## 6. Accurate READMEs with complete steps — ✅ DONE (T6.1–T6.5)
 
 Do this **last** — after T0.3/T5.2 — so the documented commands match reality.
 
@@ -372,9 +372,9 @@ Specific fixes:
 - Add one line explaining `spares/` (see T5.4).
 - **Verify:** folder contents match the description (`ls` the icon dirs). ✅ — `weather/` holds the 31 shipped forecast icons; `spares/` holds the unused variants (git-ignored, confirmed via `git check-ignore`).
 
-### T6.5 — `pyproject.toml`
+### T6.5 — `pyproject.toml` — ✅ DONE
 - `description = "Add your description here"` → `"A PyQt6 Raspberry Pi display app: live clock + Met Office weather forecast with auto-swapping views."`
-- **Verify (all §6):** grep the READMEs for old paths (`clock_demo.py` at root, `domain/`) — none remain.
+- **Verify (all §6):** grep the READMEs for old paths (`clock_demo.py` at root, `domain/`) — none remain. ✅ — all demo refs are `demos/…` (correct post-T5.2); no `domain/` refs (real dir is `api/`); no root-level `*_demo.py`.
 
 ## 7. Remove superfluous code — ✅ DONE (T7.2–T7.17; T7.1 corrected — see below)
 

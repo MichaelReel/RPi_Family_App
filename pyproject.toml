@@ -1,7 +1,7 @@
 [project]
 name = "rpi-family-app"
 version = "0.1.0"
-description = "Add your description here"
+description = "A PyQt6 Raspberry Pi display app: live clock + Met Office weather forecast with auto-swapping views."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
