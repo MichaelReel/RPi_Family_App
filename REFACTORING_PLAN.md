@@ -458,7 +458,7 @@ Specific fixes:
 - Optional: `make clean` to drop the stale root `__pycache__/`.
 - **Verify (all §7):** `uv run ruff check .` clean, `make test` 71/71.
 
-## 8. Config in `config/` — ⬜ in progress (T8.1 done)
+## 8. Config in `config/` — ✅ DONE (T8.1–T8.10)
 
 New layout:
 
@@ -518,9 +518,9 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `ICON_SIZE: Final[int] = 64`, `ICON_GRID_COLUMNS: Final[int] = 4`, `ICON_GRID_SPACING: Final[int] = 20` in-file (T9.12 folds the `max_columns` local into `ICON_GRID_COLUMNS`).
 - **Verify:** `uv run pytest test/ -q` (not covered by tests — visual check via `make demo-icons`). ✅ — `make check` green (71 tests); `ICON_SIZE` and `ICON_GRID_SPACING` now used in place of magic numbers.
 
-### T8.10 — `config/metoffice.py`
+### T8.10 — `config/metoffice.py` — ✅ DONE
 - `WEATHER_SWAP_MS`, `MET_REFRESH_MS`, `MET_*` constants stay as-is (already correct UPPER_CASE public config). `client.py`'s `HTTP_TIMEOUT` stays in-file (renamed by T9.1).
-- **Verify (all §8):** `make check` green, plus run each demo once to confirm visuals are unchanged.
+- **Verify (all §8):** `make check` green, plus run each demo once to confirm visuals are unchanged. ✅ — `make check` green (ruff, mypy 49 files, 71 tests); `demo-icons` and `demo-clock` render successfully (offscreen smoke test).
 
 ## 9. UPPER_CASE constants and underscore-prefixed privates — ✅ DONE (T9.1–T9.16)
 
