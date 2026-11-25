@@ -494,12 +494,12 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - Add a `DEFAULT_DAY_CARD_STYLE: CardStyleConfig` instance in `config/ui.py`.
 - **Verify:** `make test`, `uv run mypy lib/ test/`. ✅ — `make check` green (71 tests); `day_card.py` re-exports both dataclasses via `__all__`.
 
-### T8.5 — `four_day_grid.py` style configs → `config/ui.py`
+### T8.5 — `four_day_grid.py` style configs → `config/ui.py` — ✅ DONE
 - `FEATURED_DAY_CARD_STYLE: CardStyleConfig` (the current 9 magic values: 400/38/12/10 px text, 56/80/38 px icon box, `#007bff` border) and `SECONDARY_DAY_CARD_STYLE: CardStyleConfig` (10/8/7/6 px text, 56 px box, `#555555` border) in `config/ui.py`.
 - `DAY_GRID_SPACING: Final[int] = 10`.
 - `four_day_grid.py` imports them; delete the two inline `CardStyleConfig(...)` blocks.
 - Interacts with T9.7 (`feature_config`/`secondary_config` attributes disappear or become private).
-- **Verify:** `make test`, `uv run mypy lib/`.
+- **Verify:** `make test`, `uv run mypy lib/`. ✅ — `make check` green (71 tests); `_build_featured_config`/`_build_secondary_config` methods removed; `DAY_GRID_SPACING` used for both layout spacings.
 
 ### T8.6 — `weather_graph.py` palette → `config/ui.py`
 - `GRAPH_TEMP_MAX_COLOR`, `GRAPH_TEMP_MIN_COLOR`, `GRAPH_WIND_COLOR`, `GRAPH_RAIN_COLOR`, `GRAPH_UV_COLOR`, `GRAPH_LABEL_COLOR`, `GRIDLINE_COLOR`, `MAJORGRIDLINE_COLOR`, `MINORGRIDLINE_COLOR` (as `Final[str]`).

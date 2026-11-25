@@ -71,3 +71,34 @@ class CardStyleConfig:
 
 # Default card style (T8.4)
 DEFAULT_DAY_CARD_STYLE: Final[CardStyleConfig] = CardStyleConfig()
+
+# Four-day grid card styles (T8.5)
+FEATURED_DAY_CARD_STYLE: Final[CardStyleConfig] = CardStyleConfig(
+    widget_stylesheet=(
+        "DayCardWidget { background-color: #000022; border: 0px solid #007bff; "
+        "border-radius: 8px; }"
+    ),
+    weather_icon_dim=400,
+    metric_icon_dim=38,
+    layout_spacing=12,
+    row_spacing=10,
+    date_style=UIElementStyle(font_size="56px", font_weight="bold", text_color="#0000ff"),
+    condition_style=UIElementStyle(font_size="80px", font_weight="500", text_color="#cccccc"),
+    metrics_style=UIElementStyle(font_size="38px", text_color="#999999"),
+)
+
+SECONDARY_DAY_CARD_STYLE: Final[CardStyleConfig] = CardStyleConfig(
+    widget_stylesheet=(
+        "DayCardWidget { background-color: #000022; border: 1px solid #cccccc; "
+        "border-radius: 6px; }"
+    ),
+    weather_icon_dim=100,
+    metric_icon_dim=16,
+    layout_spacing=6,
+    row_spacing=8,
+    date_style=UIElementStyle(font_size="14px", font_weight="bold", text_color="#0056b3"),
+    condition_style=UIElementStyle(font_size="20px", font_weight="500", text_color="#cccccc"),
+    metrics_style=UIElementStyle(font_size="13px", text_color="#888888"),
+)
+
+DAY_GRID_SPACING: Final[int] = 10

@@ -6,12 +6,13 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from config import MET_REFRESH_MS
-from lib.metoffice.models import HumanReadableWeatherReport
-from lib.metoffice.widgets.day_card import (
-    CardStyleConfig,
-    DayCardWidget,
-    UIElementStyle,
+from config.ui import (
+    DAY_GRID_SPACING,
+    FEATURED_DAY_CARD_STYLE,
+    SECONDARY_DAY_CARD_STYLE,
 )
+from lib.metoffice.models import HumanReadableWeatherReport
+from lib.metoffice.widgets.day_card import DayCardWidget
 
 _LOGGER: Final[Logger] = getLogger(__name__)
 
@@ -33,55 +34,18 @@ class FourDayGridWidget(QWidget):
         self._bg_color: str = bg_color
         self._cards: list[DayCardWidget] = []
 
-        self._build_featured_config()
-        self._build_secondary_config()
-
         self._build_layouts()
         self._initialise_cards()
         self._start_refresh_timer()
 
-    def _build_featured_config(self) -> None:
-        """Builds the enlarged style configuration for the featured (day 1) card."""
-        self._featured_config: CardStyleConfig = CardStyleConfig(
-            widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 0px solid #007bff; border-radius: 8px; }}",
-            weather_icon_dim=400,
-            metric_icon_dim=38,
-            layout_spacing=12,
-            row_spacing=10,
-            date_style=UIElementStyle(
-                font_size="56px", font_weight="bold", text_color="#0000ff"
-            ),
-            condition_style=UIElementStyle(
-                font_size="80px", font_weight="500", text_color="#cccccc"
-            ),
-            metrics_style=UIElementStyle(font_size="38px", text_color="#999999"),
-        )
-
-    def _build_secondary_config(self) -> None:
-        """Builds the standard style configuration for the secondary (day 2-4) cards."""
-        self._secondary_config: CardStyleConfig = CardStyleConfig(
-            widget_stylesheet=f"DayCardWidget {{ background-color: {self._bg_color}; border: 1px solid #cccccc; border-radius: 6px; }}",
-            weather_icon_dim=100,
-            metric_icon_dim=16,
-            layout_spacing=6,
-            row_spacing=8,
-            date_style=UIElementStyle(
-                font_size="14px", font_weight="bold", text_color="#0056b3"
-            ),
-            condition_style=UIElementStyle(
-                font_size="20px", font_weight="500", text_color="#cccccc"
-            ),
-            metrics_style=UIElementStyle(font_size="13px", text_color="#888888"),
-        )
-
     def _build_layouts(self) -> None:
         """Creates the outer vertical and secondary-row layouts for the grid."""
         self._main_layout: QVBoxLayout = QVBoxLayout()
-        self._main_layout.setSpacing(10)
+        self._main_layout.setSpacing(DAY_GRID_SPACING)
         self.setLayout(self._main_layout)
 
         self._secondary_layout: QHBoxLayout = QHBoxLayout()
-        self._secondary_layout.setSpacing(10)
+        self._secondary_layout.setSpacing(DAY_GRID_SPACING)
         self._secondary_layout.setContentsMargins(0, 0, 0, 0)
 
     def _start_refresh_timer(self) -> None:
@@ -113,7 +77,7 @@ class FourDayGridWidget(QWidget):
         """Creates one card per forecast day, featuring the first at the top."""
         assert self._report is not None
         for index, data_point in enumerate(self._report.forecast_days[1:5]):
-            config = self._featured_config if index == 0 else self._secondary_config
+            config = FEATURED_DAY_CARD_STYLE if index == 0 else SECONDARY_DAY_CARD_STYLE
             card: DayCardWidget = DayCardWidget(data_point, config=config)
             self._cards.append(card)
 
