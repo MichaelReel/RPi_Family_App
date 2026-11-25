@@ -1,6 +1,12 @@
 from PyQt6.QtWidgets import QApplication, QBoxLayout, QMainWindow, QPushButton, QWidget
 
 from config import WEATHER_SWAP_MS
+from config.ui import (
+    APP_BG_COLOR,
+    APP_TEXT_COLOR,
+    CLOCK_DAY_DATE_COLOR,
+    CLOCK_SECONDS_COLOR,
+)
 from lib.clock.widgets.live_clock import LiveClockWidget
 from lib.metoffice.weather_source import CachedWeatherSource
 from lib.metoffice.widgets.weather_graph import WeatherGraphWidget
@@ -20,12 +26,12 @@ class MainWindow(QMainWindow):
         self._main_layout.setSpacing(10)
         self._main_layout.setContentsMargins(10, 10, 10, 10)
 
-        bg_color: str = "#000022"
-        text_color: str = "#0000aa"
-        hour_minutes_color: str = "#0000FF"
-        seconds_color: str = "#000088"
-        day_color: str = "#0000FF"
-        date_color: str = "#0000FF"
+        bg_color: str = APP_BG_COLOR
+        text_color: str = APP_TEXT_COLOR
+        hour_minutes_color: str = CLOCK_DAY_DATE_COLOR
+        seconds_color: str = CLOCK_SECONDS_COLOR
+        day_color: str = CLOCK_DAY_DATE_COLOR
+        date_color: str = CLOCK_DAY_DATE_COLOR
 
         self.setStyleSheet(f"background-color: {bg_color};color: {text_color};")
 
