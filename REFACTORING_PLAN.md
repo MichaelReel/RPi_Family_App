@@ -488,11 +488,11 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `live_clock` font ratios/min-sizes/margins and `weather_graph` layout tuning (margins, dot sizes, thresholds, font px) stay **in-file** as `_UPPERCASE: Final[int]`.
 - **Verify:** `make test`, visual check via a demo. ✅ — `make check` green (71 tests); no `"Arial"` literals remain in `lib/` or `main.py`.
 
-### T8.4 — Card style dataclasses → `config/ui.py`
+### T8.4 — Card style dataclasses → `config/ui.py` — ✅ DONE
 - Move `UIElementStyle` and `CardStyleConfig` (and their default values) from `day_card.py` to `config/ui.py` — config must stay a leaf module, so the dataclasses move with the values.
 - `day_card.py`: `from config.ui import CardStyleConfig` + re-export it so `from lib.metoffice.widgets.day_card import CardStyleConfig` (used by `test_widget.py`) still works.
 - Add a `DEFAULT_DAY_CARD_STYLE: CardStyleConfig` instance in `config/ui.py`.
-- **Verify:** `make test`, `uv run mypy lib/ test/`.
+- **Verify:** `make test`, `uv run mypy lib/ test/`. ✅ — `make check` green (71 tests); `day_card.py` re-exports both dataclasses via `__all__`.
 
 ### T8.5 — `four_day_grid.py` style configs → `config/ui.py`
 - `FEATURED_DAY_CARD_STYLE: CardStyleConfig` (the current 9 magic values: 400/38/12/10 px text, 56/80/38 px icon box, `#007bff` border) and `SECONDARY_DAY_CARD_STYLE: CardStyleConfig` (10/8/7/6 px text, 56 px box, `#555555` border) in `config/ui.py`.
