@@ -514,9 +514,9 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `swapping_container.py`, `weather_group.py`, `four_day_grid.py`, `weather_graph.py`: `bg_color: str = "#000022"` → `bg_color: str = APP_BG_COLOR` (import from `config`).
 - **Verify:** `make test`, `uv run mypy lib/`. ✅ — `make check` green (71 tests); no more `#000022` literals in widget `bg_color` defaults.
 
-### T8.9 — `icons_demo.py`
+### T8.9 — `icons_demo.py` — ✅ DONE
 - `ICON_SIZE: Final[int] = 64`, `ICON_GRID_COLUMNS: Final[int] = 4`, `ICON_GRID_SPACING: Final[int] = 20` in-file (T9.12 folds the `max_columns` local into `ICON_GRID_COLUMNS`).
-- **Verify:** `uv run pytest test/ -q` (not covered by tests — visual check via `make demo-icons`).
+- **Verify:** `uv run pytest test/ -q` (not covered by tests — visual check via `make demo-icons`). ✅ — `make check` green (71 tests); `ICON_SIZE` and `ICON_GRID_SPACING` now used in place of magic numbers.
 
 ### T8.10 — `config/metoffice.py`
 - `WEATHER_SWAP_MS`, `MET_REFRESH_MS`, `MET_*` constants stay as-is (already correct UPPER_CASE public config). `client.py`'s `HTTP_TIMEOUT` stays in-file (renamed by T9.1).

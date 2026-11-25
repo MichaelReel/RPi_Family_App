@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
 from lib.metoffice.icons import load_weather_icons
 
 ICON_GRID_COLUMNS: Final[int] = 4
+ICON_SIZE: Final[int] = 64
+ICON_GRID_SPACING: Final[int] = 20
 
 
 class WeatherViewerWindow(QMainWindow):
@@ -31,7 +33,7 @@ class WeatherViewerWindow(QMainWindow):
 
         content_widget = scroll_area.widget()
         grid_layout = QGridLayout(content_widget)
-        grid_layout.setSpacing(20)
+        grid_layout.setSpacing(ICON_GRID_SPACING)
 
         for index, (code, pixmap) in enumerate(icons_dict.items()):
             row = index // ICON_GRID_COLUMNS
@@ -53,10 +55,10 @@ class WeatherViewerWindow(QMainWindow):
 
         image_label = QLabel()
         if not pixmap.isNull():
-            # Scale smoothly to 64x64 while preserving ratio
+            # Scale smoothly to ICON_SIZE x ICON_SIZE while preserving ratio
             scaled_pixmap = pixmap.scaled(
-                64,
-                64,
+                ICON_SIZE,
+                ICON_SIZE,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation,
             )
