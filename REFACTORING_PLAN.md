@@ -501,10 +501,10 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - Interacts with T9.7 (`feature_config`/`secondary_config` attributes disappear or become private).
 - **Verify:** `make test`, `uv run mypy lib/`. ✅ — `make check` green (71 tests); `_build_featured_config`/`_build_secondary_config` methods removed; `DAY_GRID_SPACING` used for both layout spacings.
 
-### T8.6 — `weather_graph.py` palette → `config/ui.py`
-- `GRAPH_TEMP_MAX_COLOR`, `GRAPH_TEMP_MIN_COLOR`, `GRAPH_WIND_COLOR`, `GRAPH_RAIN_COLOR`, `GRAPH_UV_COLOR`, `GRAPH_LABEL_COLOR`, `GRIDLINE_COLOR`, `MAJORGRIDLINE_COLOR`, `MINORGRIDLINE_COLOR` (as `Final[str]`).
+### T8.6 — `weather_graph.py` palette → `config/ui.py` — ✅ DONE
+- `GRAPH_TEMP_MAX_COLOR`, `GRAPH_TEMP_MIN_COLOR`, `GRAPH_FEELS_LIKE_COLOR`, `GRAPH_RAIN_COLOR`, `GRAPH_UV_COLOR`, `GRAPH_WIND_COLOR`, `GRAPH_WIND_GUST_COLOR`, `GRAPH_AXIS_COLOR`, `GRAPH_TEXT_COLOR`, `GRAPH_GRID_COLOR`, `GRAPH_GRID_COLOR_STRONG`, `GRAPH_MIDNIGHT_COLOR`, `GRAPH_NOW_COLOR` (as `Final[str]`).
 - `weather_graph.py` imports them; delete the module-level colour block.
-- **Verify:** `make test`, visual check via `make demo-met`.
+- **Verify:** `make test`, visual check via `make demo-met`. ✅ — `make check` green (71 tests); test file updated to import from `config.ui`. Note: `GRAPH_LANE_BORDER_COLOR` defined in `config/ui.py` but unused (was defined but never used in original code).
 
 ### T8.7 — `location_label.py`
 - `_DEFAULT_STYLE: CardStyleConfig` → `LOCATION_LABEL_STYLE: CardStyleConfig` in `config/ui.py`; import it.

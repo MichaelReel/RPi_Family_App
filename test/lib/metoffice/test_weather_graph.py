@@ -442,7 +442,7 @@ def test_temp_lane_zero_c_gridline_is_bold(qtbot: QtBot) -> None:
     (_GRID_COLOR_STRONG) appears alongside the normal grid colour (_GRID_COLOR),
     i.e. horizontal lines are drawn at every 5°C with 0°C drawn bolder.
     """
-    from lib.metoffice.widgets.weather_graph import _GRID_COLOR, _GRID_COLOR_STRONG
+    from config.ui import GRAPH_GRID_COLOR, GRAPH_GRID_COLOR_STRONG
 
     days = _make_days(8)
     # Range spans -1.0 .. 11.0 so the 0 and 5 multiples both fall in range.
@@ -477,10 +477,10 @@ def test_temp_lane_zero_c_gridline_is_bold(qtbot: QtBot) -> None:
                     n += 1
         return n
 
-    assert count_near(QColor(_GRID_COLOR_STRONG)) > 0, (
+    assert count_near(QColor(GRAPH_GRID_COLOR_STRONG)) > 0, (
         "expected the bold 0°C gridline colour to be painted in the temp lane"
     )
-    assert count_near(QColor(_GRID_COLOR)) > 0, (
+    assert count_near(QColor(GRAPH_GRID_COLOR)) > 0, (
         "expected the normal 5°C gridline colour to be painted in the temp lane"
     )
 
@@ -493,7 +493,7 @@ def test_date_labels_are_centred_on_noon(qtbot: QtBot) -> None:
     _x_for_time/_time_window — i.e. the labels sit on the same time-based x as
     the vertical guide lines, not evenly spaced across the lane width.
     """
-    from lib.metoffice.widgets.weather_graph import _TEXT_COLOR
+    from config.ui import GRAPH_TEXT_COLOR
 
     # Daily dates run base+1d .. base+7d. The fine-data window below spans
     # base .. base+2.1d, so the first two daily labels (base+1d, base+2d) fall
@@ -513,7 +513,7 @@ def test_date_labels_are_centred_on_noon(qtbot: QtBot) -> None:
     widget.render(pixmap)
     image = pixmap.toImage()
 
-    target = QColor(_TEXT_COLOR)
+    target = QColor(GRAPH_TEXT_COLOR)
     tol = 40  # tolerate antialiasing / blending
     label_y = widget.height() - 22
     y_lo, y_hi = max(0, label_y - 10), min(image.height(), label_y + 12)

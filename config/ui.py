@@ -102,3 +102,19 @@ SECONDARY_DAY_CARD_STYLE: Final[CardStyleConfig] = CardStyleConfig(
 )
 
 DAY_GRID_SPACING: Final[int] = 10
+
+# Weather graph palette (T8.6)
+GRAPH_TEMP_MAX_COLOR: Final[str] = "#FF6B6B"
+GRAPH_TEMP_MIN_COLOR: Final[str] = "#4D96FF"
+GRAPH_FEELS_LIKE_COLOR: Final[str] = "#FFB347"
+GRAPH_RAIN_COLOR: Final[str] = "#4ECDC4"
+GRAPH_UV_COLOR: Final[str] = "#FFD93D"
+GRAPH_WIND_COLOR: Final[str] = "#95E1D3"
+GRAPH_WIND_GUST_COLOR: Final[str] = "#FFFFFF"
+GRAPH_AXIS_COLOR: Final[str] = "#555555"
+GRAPH_TEXT_COLOR: Final[str] = "#cccccc"
+GRAPH_GRID_COLOR: Final[str] = "#333355"
+GRAPH_GRID_COLOR_STRONG: Final[str] = "#6A6A9A"
+GRAPH_LANE_BORDER_COLOR: Final[str] = "#444466"
+GRAPH_MIDNIGHT_COLOR: Final[str] = "#3A3A5C"
+GRAPH_NOW_COLOR: Final[str] = "#E86A5E"

@@ -12,7 +12,22 @@ from PyQt6.QtCore import QRect, QRectF, Qt
 from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPaintEvent, QPen, QPixmap
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
-from config.ui import UI_FONT_FAMILY
+from config.ui import (
+    GRAPH_AXIS_COLOR,
+    GRAPH_FEELS_LIKE_COLOR,
+    GRAPH_GRID_COLOR,
+    GRAPH_GRID_COLOR_STRONG,
+    GRAPH_MIDNIGHT_COLOR,
+    GRAPH_NOW_COLOR,
+    GRAPH_RAIN_COLOR,
+    GRAPH_TEMP_MAX_COLOR,
+    GRAPH_TEMP_MIN_COLOR,
+    GRAPH_TEXT_COLOR,
+    GRAPH_UV_COLOR,
+    GRAPH_WIND_COLOR,
+    GRAPH_WIND_GUST_COLOR,
+    UI_FONT_FAMILY,
+)
 from lib.metoffice.icons import load_stats_icons
 from lib.metoffice.models import (
     DailyForecastPoint,
@@ -22,26 +37,6 @@ from lib.metoffice.models import (
 )
 
 _LOGGER: Final[Logger] = getLogger(__name__)
-
-# Series colours
-_TEMP_MAX_COLOR = "#FF6B6B"
-_TEMP_MIN_COLOR = "#4D96FF"
-_FEELS_LIKE_COLOR = "#FFB347"
-_RAIN_COLOR = "#4ECDC4"
-_UV_COLOR = "#FFD93D"
-_WIND_COLOR = "#95E1D3"
-_WIND_GUST_COLOR = "#FFFFFF"
-
-_AXIS_COLOR = "#555555"
-_TEXT_COLOR = "#cccccc"
-_GRID_COLOR = "#333355"
-_GRID_COLOR_STRONG = (
-    "#6A6A9A"  # bold 0°C reference line (slightly bolder/brighter than _GRID_COLOR)
-)
-_LANE_BORDER_COLOR = "#444466"
-# Vertical reference lines: faint midnight gridlines and a distinct "now" marker.
-_MIDNIGHT_COLOR = "#3A3A5C"
-_NOW_COLOR = "#E86A5E"
 
 # The temperature lane's unit string (distinguishes °C lanes from %/mph lanes).
 _TEMP_UNIT: Final[str] = "C"
@@ -138,7 +133,7 @@ class WeatherGraphWidget(QWidget):
         title = QLabel("8-Day Forecast")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(
-            f"QLabel {{ background-color: transparent; color: {_TEXT_COLOR}; "
+            f"QLabel {{ background-color: transparent; color: {GRAPH_TEXT_COLOR}; "
             f"font-size: 22px; font-weight: bold; font-family: {UI_FONT_FAMILY}, sans-serif; }}"
         )
         return title
@@ -333,7 +328,7 @@ class WeatherGraphWidget(QWidget):
         """Paint one lane: grid + axis labels, lane icons, and one line per series."""
         if not any(pts for pts, _ in series):
             self._draw_lane_icons(painter, width, height, icons)
-            painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
+            painter.setPen(QPen(QColor(GRAPH_TEXT_COLOR), 1))
             painter.setFont(QFont(UI_FONT_FAMILY, 11))
             painter.drawText(
                 QRectF(0, 0, width, height),
@@ -374,9 +369,9 @@ class WeatherGraphWidget(QWidget):
                 ratio = (val - v_min) / (v_max - v_min)
                 y = plot_bottom - (plot_height * ratio)
             painter.setPen(
-                QPen(QColor(_GRID_COLOR_STRONG), 2)
+                QPen(QColor(GRAPH_GRID_COLOR_STRONG), 2)
                 if is_zero
-                else QPen(QColor(_GRID_COLOR), 1)
+                else QPen(QColor(GRAPH_GRID_COLOR), 1)
             )
             painter.drawLine(
                 int(_LEFT_MARGIN), int(y), int(width - _RIGHT_MARGIN), int(y)
@@ -389,7 +384,7 @@ class WeatherGraphWidget(QWidget):
         )
 
         # Bottom axis.
-        painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
+        painter.setPen(QPen(QColor(GRAPH_AXIS_COLOR), 1))
         painter.drawLine(
             int(_LEFT_MARGIN),
             int(plot_bottom),
@@ -427,7 +422,7 @@ class WeatherGraphWidget(QWidget):
             label = f"{val:.0f}%"
         else:
             label = f"{val:.0f}"
-        painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
+        painter.setPen(QPen(QColor(GRAPH_TEXT_COLOR), 1))
         painter.drawText(
             QRectF(4, y - 8, _LEFT_MARGIN - 8, 16),
             Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
@@ -537,7 +532,7 @@ class WeatherGraphWidget(QWidget):
         while midnight <= window_end:
             x = self._x_for_time(midnight, window_start, window_end, width)
             if left <= x <= right:
-                painter.setPen(QPen(QColor(_MIDNIGHT_COLOR), 1))
+                painter.setPen(QPen(QColor(GRAPH_MIDNIGHT_COLOR), 1))
                 painter.drawLine(int(x), int(top), int(x), int(bottom))
             midnight += timedelta(days=1)
 
@@ -545,7 +540,7 @@ class WeatherGraphWidget(QWidget):
         if window_start <= now <= window_end:
             x = self._x_for_time(now, window_start, window_end, width)
             if left <= x <= right:
-                pen = QPen(QColor(_NOW_COLOR), 1)
+                pen = QPen(QColor(GRAPH_NOW_COLOR), 1)
                 pen.setStyle(Qt.PenStyle.DashLine)
                 painter.setPen(pen)
                 painter.drawLine(int(x), int(top), int(x), int(bottom))
@@ -668,18 +663,18 @@ class WeatherGraphWidget(QWidget):
             all_vals = self._collect_values([min_series, max_series, feels_series])
             v_min, v_max = self._range_from_values(all_vals, pad=1.0)
             icons = [
-                ("temp_high", _TEMP_MAX_COLOR),
-                ("temp_feel", _FEELS_LIKE_COLOR),
-                ("temp_low", _TEMP_MIN_COLOR),
+                ("temp_high", GRAPH_TEMP_MAX_COLOR),
+                ("temp_feel", GRAPH_FEELS_LIKE_COLOR),
+                ("temp_low", GRAPH_TEMP_MIN_COLOR),
             ]
             self._draw_lane(
                 painter,
                 width,
                 height,
                 [
-                    (min_series, _TEMP_MIN_COLOR),
-                    (max_series, _TEMP_MAX_COLOR),
-                    (feels_series, _FEELS_LIKE_COLOR),
+                    (min_series, GRAPH_TEMP_MIN_COLOR),
+                    (max_series, GRAPH_TEMP_MAX_COLOR),
+                    (feels_series, GRAPH_FEELS_LIKE_COLOR),
                 ],
                 v_min,
                 v_max,
@@ -691,23 +686,23 @@ class WeatherGraphWidget(QWidget):
             series = [
                 (
                     self._daily_series(self._days, lambda d: d.min_temperature_c),
-                    _TEMP_MIN_COLOR,
+                    GRAPH_TEMP_MIN_COLOR,
                 ),
                 (
                     self._daily_series(self._days, lambda d: d.max_temperature_c),
-                    _TEMP_MAX_COLOR,
+                    GRAPH_TEMP_MAX_COLOR,
                 ),
                 (
                     self._daily_series(self._days, lambda d: d.max_feels_like_c),
-                    _FEELS_LIKE_COLOR,
+                    GRAPH_FEELS_LIKE_COLOR,
                 ),
             ]
             all_vals = self._collect_values([s for s, _ in series])
             v_min, v_max = self._range_from_values(all_vals, pad=1.0)
             icons = [
-                ("temp_high", _TEMP_MAX_COLOR),
-                ("temp_feel", _FEELS_LIKE_COLOR),
-                ("temp_low", _TEMP_MIN_COLOR),
+                ("temp_high", GRAPH_TEMP_MAX_COLOR),
+                ("temp_feel", GRAPH_FEELS_LIKE_COLOR),
+                ("temp_low", GRAPH_TEMP_MIN_COLOR),
             ]
             self._draw_lane(
                 painter,
@@ -769,12 +764,12 @@ class WeatherGraphWidget(QWidget):
             )
             all_vals = self._collect_values([avg_series, gust_series])
             v_max = (max(all_vals, default=20.0) + 5.0) if all_vals else 25.0
-            icons = [("wind", _WIND_COLOR), ("wind", _WIND_GUST_COLOR)]
+            icons = [("wind", GRAPH_WIND_COLOR), ("wind", GRAPH_WIND_GUST_COLOR)]
             self._draw_lane(
                 painter,
                 width,
                 height,
-                [(avg_series, _WIND_COLOR), (gust_series, _WIND_GUST_COLOR)],
+                [(avg_series, GRAPH_WIND_COLOR), (gust_series, GRAPH_WIND_GUST_COLOR)],
                 0.0,
                 v_max,
                 unit="mph",
@@ -784,12 +779,12 @@ class WeatherGraphWidget(QWidget):
             series = [
                 (
                     self._daily_series(self._days, lambda d: d.wind_speed_midday_mph),
-                    _WIND_COLOR,
+                    GRAPH_WIND_COLOR,
                 )
             ]
             all_vals = self._collect_values([series[0][0]])
             v_max = (max(all_vals, default=20.0) + 5.0) if all_vals else 25.0
-            icons = [("wind", _WIND_COLOR)]
+            icons = [("wind", GRAPH_WIND_COLOR)]
             self._draw_lane(
                 painter, width, height, series, 0.0, v_max, unit="mph", icons=icons
             )
@@ -840,7 +835,7 @@ class WeatherGraphWidget(QWidget):
             )
             uv_series = self._daily_series(self._days, lambda d: d.uv_index_max)
 
-        icons = [("rain_pct", _RAIN_COLOR), ("uv_index", _UV_COLOR)]
+        icons = [("rain_pct", GRAPH_RAIN_COLOR), ("uv_index", GRAPH_UV_COLOR)]
         self._draw_dual_axis_lane(painter, width, height, rain_series, uv_series, icons)
 
     # ------------------------------------------------------------------
@@ -861,7 +856,7 @@ class WeatherGraphWidget(QWidget):
 
         if not (left_series or right_series):
             self._draw_lane_icons(painter, width, height, icons)
-            painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
+            painter.setPen(QPen(QColor(GRAPH_TEXT_COLOR), 1))
             painter.setFont(QFont(UI_FONT_FAMILY, 11))
             painter.drawText(
                 QRectF(0, 0, width, height),
@@ -885,11 +880,11 @@ class WeatherGraphWidget(QWidget):
         for i in range(3):
             ratio = i / 2
             y = plot_bottom - (plot_height * ratio)
-            painter.setPen(QPen(QColor(_GRID_COLOR), 1))
+            painter.setPen(QPen(QColor(GRAPH_GRID_COLOR), 1))
             painter.drawLine(int(chart_left), int(y), int(chart_right), int(y))
 
         # Left axis labels (rain %)
-        painter.setPen(QPen(QColor(_RAIN_COLOR), 1))
+        painter.setPen(QPen(QColor(GRAPH_RAIN_COLOR), 1))
         for i in range(3):
             ratio = i / 2
             y = plot_bottom - (plot_height * ratio)
@@ -903,7 +898,7 @@ class WeatherGraphWidget(QWidget):
             )
 
         # Right axis labels (UV index), in the right margin
-        painter.setPen(QPen(QColor(_UV_COLOR), 1))
+        painter.setPen(QPen(QColor(GRAPH_UV_COLOR), 1))
         for i in range(3):
             ratio = i / 2
             y = plot_bottom - (plot_height * ratio)
@@ -922,7 +917,7 @@ class WeatherGraphWidget(QWidget):
         )
 
         # Bottom axis
-        painter.setPen(QPen(QColor(_AXIS_COLOR), 1))
+        painter.setPen(QPen(QColor(GRAPH_AXIS_COLOR), 1))
         painter.drawLine(
             int(chart_left), int(plot_bottom), int(chart_right), int(plot_bottom)
         )
@@ -940,8 +935,8 @@ class WeatherGraphWidget(QWidget):
                 return plot_bottom
             return plot_bottom - (plot_height * (value / right_max))
 
-        self._draw_line(painter, left_series, _RAIN_COLOR, x_pos, y_left)
-        self._draw_line(painter, right_series, _UV_COLOR, x_pos, y_right)
+        self._draw_line(painter, left_series, GRAPH_RAIN_COLOR, x_pos, y_left)
+        self._draw_line(painter, right_series, GRAPH_UV_COLOR, x_pos, y_right)
 
     # ------------------------------------------------------------------
     # Small numeric helpers
@@ -1003,7 +998,7 @@ class WeatherGraphWidget(QWidget):
         # they line up with the midnight / "now" markers.
         window_start, window_end = self._time_window()
 
-        painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
+        painter.setPen(QPen(QColor(GRAPH_TEXT_COLOR), 1))
         painter.setFont(QFont(UI_FONT_FAMILY, 10))
 
         # Place labels in the 28px bottom strip (below the last lane frame)
