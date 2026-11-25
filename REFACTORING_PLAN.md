@@ -6,7 +6,7 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 - "Verify" commands assume the project root. Use `make …` targets from §T0 (or `uv run …` directly before T0 exists).
 - A task touching tests always lists them — no task may leave the suite red.
 
-## Status — completed so far (as of 20/11/2026)
+## Status — completed so far (as of 25/11/2026)
 
 | Section | Status | Evidence |
 |---|---|---|
@@ -15,10 +15,10 @@ Self-contained refactoring tasks for this PyQt6 Raspberry Pi display app, organi
 | **§1 — Full type annotations** | ✅ **DONE** (T1.1–T1.19) | commit `d8b6812`; mypy clean across 47 files; `make test` 71/71. |
 | §2 — Short functions | ✅ **DONE** (T2.1–T2.8) | `live_clock`, `icons`, `day_card`, `four_day_grid`, **`weather_graph`** (all 5 steps of T2.5), **`adapter`** (T2.6), **`main`** (T2.7), **`icons_demo`** (T2.8) all done |
 | §3 — Blank-line separation | ✅ **DONE** (verified) | All T3.1–T3.6 targets already satisfied as a side effect of §2; verified against disk, no code changes needed |
-| §4 — Name-accuracy renames | ⬜ not started | `setup_grid_data`, `init_ui`, `raw_vis` still present |
-| §5 — Paths that show purpose | ⬜ not started | `domain/`, root demos, `clock/widget/` unchanged |
-| §6 — Accurate READMEs | ⬜ not started | READMEs last edited in the pre-plan "ACTION_ITEMS" era |
-| §8 — Config in `config/` | ⬜ not started | attempted & reverted; `config/` absent |
+| §4 — Name-accuracy renames | ✅ **DONE** (T4.1–T4.8) | `setup_grid_data`, `init_ui`, `raw_vis` renamed; `ruff check .` clean |
+| §5 — Paths that show purpose | ✅ **DONE** (T5.1–T5.4) | `domain/` → `api/`, root demos → `demos/`, `clock/widget/` → `clock/widgets/` |
+| §6 — Accurate READMEs | ✅ **DONE** (T6.1–T6.5) | READMEs rewritten; `pyproject.toml` description set; no stale path refs |
+| §8 — Config in `config/` | ✅ **DONE** (T8.1–T8.10) | `config/` package created; UI styles + colours in `config/ui.py`; `make check` green |
 | §9 — UPPER_CASE / underscore privates | ✅ DONE | All internal attributes now `_private`; config constants intentionally public (T9.16) |
 
 > **⚠️ Bug fixed that the plan would have re-introduced.** The app stopped showing its window because `main.py` was left with an unassigned `MainWindow()` — CPython garbage-collects a top-level widget nothing references, so it is destroyed before `app.exec()`. Fixed in commit `686922a` by restoring `window = MainWindow()`. **T7.1 below endorses the broken form and must not be re-applied as written.**
