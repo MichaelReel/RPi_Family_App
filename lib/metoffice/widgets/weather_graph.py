@@ -1,11 +1,11 @@
 """Widget that renders a multi-lane weather stats chart of the next 8 days."""
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from decimal import Decimal
 from logging import Logger, getLogger
-from typing import Final
+from typing import Final, TypeVar
 from zoneinfo import ZoneInfo
 
 from PyQt6.QtCore import QRect, QRectF, Qt
@@ -38,6 +38,9 @@ from lib.metoffice.models import (
 )
 
 _LOGGER: Final[Logger] = getLogger(__name__)
+
+# Type variable for the fine-grained forecast point types (hourly / 3-hourly).
+_T = TypeVar("_T", HourlyForecastPoint, ThreeHourlyForecastPoint)
 
 # The temperature lane's unit string (distinguishes °C lanes from %/mph lanes).
 _TEMP_UNIT: Final[str] = "C"
@@ -174,10 +177,28 @@ class WeatherGraphWidget(QWidget):
         self._days = report.forecast_days[
             1:8
         ]  # the 7 days the daily API provides (today is index 0)
-        self._hourly = report.forecast_hourly
-        self._three_hourly = report.forecast_three_hourly or []
+        self._hourly = self._filter_recent(report.forecast_hourly)
+        self._three_hourly = self._filter_recent(report.forecast_three_hourly or [])
         self._extend_labels_to_fine_window()
         self._repaint()
+
+    @staticmethod
+    def _filter_recent(points: Sequence[_T]) -> list[_T]:
+        """Drop fine-grained points older than 24h before "now".
+
+        The Met Office forecast starts a few hours in the past, and that start
+        time is fixed at fetch time. Without this filter the graph's left edge
+        would keep showing stale historical data as the app runs for days.
+        Keeping only the last 24h of fine data anchors the plotted window to
+        "now" so the start position advances with time.
+        """
+        if not points:
+            return []
+        now = datetime.now(ZoneInfo("UTC"))
+        if points[0].time.tzinfo is None:
+            now = now.replace(tzinfo=None)
+        cutoff = now - timedelta(hours=24)
+        return [p for p in points if p.time >= cutoff]
 
     def _extend_labels_to_fine_window(self) -> None:
         """Add a date label for the next day when the plotted fine-data window

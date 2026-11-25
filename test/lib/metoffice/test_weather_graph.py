@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from freezegun import freeze_time
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPixmap
 from pytestqt.qtbot import QtBot
@@ -18,7 +19,7 @@ from lib.metoffice.widgets.weather_graph import WeatherGraphWidget
 
 def _make_days(count: int = 7) -> list[DailyForecastPoint]:
     """Generate a list of DailyForecastPoint values for testing."""
-    base_date = datetime(2026, 11, 10)
+    base_date = datetime(2026, 11, 25)
     days: list[DailyForecastPoint] = []
     for i in range(count):
         days.append(
@@ -168,7 +169,7 @@ def _make_hourly(
     points: list[tuple[int, float, float, float, float]],
 ) -> list[HourlyForecastPoint]:
     """Build hourly points. Each item is (hour_offset, screen, min, max, feels)."""
-    base = datetime(2026, 11, 15)
+    base = datetime(2026, 11, 25)
     out: list[HourlyForecastPoint] = []
     for offset, temp, mn, mx, feels in points:
         out.append(
@@ -196,7 +197,7 @@ def _make_three_hourly(
     points: list[tuple[int, float, float, float]],
 ) -> list[ThreeHourlyForecastPoint]:
     """Build 3-hourly points. Each item is (hour_offset, min_temp, max_temp, feels)."""
-    base = datetime(2026, 11, 15)
+    base = datetime(2026, 11, 25)
     out: list[ThreeHourlyForecastPoint] = []
     for offset, mn, mx, feels in points:
         out.append(
@@ -220,9 +221,70 @@ def _make_three_hourly(
     return out
 
 
+def test_filter_recent_drops_points_older_than_24h() -> None:
+    """Fine-grained points older than 24h before "now" must be dropped.
+
+    Regression: the Met Office forecast starts a few hours in the past, and that
+    start time is fixed at fetch time. Without filtering, the graph's left edge
+    keeps showing stale historical data as the app runs for days. The filter
+    anchors the plotted window to "now" so the start position advances with time.
+    """
+    with freeze_time("2026-11-25 12:00:00"):
+        now = datetime.now()
+        old = now - timedelta(hours=30)  # older than 24h -> dropped
+        recent = now - timedelta(hours=2)  # within 24h -> kept
+        future = now + timedelta(hours=6)  # in the future -> kept
+
+        points = [
+            _make_hourly_point(old, 10),
+            _make_hourly_point(recent, 11),
+            _make_hourly_point(future, 12),
+        ]
+
+        filtered = WeatherGraphWidget._filter_recent(points)
+        assert [p.time for p in filtered] == [recent, future]
+        assert old not in [p.time for p in filtered]
+
+
+def test_filter_recent_handles_naive_datetimes() -> None:
+    """The filter must not raise when points carry naive (tz-less) datetimes."""
+    with freeze_time("2026-11-25 12:00:00"):
+        now = datetime.now()  # naive
+        old = now - timedelta(hours=30)
+        recent = now - timedelta(hours=2)
+
+        points = [
+            _make_hourly_point(old, 10),
+            _make_hourly_point(recent, 11),
+        ]
+
+        filtered = WeatherGraphWidget._filter_recent(points)
+        assert [p.time for p in filtered] == [recent]
+
+
+def _make_hourly_point(time: datetime, temp: float) -> HourlyForecastPoint:
+    """Build a single HourlyForecastPoint at `time` with a given screen temp."""
+    return HourlyForecastPoint(
+        time=time,
+        screen_temperature_c=Decimal(temp),
+        min_screen_temperature_c=Decimal(temp - 4),
+        max_screen_temperature_c=Decimal(temp + 2),
+        feels_like_temperature_c=Decimal(temp - 2),
+        wind_speed_10m_mph=Decimal(5),
+        wind_gust_10m_mph=Decimal(10),
+        wind_direction_10m_deg=180,
+        relative_humidity_pct=Decimal(80),
+        precipitation_rate_mmh=Decimal(0),
+        total_precip_amount_mm=Decimal(0),
+        prob_of_precipitation_pct=20,
+        uv_index=1,
+        significant_weather_code=3,
+    )
+
+
 def test_continuous_series_dedupes_shared_timestamps_hourly_wins() -> None:
     """Where hourly and three-hourly share a timestamp, the hourly value is used."""
-    base = datetime(2026, 11, 15)
+    base = datetime(2026, 11, 25)
     hourly = [
         HourlyForecastPoint(
             time=base,
@@ -304,7 +366,7 @@ def test_temp_min_max_lines_are_continuous_from_hourly() -> None:
     3-hourly alone left the first 48h blank. The hourly API also exposes
     minScreenAirTemp/maxScreenAirTemp, which must fill that span.
     """
-    base = datetime(2026, 11, 15)
+    base = datetime(2026, 11, 25)
     hourly = _make_hourly([(0, 8, 6, 11, 5), (1, 7, 5, 10, 4), (2, 6, 4, 9, 3)])
     three_hourly = _make_three_hourly([(3, 5, 12, 6), (6, 4, 13, 5)])
 
@@ -352,7 +414,7 @@ def test_temp_min_max_lines_are_continuous_from_hourly() -> None:
 
 def test_continuous_series_is_sorted_by_time() -> None:
     """The merged series must be in chronological order regardless of input order."""
-    base = datetime(2026, 11, 15)
+    base = datetime(2026, 11, 25)
     hourly = _make_hourly([(24, 11, 7, 15, 9)])  # later than the 3-hourly point below
     three_hourly = _make_three_hourly([(0, 5, 12, 6)])
 
