@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from config.ui import UI_FONT_FAMILY
 from lib.metoffice.icons import load_stats_icons, load_weather_icons
 from lib.metoffice.models import DailyForecastPoint
 
@@ -21,7 +22,7 @@ from lib.metoffice.models import DailyForecastPoint
 class UIElementStyle:
     """Holds individual CSS and font properties for a single text label."""
 
-    font_family: str = "Arial, sans-serif"
+    font_family: str = f"{UI_FONT_FAMILY}, sans-serif"
     font_size: str = "13px"
     font_weight: str = "normal"
     text_color: str = "#888888"

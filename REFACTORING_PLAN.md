@@ -482,11 +482,11 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `main.py` imports them (replaces the 5 local colour strings).
 - **Verify:** `make test`, run the app briefly (`make run`) to confirm colours unchanged. ✅ — `make check` green (71 tests). `CLOCK_LABEL_COLOR` defined in `config/ui.py` (unused in `main.py` — kept for completeness per spec).
 
-### T8.3 — Shared font family
+### T8.3 — Shared font family — ✅ DONE
 - `UI_FONT_FAMILY = "Arial"` in `config/ui.py`.
 - Use in `live_clock.py`, `day_card.py` (`"Arial, sans-serif"` → `f"{UI_FONT_FAMILY}, sans-serif"`), `weather_graph.py`, `location_label.py`.
 - `live_clock` font ratios/min-sizes/margins and `weather_graph` layout tuning (margins, dot sizes, thresholds, font px) stay **in-file** as `_UPPERCASE: Final[int]`.
-- **Verify:** `make test`, visual check via a demo.
+- **Verify:** `make test`, visual check via a demo. ✅ — `make check` green (71 tests); no `"Arial"` literals remain in `lib/` or `main.py`.
 
 ### T8.4 — Card style dataclasses → `config/ui.py`
 - Move `UIElementStyle` and `CardStyleConfig` (and their default values) from `day_card.py` to `config/ui.py` — config must stay a leaf module, so the dataclasses move with the values.

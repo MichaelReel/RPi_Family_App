@@ -12,3 +12,6 @@ APP_TEXT_COLOR: Final[str] = "#0000aa"
 CLOCK_LABEL_COLOR: Final[str] = "#0000aa"
 CLOCK_DAY_DATE_COLOR: Final[str] = "#0000FF"
 CLOCK_SECONDS_COLOR: Final[str] = "#000088"
+
+# Shared font family (T8.3)
+UI_FONT_FAMILY: Final[str] = "Arial"

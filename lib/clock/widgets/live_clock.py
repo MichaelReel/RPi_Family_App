@@ -4,6 +4,8 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QResizeEvent
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
+from config.ui import UI_FONT_FAMILY
+
 
 class LiveClockWidget(QWidget):
     def __init__(
@@ -83,8 +85,8 @@ class LiveClockWidget(QWidget):
         self._seconds_font_size = seconds_font_size  # Saved for the inline HTML string
 
         # Update widget fonts and minimum heights dynamically
-        time_font = QFont("Arial", time_font_size, QFont.Weight.Bold)
-        sub_font = QFont("Arial", sub_font_size)
+        time_font = QFont(UI_FONT_FAMILY, time_font_size, QFont.Weight.Bold)
+        sub_font = QFont(UI_FONT_FAMILY, sub_font_size)
 
         self._time_label.setFont(time_font)
         self._time_label.setMinimumHeight(int(base_height * 0.25))

@@ -7,6 +7,8 @@ from typing import Final
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QWidget
 
+from config.ui import UI_FONT_FAMILY
+
 _LOGGER: Final[Logger] = getLogger(__name__)
 
 # Default style — can be overridden by the caller
@@ -15,7 +17,7 @@ _DEFAULT_STYLE: str = (
     "    background-color: transparent; "
     "    color: #888888; "
     "    font-size: 14px; "
-    "    font-family: Arial, sans-serif; "
+    f"    font-family: {UI_FONT_FAMILY}, sans-serif; "
     "}"
 )
 

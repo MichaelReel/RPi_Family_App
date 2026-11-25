@@ -12,6 +12,7 @@ from PyQt6.QtCore import QRect, QRectF, Qt
 from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPaintEvent, QPen, QPixmap
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
+from config.ui import UI_FONT_FAMILY
 from lib.metoffice.icons import load_stats_icons
 from lib.metoffice.models import (
     DailyForecastPoint,
@@ -138,7 +139,7 @@ class WeatherGraphWidget(QWidget):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(
             f"QLabel {{ background-color: transparent; color: {_TEXT_COLOR}; "
-            f"font-size: 22px; font-weight: bold; font-family: Arial, sans-serif; }}"
+            f"font-size: 22px; font-weight: bold; font-family: {UI_FONT_FAMILY}, sans-serif; }}"
         )
         return title
 
@@ -333,7 +334,7 @@ class WeatherGraphWidget(QWidget):
         if not any(pts for pts, _ in series):
             self._draw_lane_icons(painter, width, height, icons)
             painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
-            painter.setFont(QFont("Arial", 11))
+            painter.setFont(QFont(UI_FONT_FAMILY, 11))
             painter.drawText(
                 QRectF(0, 0, width, height),
                 Qt.AlignmentFlag.AlignCenter,
@@ -365,7 +366,7 @@ class WeatherGraphWidget(QWidget):
 
         self._draw_lane_icons(painter, width, height, icons)
 
-        painter.setFont(QFont("Arial", 9))
+        painter.setFont(QFont(UI_FONT_FAMILY, 9))
         for val, is_zero in self._lane_grid_items(v_min, v_max, unit):
             if v_max == v_min:
                 y: float = plot_bottom
@@ -861,7 +862,7 @@ class WeatherGraphWidget(QWidget):
         if not (left_series or right_series):
             self._draw_lane_icons(painter, width, height, icons)
             painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
-            painter.setFont(QFont("Arial", 11))
+            painter.setFont(QFont(UI_FONT_FAMILY, 11))
             painter.drawText(
                 QRectF(0, 0, width, height),
                 Qt.AlignmentFlag.AlignCenter,
@@ -880,7 +881,7 @@ class WeatherGraphWidget(QWidget):
         plot_height = plot_bottom - plot_top
 
         # Grid lines
-        painter.setFont(QFont("Arial", 9))
+        painter.setFont(QFont(UI_FONT_FAMILY, 9))
         for i in range(3):
             ratio = i / 2
             y = plot_bottom - (plot_height * ratio)
@@ -1003,7 +1004,7 @@ class WeatherGraphWidget(QWidget):
         window_start, window_end = self._time_window()
 
         painter.setPen(QPen(QColor(_TEXT_COLOR), 1))
-        painter.setFont(QFont("Arial", 10))
+        painter.setFont(QFont(UI_FONT_FAMILY, 10))
 
         # Place labels in the 28px bottom strip (below the last lane frame)
         y = self.height() - 22
