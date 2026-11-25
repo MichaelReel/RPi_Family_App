@@ -506,9 +506,9 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `weather_graph.py` imports them; delete the module-level colour block.
 - **Verify:** `make test`, visual check via `make demo-met`. ✅ — `make check` green (71 tests); test file updated to import from `config.ui`. Note: `GRAPH_LANE_BORDER_COLOR` defined in `config/ui.py` but unused (was defined but never used in original code).
 
-### T8.7 — `location_label.py`
-- `_DEFAULT_STYLE: CardStyleConfig` → `LOCATION_LABEL_STYLE: CardStyleConfig` in `config/ui.py`; import it.
-- **Verify:** `make test`.
+### T8.7 — `location_label.py` — ✅ DONE
+- `_DEFAULT_STYLE: str` → `LOCATION_LABEL_STYLE: str` in `config/ui.py`; import it.
+- **Verify:** `make test`. ✅ — `make check` green (71 tests). Note: plan said `_DEFAULT_STYLE: CardStyleConfig` but actual code was `_DEFAULT_STYLE: str` (CSS stylesheet string) — moved the actual string.
 
 ### T8.8 — Duplicated `bg_color` default
 - `swapping_container.py`, `weather_group.py`, `four_day_grid.py`, `weather_graph.py`: `bg_color: str = "#000022"` → `bg_color: str = APP_BG_COLOR` (import from `config`).

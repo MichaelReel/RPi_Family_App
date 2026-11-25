@@ -118,3 +118,13 @@ GRAPH_GRID_COLOR_STRONG: Final[str] = "#6A6A9A"
 GRAPH_LANE_BORDER_COLOR: Final[str] = "#444466"
 GRAPH_MIDNIGHT_COLOR: Final[str] = "#3A3A5C"
 GRAPH_NOW_COLOR: Final[str] = "#E86A5E"
+
+# Location label style (T8.7)
+LOCATION_LABEL_STYLE: Final[str] = (
+    "QLabel { "
+    "    background-color: transparent; "
+    "    color: #888888; "
+    "    font-size: 14px; "
+    f"    font-family: {UI_FONT_FAMILY}, sans-serif; "
+    "}"
+)
