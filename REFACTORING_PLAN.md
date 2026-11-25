@@ -334,7 +334,7 @@ Apply **after §2**, to the functions that legitimately stay long. Rule: one bla
 - ✅ Added `lib/metoffice/icons/weather/spares/` to `.gitignore` (unused-but-intentional local asset folder; now ignored so it stays on disk untracked).
 - **Verify:** `git check-ignore lib/metoffice/icons/weather/spares/rain.png` ✅.
 
-## 6. Accurate READMEs with complete steps — ⬜ not started
+## 6. Accurate READMEs with complete steps — ⬜ in progress (T6.1–T6.3 done)
 
 Do this **last** — after T0.3/T5.2 — so the documented commands match reality.
 
@@ -361,10 +361,10 @@ Specific fixes:
 - Reflect the `api/` rename if T5.1 was done.
 - **Verify:** every path in the tree exists (`find lib test demos -name '*.py'`), every claim cross-checked against the code.
 
-### T6.3 — Slim `lib/metoffice/README.md`
+### T6.3 — Slim `lib/metoffice/README.md` — ✅ DONE
 - Remove the env-var prose duplicated from the root README.
 - Keep: module contents, where the API key comes from, pointer to the root README for setup.
-- **Verify:** no factual drift vs `config/metoffice.py`.
+- **Verify:** no factual drift vs `config.py` (config lives in root `config.py`, not `config/metoffice.py` — T8.x was reverted). Env vars `METOFFICE_API_KEY` (required), `METOFFICE_LATITUDE` (default `54.3`), `METOFFICE_LONGITUDE` (default `-7.3`) all match.
 
 ### T6.4 — Trim `lib/metoffice/icons/weather/README.md`
 - Remove "alerting icons must for now be downloaded from the NRK GitHub page" (not shipped here).
