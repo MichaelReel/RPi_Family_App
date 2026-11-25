@@ -21,7 +21,7 @@ A full-screen PyQt6 application designed for Raspberry Pi + Touch Screen display
 
 ### Configuration
 
-**`config.py`** defines global constants:
+**`config/`** defines global constants (Met Office API config in `config/metoffice.py`, UI styling in `config/ui.py`):
 - `MET_DAILY_URL` — Met Office DataHub API endpoint (daily forecast)
 - `MET_HOURLY_URL` — Met Office DataHub API endpoint (1-hourly forecast, used by the graph)
 - `MET_THREE_HOURLY_URL` — Met Office DataHub API endpoint (3-hourly forecast, used by the graph)
@@ -43,7 +43,10 @@ A full-screen PyQt6 application designed for Raspberry Pi + Touch Screen display
 
 ```
 RPi_Family_App/
-├── config.py                        # Global configuration (API URLs, headers, params, refresh intervals)
+├── config/                          # Global configuration package
+│   ├── __init__.py                  # Re-exports so `from config import X` keeps working
+│   ├── metoffice.py                 # Met Office API URLs, headers, params, refresh intervals
+│   └── ui.py                        # UI styling (colours, fonts, card styles, graph palette)
 ├── main.py                          # Main app entry point (PyQt6 full-screen window)
 ├── demos/
 │   ├── met_demo.py                  # Standalone weather widget demo
@@ -307,7 +310,7 @@ uv run pytest test/ -v
 | `make demo-icons` | `uv run python demos/icons_demo.py` | Icon loading demo |
 | `make lint` | `uv run ruff check .` | Lint with Ruff |
 | `make format` | `uv run ruff format .` | Format with Ruff |
-| `make typecheck` | `uv run mypy lib main.py config.py demos/... test` | Type-check with mypy |
+| `make typecheck` | `uv run mypy lib main.py config demos/... test` | Type-check with mypy |
 | `make test` | `QT_QPA_PLATFORM=offscreen uv run pytest test/` | Run the test suite |
 | `make check` | `lint` + `typecheck` + `test` | Full CI-style check |
 | `make clean` | removes caches | Clean build/test caches |

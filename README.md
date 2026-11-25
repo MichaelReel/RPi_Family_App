@@ -37,7 +37,7 @@ make run     # uv run main.py
 
 ## Configuration
 
-The app reads its settings from environment variables (defined in [`config.py`](config.py)):
+The app reads its settings from environment variables (defined in [`config/`](config/)):
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -68,7 +68,7 @@ make demo-icons   # uv run python demos/icons_demo.py
 ```sh
 make lint        # uv run ruff check .
 make format      # uv run ruff format .
-make typecheck   # uv run mypy lib main.py config.py demos/... test
+make typecheck   # uv run mypy lib main.py config demos/... test
 make test        # QT_QPA_PLATFORM=offscreen uv run pytest test/
 make check       # lint + typecheck + test
 ```

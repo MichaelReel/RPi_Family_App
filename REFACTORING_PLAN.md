@@ -458,7 +458,7 @@ Specific fixes:
 - Optional: `make clean` to drop the stale root `__pycache__/`.
 - **Verify (all §7):** `uv run ruff check .` clean, `make test` 71/71.
 
-## 8. Config in `config/` — ⬜ not started (attempted & reverted)
+## 8. Config in `config/` — ⬜ in progress (T8.1 done)
 
 New layout:
 
@@ -471,11 +471,11 @@ config/
 
 In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margins, ratios, `HTTP_TIMEOUT`) — per the agreed rule. **Gate:** `make check` green + each demo still renders.
 
-### T8.1 — Create the `config/` package
+### T8.1 — Create the `config/` package — ✅ DONE
 - `mkdir config && git mv config.py config/metoffice.py`.
 - Create `config/ui.py` (populated by T8.2–T8.8).
 - `config/__init__.py`: explicitly re-export all public names so existing `from config import MET_REFRESH_MS` etc. keeps working everywhere (client, weather_source, tests, demos).
-- **Verify:** `make test`, `uv run mypy config/ main.py lib/`.
+- **Verify:** `make test`, `uv run mypy config/ main.py lib/`. ✅ — `make check` green (ruff, mypy 49 files, 71 tests). Also updated Makefile `typecheck` target and all `config.py` doc references (README, REPOSITORY_GUIDE, lib/metoffice/README) to `config/`.
 
 ### T8.2 — `main.py` colours → `config/ui.py`
 - `APP_BG_COLOR = "#000022"`, `APP_TEXT_COLOR = "#0000aa"`, `CLOCK_LABEL_COLOR = "#0000aa"`, `CLOCK_DAY_DATE_COLOR = "#0000FF"`, `CLOCK_SECONDS_COLOR = "#000088"`.

@@ -10,7 +10,7 @@ format:
 	uv run ruff format .
 
 typecheck:
-	uv run mypy lib main.py config.py demos/clock_demo.py demos/met_demo.py demos/icons_demo.py test
+	uv run mypy lib main.py config demos/clock_demo.py demos/met_demo.py demos/icons_demo.py test
 
 test:
 	QT_QPA_PLATFORM=offscreen uv run pytest test/
