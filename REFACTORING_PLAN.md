@@ -366,11 +366,11 @@ Specific fixes:
 - Keep: module contents, where the API key comes from, pointer to the root README for setup.
 - **Verify:** no factual drift vs `config.py` (config lives in root `config.py`, not `config/metoffice.py` — T8.x was reverted). Env vars `METOFFICE_API_KEY` (required), `METOFFICE_LATITUDE` (default `54.3`), `METOFFICE_LONGITUDE` (default `-7.3`) all match.
 
-### T6.4 — Trim `lib/metoffice/icons/weather/README.md`
+### T6.4 — Trim `lib/metoffice/icons/weather/README.md` — ✅ DONE
 - Remove "alerting icons must for now be downloaded from the NRK GitHub page" (not shipped here).
 - Keep Yr attribution + MIT license.
 - Add one line explaining `spares/` (see T5.4).
-- **Verify:** folder contents match the description (`ls` the icon dirs).
+- **Verify:** folder contents match the description (`ls` the icon dirs). ✅ — `weather/` holds the 31 shipped forecast icons; `spares/` holds the unused variants (git-ignored, confirmed via `git check-ignore`).
 
 ### T6.5 — `pyproject.toml`
 - `description = "Add your description here"` → `"A PyQt6 Raspberry Pi display app: live clock + Met Office weather forecast with auto-swapping views."`
