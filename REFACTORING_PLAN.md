@@ -510,9 +510,9 @@ In-file `_UPPERCASE: Final` stays for tuning constants unlikely to change (margi
 - `_DEFAULT_STYLE: str` → `LOCATION_LABEL_STYLE: str` in `config/ui.py`; import it.
 - **Verify:** `make test`. ✅ — `make check` green (71 tests). Note: plan said `_DEFAULT_STYLE: CardStyleConfig` but actual code was `_DEFAULT_STYLE: str` (CSS stylesheet string) — moved the actual string.
 
-### T8.8 — Duplicated `bg_color` default
+### T8.8 — Duplicated `bg_color` default — ✅ DONE
 - `swapping_container.py`, `weather_group.py`, `four_day_grid.py`, `weather_graph.py`: `bg_color: str = "#000022"` → `bg_color: str = APP_BG_COLOR` (import from `config`).
-- **Verify:** `make test`, `uv run mypy lib/`.
+- **Verify:** `make test`, `uv run mypy lib/`. ✅ — `make check` green (71 tests); no more `#000022` literals in widget `bg_color` defaults.
 
 ### T8.9 — `icons_demo.py`
 - `ICON_SIZE: Final[int] = 64`, `ICON_GRID_COLUMNS: Final[int] = 4`, `ICON_GRID_SPACING: Final[int] = 20` in-file (T9.12 folds the `max_columns` local into `ICON_GRID_COLUMNS`).

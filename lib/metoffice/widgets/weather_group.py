@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
+from config.ui import APP_BG_COLOR
 from lib.metoffice.models import HumanReadableWeatherReport
 from lib.metoffice.widgets.four_day_grid import FourDayGridWidget
 from lib.metoffice.widgets.location_label import LocationLabelWidget
@@ -23,7 +24,7 @@ class WeatherGroupWidget(QWidget):
         report_source: Callable[[], HumanReadableWeatherReport | None],
         location_name: str | None,
         coordinates: list[Decimal] | None = None,
-        bg_color: str = "#000022",
+        bg_color: str = APP_BG_COLOR,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)

@@ -13,6 +13,7 @@ from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPaintEvent, QPen, QPix
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
 from config.ui import (
+    APP_BG_COLOR,
     GRAPH_AXIS_COLOR,
     GRAPH_FEELS_LIKE_COLOR,
     GRAPH_GRID_COLOR,
@@ -100,7 +101,7 @@ class WeatherGraphWidget(QWidget):
     def __init__(
         self,
         report_source: Callable[[], HumanReadableWeatherReport | None],
-        bg_color: str = "#000022",
+        bg_color: str = APP_BG_COLOR,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)

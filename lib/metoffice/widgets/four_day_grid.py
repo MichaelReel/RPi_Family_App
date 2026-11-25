@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 
 from config import MET_REFRESH_MS
 from config.ui import (
+    APP_BG_COLOR,
     DAY_GRID_SPACING,
     FEATURED_DAY_CARD_STYLE,
     SECONDARY_DAY_CARD_STYLE,
@@ -23,7 +24,7 @@ class FourDayGridWidget(QWidget):
     def __init__(
         self,
         report_source: Callable[[], HumanReadableWeatherReport | None],
-        bg_color: str = "#000022",
+        bg_color: str = APP_BG_COLOR,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)

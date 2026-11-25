@@ -7,6 +7,8 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QStackedWidget, QVBoxLayout, QWidget
 
+from config.ui import APP_BG_COLOR
+
 _LOGGER: Final[Logger] = getLogger(__name__)
 
 
@@ -25,7 +27,7 @@ class SwappingContainerWidget(QWidget):
         self,
         pages: list[QWidget],
         swap_interval_ms: int,
-        bg_color: str = "#000022",
+        bg_color: str = APP_BG_COLOR,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
