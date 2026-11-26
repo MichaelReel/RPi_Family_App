@@ -1,6 +1,6 @@
 # RPi Family App Repository Guide
 
-> **Purpose:** This document provides a structured overview of the `RPi_Family_App` codebase for LLM agents and developers. It covers architecture, module responsibilities, data flow, configuration, and testing conventions.
+> **Purpose:** This document provides a structured overview of the `RPi_Family_App` codebase for LLM agents and developers. It covers architecture, module responsibilities, data flow, configuration, and testing conventions. See also [AI_GUIDE.md](AI_GUIDE.md) for coding conventions and project-specific rules.
 
 ---
 
@@ -203,6 +203,7 @@ Met Office API (HTTP JSON)
 - `WeatherGraphWidget` — renders an 8-day multi-lane stats chart
 - Lanes (top to bottom): temperature (min/max/feels-like), rain probability + UV index, wind (avg + gust)
 - Built from the dense 1-hourly and 3-hourly forecast points
+- `_filter_recent` — drops fine-grained points older than 24h before "now" so the graph's left edge advances with time (uses a generic `TypeVar _T` with `Sequence[_T]` input and `list[_T]` output)
 
 ### `lib/metoffice/weather_source.py`
 - `CachedWeatherSource` — TTL-cached wrapper around `get_human_readable_weather()`
@@ -224,15 +225,21 @@ Met Office API (HTTP JSON)
 
 ### Test Framework
 - **pytest** with **pytest-qt** for Qt widget testing
+- **freezegun** for deterministic time-based testing (freezes `datetime.now()` to a fixed date)
 - `--import-mode=importlib` (from `pyproject.toml`)
 - `pythonpath = ["."]` — root directory on import path
+
+### Time-Based Testing
+- Tests that depend on `datetime.now()` (e.g. `_filter_recent`) use `freezegun.freeze_time` to pin the clock to a known date
+- Test data helpers (`_make_hourly`, `_make_three_hourly`, `_make_days`) use `2026-11-25` as the base date
+- When constructing widget instances with fine-grained data, wrap the test body in `freeze_time("2026-11-25 12:00:00")` so the data is "recent" relative to the frozen clock
 
 ### Test Data
 - `test/test_data/metoffice_sitespecific_point_daily/domain.json` — real Met Office API response snapshot
 - `test/test_data/metoffice_sitespecific_point_daily/model.py` — `expected_human_report_snapshot` pytest fixture
 
 ### Current Test Coverage
-71 tests across 10 test modules:
+73 tests across 10 test modules:
 
 | Module | Test File | Tests |
 |--------|-----------|-------|
@@ -243,7 +250,7 @@ Met Office API (HTTP JSON)
 | `metoffice/icons.py` | `test/lib/metoffice/test_icons.py` | 6 |
 | `metoffice/weather_source.py` | `test/lib/metoffice/test_weather_source.py` | 7 |
 | `metoffice/widgets/` | `test/lib/metoffice/test_widget.py` | 11 |
-| `metoffice/widgets/weather_graph.py` | `test/lib/metoffice/test_weather_graph.py` | 13 |
+| `metoffice/widgets/weather_graph.py` | `test/lib/metoffice/test_weather_graph.py` | 15 |
 | `widgets/swapping_container.py` | `test/lib/widgets/test_swapping_container.py` | 9 |
 | package imports | `test/lib/test_packages.py` | 7 |
 
@@ -275,6 +282,17 @@ uv run pytest test/ -v
 | `PyQt6` | GUI framework (widgets, layouts, timers, painters) |
 | `requests` | HTTP client for Met Office API |
 | `marshmallow` | JSON schema deserialization (domain models) |
+
+### Dev Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `pytest` | Test framework |
+| `pytest-qt` | Qt widget testing support |
+| `freezegun` | Deterministic time-based testing (freezes `datetime.now()`) |
+| `mypy` | Static type checking (strict mode) |
+| `ruff` | Linting and formatting |
+| `black` | Code formatting (kept for compatibility) |
 
 ---
 

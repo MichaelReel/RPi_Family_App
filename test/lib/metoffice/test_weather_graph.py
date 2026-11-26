@@ -439,23 +439,24 @@ def test_continuous_series_is_sorted_by_time() -> None:
 
 def test_widget_with_fine_data_populates_all_series_and_paints(qtbot: QtBot) -> None:
     """With hourly + three-hourly data the widget stores both and paints without error."""
-    days = _make_days(8)
-    hourly = _make_hourly([(0, 10, 6, 12, 8), (1, 11, 7, 13, 9), (2, 12, 8, 14, 10)])
-    three_hourly = _make_three_hourly([(3, 5, 12, 6), (6, 4, 13, 5), (24, 6, 15, 7)])
-    report = _make_report(days, hourly=hourly, three_hourly=three_hourly)
+    with freeze_time("2026-11-25 12:00:00"):
+        days = _make_days(8)
+        hourly = _make_hourly([(0, 10, 6, 12, 8), (1, 11, 7, 13, 9), (2, 12, 8, 14, 10)])
+        three_hourly = _make_three_hourly([(3, 5, 12, 6), (6, 4, 13, 5), (24, 6, 15, 7)])
+        report = _make_report(days, hourly=hourly, three_hourly=three_hourly)
 
-    widget = WeatherGraphWidget(report_source=lambda: report)
-    qtbot.addWidget(widget)
-    widget.show()
+        widget = WeatherGraphWidget(report_source=lambda: report)
+        qtbot.addWidget(widget)
+        widget.show()
 
-    assert len(widget._days) == 7
-    assert len(widget._hourly) == 3
-    assert len(widget._three_hourly) == 3
+        assert len(widget._days) == 7
+        assert len(widget._hourly) == 3
+        assert len(widget._three_hourly) == 3
 
-    # Force a full paint of every lane; must not raise.
-    for frame in widget._frames:
-        frame.grab()
-    widget.grab()
+        # Force a full paint of every lane; must not raise.
+        for frame in widget._frames:
+            frame.grab()
+        widget.grab()
 
 
 def test_temp_lane_draws_midnight_gridlines(qtbot: QtBot) -> None:
@@ -506,45 +507,46 @@ def test_temp_lane_zero_c_gridline_is_bold(qtbot: QtBot) -> None:
     """
     from config.ui import GRAPH_GRID_COLOR, GRAPH_GRID_COLOR_STRONG
 
-    days = _make_days(8)
-    # Range spans -1.0 .. 11.0 so the 0 and 5 multiples both fall in range.
-    hourly = _make_hourly([(0, 5, -1, 8, 4), (1, 4, -1, 7, 3), (2, 6, 0, 9, 5)])
-    three_hourly = _make_three_hourly([(3, -1, 10, 4), (6, 0, 11, 5)])
-    report = _make_report(days, hourly=hourly, three_hourly=three_hourly)
+    with freeze_time("2026-11-25 12:00:00"):
+        days = _make_days(8)
+        # Range spans -1.0 .. 11.0 so the 0 and 5 multiples both fall in range.
+        hourly = _make_hourly([(0, 5, -1, 8, 4), (1, 4, -1, 7, 3), (2, 6, 0, 9, 5)])
+        three_hourly = _make_three_hourly([(3, -1, 10, 4), (6, 0, 11, 5)])
+        report = _make_report(days, hourly=hourly, three_hourly=three_hourly)
 
-    widget = WeatherGraphWidget(report_source=lambda: report)
-    qtbot.addWidget(widget)
-    widget.resize(1200, 600)
-    widget.show()
+        widget = WeatherGraphWidget(report_source=lambda: report)
+        qtbot.addWidget(widget)
+        widget.resize(1200, 600)
+        widget.show()
 
-    frame = widget._frames[0]
-    frame.resize(frame.size())
-    pixmap = QPixmap(frame.size())
-    pixmap.fill(Qt.GlobalColor.transparent)
-    frame.render(pixmap)
-    image = pixmap.toImage()
+        frame = widget._frames[0]
+        frame.resize(frame.size())
+        pixmap = QPixmap(frame.size())
+        pixmap.fill(Qt.GlobalColor.transparent)
+        frame.render(pixmap)
+        image = pixmap.toImage()
 
-    tol = 12  # tolerate antialiasing / blending
+        tol = 12  # tolerate antialiasing / blending
 
-    def count_near(target: QColor) -> int:
-        n = 0
-        for y in range(image.height()):
-            for x in range(image.width()):
-                c = image.pixelColor(x, y)
-                if (
-                    abs(c.red() - target.red()) <= tol
-                    and abs(c.green() - target.green()) <= tol
-                    and abs(c.blue() - target.blue()) <= tol
-                ):
-                    n += 1
-        return n
+        def count_near(target: QColor) -> int:
+            n = 0
+            for y in range(image.height()):
+                for x in range(image.width()):
+                    c = image.pixelColor(x, y)
+                    if (
+                        abs(c.red() - target.red()) <= tol
+                        and abs(c.green() - target.green()) <= tol
+                        and abs(c.blue() - target.blue()) <= tol
+                    ):
+                        n += 1
+            return n
 
-    assert count_near(QColor(GRAPH_GRID_COLOR_STRONG)) > 0, (
-        "expected the bold 0°C gridline colour to be painted in the temp lane"
-    )
-    assert count_near(QColor(GRAPH_GRID_COLOR)) > 0, (
-        "expected the normal 5°C gridline colour to be painted in the temp lane"
-    )
+        assert count_near(QColor(GRAPH_GRID_COLOR_STRONG)) > 0, (
+            "expected the bold 0°C gridline colour to be painted in the temp lane"
+        )
+        assert count_near(QColor(GRAPH_GRID_COLOR)) > 0, (
+            "expected the normal 5°C gridline colour to be painted in the temp lane"
+        )
 
 
 def test_date_labels_are_centred_on_noon(qtbot: QtBot) -> None:

@@ -12,6 +12,7 @@ A full-screen PyQt6 application for a Raspberry Pi + touch-screen display. It sh
 ## Documentation
 
 - **[REPOSITORY_GUIDE.md](REPOSITORY_GUIDE.md)** — Repository overview, architecture, data flow, module responsibilities, and testing conventions (useful for LLM agents and new developers).
+- **[AI_GUIDE.md](AI_GUIDE.md)** — Coding conventions, type-hint rules, test patterns, and project-specific rules for AI agents and developers.
 
 ## Requirements
 
