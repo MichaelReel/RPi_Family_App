@@ -627,3 +627,37 @@ def test_date_labels_are_centred_on_noon(qtbot: QtBot) -> None:
                 f"date label centred at x={label_centre_x:.1f} does not sit on its "
                 f"day's noon x={exp_x:.1f}"
             )
+
+
+def test_refresh_timer_reprunes_fine_data_as_time_advances(qtbot: QtBot) -> None:
+    """The graph must re-run _refresh (and re-prune) on its periodic timer.
+
+    Regression: the widget previously only called _refresh() once at construction,
+    so the fine-data window stayed anchored to the startup fetch time. On an app
+    that had been running for days, the left edge of the graph kept showing stale
+    historical data to the left of the "now" line. The periodic timer must
+    re-fetch and re-prune so the window re-anchors to "now".
+    """
+    base = datetime(2026, 11, 25, 12)
+    # A long fine-data series: starts 30h before "now" (stale) and runs 8 days
+    # out. At construction (frozen at base) only the last 24h is kept.
+    offsets = list(range(-30, 24 * 8, 3))
+    hourly = _make_hourly([(o, 10, 6, 12, 8) for o in offsets])
+    report = _make_report(_make_days(8), hourly=hourly)
+
+    with freeze_time("2026-11-25 12:00:00") as frozen:
+        widget = WeatherGraphWidget(report_source=lambda: report)
+        qtbot.addWidget(widget)
+        widget.show()
+
+        # At construction the 30h-old points are pruned: the first point within
+        # 24h of "now" is base - 24h (the series is on a 3h grid).
+        assert widget._hourly[0].time == base - timedelta(hours=24)
+
+        # Advance "now" by 30h and fire the refresh timer. The window must
+        # re-anchor to the new "now", dropping the previously-kept points that
+        # are now older than 24h.
+        frozen.move_to("2026-11-26 18:00:00")
+        widget._refresh_timer.timeout.emit()
+
+        assert widget._hourly[0].time == base + timedelta(hours=6)

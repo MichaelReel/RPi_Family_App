@@ -8,10 +8,11 @@ from logging import Logger, getLogger
 from typing import Final, TypeVar
 from zoneinfo import ZoneInfo
 
-from PyQt6.QtCore import QRect, QRectF, Qt
+from PyQt6.QtCore import QRect, QRectF, Qt, QTimer
 from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPaintEvent, QPen, QPixmap
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
+from config import MET_REFRESH_MS
 from config.ui import (
     APP_BG_COLOR,
     GRAPH_AXIS_COLOR,
@@ -131,6 +132,7 @@ class WeatherGraphWidget(QWidget):
 
         self.setMinimumSize(400, 400)
         self._refresh()
+        self._start_refresh_timer()
 
     def _build_title(self) -> QLabel:
         """Builds the centred "8-Day Forecast" title label for the chart."""
@@ -154,6 +156,18 @@ class WeatherGraphWidget(QWidget):
     # ------------------------------------------------------------------
     # Data refresh
     # ------------------------------------------------------------------
+
+    def _start_refresh_timer(self) -> None:
+        """Starts the periodic timer that re-fetches and re-renders the graph.
+
+        Without this the graph would only ever be populated once at construction,
+        so the fine-data window (and its 24h pruning) would stay anchored to the
+        startup fetch time and stale historical data would accumulate to the left
+        of the "now" line as the app runs for days.
+        """
+        self._refresh_timer: QTimer = QTimer(self)
+        self._refresh_timer.timeout.connect(self._refresh)
+        self._refresh_timer.start(MET_REFRESH_MS)
 
     def _refresh(self) -> None:
         try:
